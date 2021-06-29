@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=42.0", "wheel", "setuptools_scm[toml]>=3.4"]
+
+[tool.mypy]
+pretty = true
+show_error_codes = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["depccg.*", "discopy.*"]
+ignore_missing_imports = true
+
+[tool.setuptools_scm]
+write_to = "discoket/version.py"
