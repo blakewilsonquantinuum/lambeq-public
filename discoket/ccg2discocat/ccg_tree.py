@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union, overload
 from discopy import biclosed, rigid, Word
 from discopy.biclosed import Diagram, Functor, Id, Ty, biclosed2rigid_ob
 
-from discoket.ccg2diagram.ccg_rule import CCGAtomicType, CCGRule
+from discoket.ccg2discocat.ccg_rule import CCGAtomicType, CCGRule
 
 # Types
 JSONDict = Dict[str, Any]

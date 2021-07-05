@@ -2,8 +2,8 @@ import pytest
 
 from discopy import biclosed, rigid, Word
 
-from discoket.ccg2diagram import CCGTree
-from discoket.ccg2diagram.ccg_rule import IllegalRuleUseException
+from discoket.ccg2discocat import CCGTree
+from discoket.ccg2discocat.ccg_rule import CCGRuleUseError
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def tree():
 
 
 def test_biclosed_diagram(tree):
-    with pytest.raises(IllegalRuleUseException):
+    with pytest.raises(CCGRuleUseError):
         tree.to_biclosed_diagram()
 
     expected_diagram = biclosed.Box('word', biclosed.Ty(), biclosed.Ty('n'))
@@ -23,7 +23,7 @@ def test_biclosed_diagram(tree):
 
 
 def test_diagram(tree):
-    with pytest.raises(IllegalRuleUseException):
+    with pytest.raises(CCGRuleUseError):
         tree.to_diagram()
 
     expected_diagram = Word('word', rigid.Ty('n'))

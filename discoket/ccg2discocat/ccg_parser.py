@@ -5,7 +5,7 @@ from typing import Any, Iterable, List, Optional
 
 from discopy import Diagram
 
-from discoket.ccg2diagram.ccg_tree import CCGTree
+from discoket.ccg2discocat.ccg_tree import CCGTree
 
 
 class CCGParser(ABC):

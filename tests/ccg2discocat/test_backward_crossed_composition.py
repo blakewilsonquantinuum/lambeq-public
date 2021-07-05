@@ -3,7 +3,7 @@ import pytest
 from discopy import biclosed, rigid, Word
 from discopy.rigid import Id, Swap
 
-from discoket.ccg2diagram.ccg_tree import PlanarBX, CCGTree
+from discoket.ccg2discocat.ccg_tree import PlanarBX, CCGTree
 
 
 @pytest.fixture

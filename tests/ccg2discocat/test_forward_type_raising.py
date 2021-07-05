@@ -3,7 +3,7 @@ import pytest
 from discopy import biclosed, rigid, Word
 from discopy.rigid import Cap, Cup, Id
 
-from discoket.ccg2diagram import CCGTree
+from discoket.ccg2discocat import CCGTree
 
 
 @pytest.fixture

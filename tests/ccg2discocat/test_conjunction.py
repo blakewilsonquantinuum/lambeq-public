@@ -2,8 +2,8 @@ import pytest
 
 from discopy import biclosed, rigid, Word
 
-from discoket.ccg2diagram import CCGTree
-from discoket.ccg2diagram.ccg_rule import CCGAtomicType
+from discoket.ccg2discocat import CCGTree
+from discoket.ccg2discocat.ccg_rule import CCGAtomicType
 
 
 @pytest.fixture

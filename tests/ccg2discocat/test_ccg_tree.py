@@ -4,7 +4,7 @@ import json
 
 from discopy.biclosed import Ty
 
-from discoket.ccg2diagram import CCGTree
+from discoket.ccg2discocat import CCGTree
 
 
 @pytest.fixture

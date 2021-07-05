@@ -3,7 +3,7 @@ import pytest
 from discopy import Word
 from discopy.rigid import Cup, Diagram, Id, Swap, Ty
 
-from discoket.ccg2diagram import DepCCGParser
+from discoket.ccg2discocat.depccg_parser import DepCCGParser, DepCCGParseError
 from discoket.core.types import AtomicType
 
 
@@ -60,4 +60,5 @@ def test_sentence2tree(depccg_parser):
     with pytest.raises(ValueError):
         depccg_parser.sentence2tree('')
 
-    assert depccg_parser.sentence2diagram('a '*251) is None  # too long
+    with pytest.raises(DepCCGParseError):
+        depccg_parser.sentence2diagram('a '*251)  # too long

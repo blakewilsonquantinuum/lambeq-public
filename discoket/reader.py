@@ -51,7 +51,8 @@ class Reader:
     This class cannot be used directly, since its methods
     `sentence2diagram` and `sentences2diagrams` call each other. This is
     so that a subclass only needs to implement one method of these
-    methods for full functionality (though.
+    methods for full functionality (though both can be overridden if
+    needed).
 
     """
 
@@ -91,7 +92,7 @@ class LinearReader(Reader):
         word_type : Ty, default: core.types.AtomicType.SENTENCE
             The type of each word box. By default, it uses the sentence
             type from `core.types.AtomicType`.
-        start_box : Diagram, default: Id().
+        start_box : Diagram, default: Id()
             The start box used as a sentinel value for combining. By
             default, the empty diagram is used.
 

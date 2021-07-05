@@ -8,9 +8,9 @@ import depccg.download
 from depccg.parser import EnglishCCGParser
 import discopy
 
-from discoket.ccg2diagram.ccg_parser import CCGParser
-from discoket.ccg2diagram.ccg_rule import CCGAtomicType
-from discoket.ccg2diagram.ccg_tree import CCGTree
+from discoket.ccg2discocat.ccg_parser import CCGParser
+from discoket.ccg2discocat.ccg_rule import CCGAtomicType
+from discoket.ccg2discocat.ccg_tree import CCGTree
 
 
 class DepCCGParseError(Exception):
@@ -48,7 +48,7 @@ class DepCCGParser(CCGParser):
                 - A pre-instantiated EnglishCCGParser.
         use_model_unary_rules : bool, default: False
             Use the unary rules supplied by the model instead of the
-            ones included with `ccg2diagram`.
+            ones included with `ccg2discocat`.
         kwargs : dict, optional
             Optional arguments passed to `depccg.parser.EnglishCCGParser`.
 

@@ -2,7 +2,7 @@ import pytest
 
 from discopy import biclosed, rigid, Word
 
-from discoket.ccg2diagram import CCGTree
+from discoket.ccg2discocat import CCGTree
 
 
 @pytest.fixture
