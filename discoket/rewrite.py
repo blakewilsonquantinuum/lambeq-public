@@ -242,8 +242,9 @@ class Rewriter:
 
     def _ar(self, box: Box) -> Diagram:
         for rule in self.rules:
-            if rule.matches(box):
-                return rule.rewrite(box)
+            rewritten_box = rule(box)
+            if rewritten_box is not None:
+                return rewritten_box
         return box
 
     def _ob(self, ob: Ty) -> Ty:
