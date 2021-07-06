@@ -63,10 +63,11 @@ bash install.sh <installation-directory>
 
 ## Usage
 
-Example - parsing a sentence into a diagram:
+Example - parsing a sentence into a diagram (see
+`examples/ccg2discocat.ipynb`):
 
 ```python
-from discoket.ccg2diagram import DepCCGParser
+from discoket.ccg2discocat import DepCCGParser
 
 depccg_parser = DepCCGParser()
 diagram = depccg_parser.sentence2diagram('This is a test sentence')
