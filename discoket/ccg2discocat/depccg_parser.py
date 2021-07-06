@@ -48,7 +48,7 @@ class DepCCGParser(CCGParser):
                 - A pre-instantiated EnglishCCGParser.
         use_model_unary_rules : bool, default: False
             Use the unary rules supplied by the model instead of the
-            ones included with `ccg2discocat`.
+            ones included with `DepCCGParser`.
         kwargs : dict, optional
             Optional arguments passed to `depccg.parser.EnglishCCGParser`.
 
@@ -73,9 +73,9 @@ class DepCCGParser(CCGParser):
         model_dir, config_file = depccg.download.load_model_directory(
                 f'en[{model}]' if model else 'en')
 
+        with open(config_file) as f:
+            config = json.load(f)
         if not use_model_unary_rules:
-            with open(config_file) as f:
-                config = json.load(f)
             config['unary_rules'] = self._unary_rules
 
         self.parser = EnglishCCGParser.from_json(config, model_dir, **kwargs)
