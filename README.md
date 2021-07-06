@@ -48,9 +48,18 @@ bash install.sh <installation-directory>
 
 3. If using a pretrained depccg parser,
 [download a pretrained model](//github.com/masashi-y/depccg#using-a-pretrained-english-parser):
-```bash
-depccg_en download
-```
+   ```bash
+   depccg_en download
+   ```
+
+   If this raises the following exception:
+   ```
+   TypeError: __init__() got an unexpected keyword argument 'doc'
+   ```
+   then upgrade `typing-extensions` (`depccg` installs an old version):
+   ```bash
+   pip install --upgrade typing-extensions
+   ```
 
 ## Usage
 
