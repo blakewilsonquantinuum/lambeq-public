@@ -97,16 +97,21 @@ class DepCCGParser(CCGParser):
         for i in reversed(empty_indices):
             del sentences[i]
 
-        results = self.parser.parse_doc(sentences)
         trees = self._last_trees = []
-        for result, sentence in zip(results, sentences):
-            depccg_tree, score = result[0]
-            if score or depccg_tree.word != 'FAILED':
-                trees.append(self._build_ccgtree(depccg_tree))
-            elif suppress_exceptions:
-                trees.append(None)
-            else:
-                raise DepCCGParseError(sentence)
+        if sentences:
+            results = self.parser.parse_doc(sentences)
+            for result, sentence in zip(results, sentences):
+                depccg_tree, score = result[0]
+                if score or depccg_tree.word != 'FAILED':
+                    trees.append(self._build_ccgtree(depccg_tree))
+                elif suppress_exceptions:
+                    trees.append(None)
+                else:
+                    raise DepCCGParseError(sentence)
+
+        for i in empty_indices:
+            trees.insert(i, None)
+
         return trees
 
     @staticmethod

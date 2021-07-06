@@ -56,9 +56,14 @@ def test_sentence2diagram(depccg_parser):
     assert depccg_parser.sentence2diagram(sentence) == expected_diagram
 
 
-def test_sentence2tree(depccg_parser):
+def test_bad_sentences(depccg_parser):
     with pytest.raises(ValueError):
         depccg_parser.sentence2tree('')
 
+    unparsable_sentence = 'a '*251  # too long
     with pytest.raises(DepCCGParseError):
-        depccg_parser.sentence2diagram('a '*251)  # too long
+        depccg_parser.sentence2tree(unparsable_sentence)
+
+    assert depccg_parser.sentences2trees(
+            ['', unparsable_sentence],
+            suppress_exceptions=True) == [None, None]

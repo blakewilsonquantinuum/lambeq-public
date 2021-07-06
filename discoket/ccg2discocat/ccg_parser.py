@@ -32,7 +32,8 @@ class CCGParser(ABC):
 
         If the sentence fails to parse, it returns `None`.
         """
-        return self.sentences2trees([sentence])[0]
+        return self.sentences2trees([sentence],
+                                    suppress_exceptions=suppress_exceptions)[0]
 
     def sentences2diagrams(
             self,
@@ -43,8 +44,10 @@ class CCGParser(ABC):
 
         If a sentence fails to parse, its list entry is `None`.
         """
+        trees = self.sentences2trees(sentences,
+                                     suppress_exceptions=suppress_exceptions)
         diagrams = []
-        for tree in self.sentences2trees(sentences):
+        for tree in trees:
             if tree is not None:
                 try:
                     diagrams.append(tree.to_diagram(planar=planar))
@@ -66,5 +69,7 @@ class CCGParser(ABC):
 
         If the sentence fails to parse, it returns `None`.
         """
-        return self.sentences2diagrams([sentence], planar,
-                                       suppress_exceptions)[0]
+        return self.sentences2diagrams(
+                [sentence],
+                planar=planar,
+                suppress_exceptions=suppress_exceptions)[0]
