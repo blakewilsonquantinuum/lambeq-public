@@ -1,2 +1,10 @@
 # `discoket/version.py` is generated automatically by setuptools-scm
 discoket/version.py
+
+# development files
+*.egg-info/
+.coverage
+.ipynb_checkpoints/
+__pycache__/
+build/
+htmlcov/
