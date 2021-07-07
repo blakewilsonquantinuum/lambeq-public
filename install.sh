@@ -11,13 +11,13 @@ VENV_DIR=$1
 python3 -m venv $VENV_DIR
 $VENV_DIR/bin/pip install --upgrade pip
 $VENV_DIR/bin/pip install cython numpy
-$VENV_DIR/bin/pip install "$SCRIPT_DIR"
+$VENV_DIR/bin/pip install --use-feature=in-tree-build "$SCRIPT_DIR"
 
 function download_depccg_parser { $VENV_DIR/bin/python -m depccg en download; }
-if download_depccg_parser; then
+if download_depccg_parser 2>/dev/null; then
     true  # success, no further action needed
 else
     # See README.md for rationale
-    $VENV_DIR/bin/pip install --upgrade typing-extensions
+    $VENV_DIR/bin/pip install --upgrade typing-extensions 2>/dev/null
     download_depccg_parser
 fi

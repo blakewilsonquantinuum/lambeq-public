@@ -33,7 +33,13 @@ bash install.sh <installation-directory>
 
 #### Manual Installation
 
-1. DisCoKet has the dependency `depccg` which requires the following
+3. Make sure `pip` is up-to-date:
+
+   ```bash
+   pip install --upgrade pip
+   ```
+
+4. DisCoKet has the dependency `depccg` which requires the following
    packages to be installed *before* installing `depccg`:
    ```bash
    pip install cython numpy
@@ -41,12 +47,12 @@ bash install.sh <installation-directory>
    Further information can be found on the
    [depccg homepage](//github.com/masashi-y/depccg).
 
-2. Install DisCoKet from the local repository using pip:
+5. Install DisCoKet from the local repository using pip:
    ```bash
-   pip install .
+   pip install --use-feature=in-tree-build .
    ```
 
-3. If using a pretrained depccg parser,
+6. If using a pretrained depccg parser,
 [download a pretrained model](//github.com/masashi-y/depccg#using-a-pretrained-english-parser):
    ```bash
    depccg_en download
