@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __all__ = ['CCGTree']
 
 import json
@@ -73,7 +75,7 @@ class CCGTree:
                  *,
                  ccg_rule: Union[str, CCGRule] = CCGRule.UNKNOWN,
                  biclosed_type: Ty,
-                 children: Optional[Sequence['CCGTree']] = None) -> None:
+                 children: Optional[Sequence[CCGTree]] = None) -> None:
         self._text = text
         self.rule = CCGRule(ccg_rule)
         self.biclosed_type = biclosed_type
@@ -91,11 +93,11 @@ class CCGTree:
 
     @overload
     @classmethod
-    def from_json(cls, data: Union[str, JSONDict]) -> 'CCGTree': ...
+    def from_json(cls, data: Union[str, JSONDict]) -> CCGTree: ...
 
     @classmethod
     def from_json(cls,
-                  data: Union[None, str, JSONDict]) -> Optional['CCGTree']:
+                  data: Union[None, str, JSONDict]) -> Optional[CCGTree]:
         if data is None:
             return None
 

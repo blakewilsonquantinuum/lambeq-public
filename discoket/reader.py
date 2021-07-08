@@ -32,10 +32,12 @@ See `examples/readers.ipynb` for illustrative usage.
 
 """
 
+from __future__ import annotations
+
 __all__ = ['Reader', 'LinearReader', 'box_stairs_reader',
            'box_stairs_with_discard_reader', 'cups_reader', 'spiders_reader']
 
-from typing import List, Sequence
+from typing import Any, List, Sequence
 
 from discopy import Word
 from discopy.rigid import Box, Cup, Diagram, Id, Ty
@@ -56,7 +58,7 @@ class Reader:
 
     """
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> Reader:
         if (cls.sentence2diagram == Reader.sentence2diagram and
                 cls.sentences2diagrams == Reader.sentences2diagrams):
             raise TypeError(
@@ -80,7 +82,7 @@ class LinearReader(Reader):
     def __init__(self,
                  combining_diagram: Diagram,
                  word_type: Ty = S,
-                 start_box: Diagram = Id()):
+                 start_box: Diagram = Id()) -> None:
         """Initialise a linear reader.
 
         Parameters

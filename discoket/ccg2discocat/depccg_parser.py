@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 __all__ = ['DepCCGParser', 'DepCCGParseError']
 
 import json
-from typing import Any, List, Optional, Iterable, Union
+from typing import Any, Iterable, List, Optional, Union
 
 import depccg
 import depccg.download
@@ -25,12 +27,12 @@ class DepCCGParser(CCGParser):
     """CCG parser using depccg as the backend."""
 
     _unary_rules = [
-        ['N', 'NP'],
-        ['NP', r'(S[X]/(S[X]\NP))'],
-        ['NP', r'((S[X]\NP)\((S[X]\NP)/NP))'],
-        ['PP', r'((S[X]\NP)\((S[X]\NP)/PP))'],
-        ['NP', r'(((S[X]\NP)/NP)\(((S[X]\NP)/NP)/NP))'],
-        ['NP', r'(((S[X]\NP)/PP)\(((S[X]\NP)/PP)/NP))']
+        ('N', 'NP'),
+        ('NP', r'(S[X]/(S[X]\NP))'),
+        ('NP', r'((S[X]\NP)\((S[X]\NP)/NP))'),
+        ('PP', r'((S[X]\NP)\((S[X]\NP)/PP))'),
+        ('NP', r'(((S[X]\NP)/NP)\(((S[X]\NP)/NP)/NP))'),
+        ('NP', r'(((S[X]\NP)/PP)\(((S[X]\NP)/PP)/NP))')
     ]
 
     def __init__(self, *,

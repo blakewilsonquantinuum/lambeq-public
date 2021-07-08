@@ -9,6 +9,11 @@ stability.
 
 ## Getting started
 
+### Prerequisites
+
+- Git
+- Python 3.7+
+
 ### Installation
 
 1. Download this repository:
@@ -69,8 +74,11 @@ bash install.sh <installation-directory>
 
 ## Usage
 
+The [`examples`](examples) directory contains notebooks demonstrating
+usage of the various tools in DisCoKet.
+
 Example - parsing a sentence into a diagram (see
-`examples/ccg2discocat.ipynb`):
+[`examples/ccg2discocat.ipynb`](examples/ccg2discokat.ipynb)):
 
 ```python
 from discoket.ccg2discocat import DepCCGParser

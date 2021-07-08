@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __all__ = ['AtomicType', 'Spider']
 
 from enum import Enum
@@ -32,7 +34,7 @@ class Spider(Box):
     def __repr__(self) -> str:
         return self.name
 
-    def dagger(self) -> 'Spider':
+    def dagger(self) -> Spider:
         return type(self)(len(self.cod), len(self.dom), self.type)
 
     @property
