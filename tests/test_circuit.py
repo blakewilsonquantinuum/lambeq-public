@@ -4,7 +4,7 @@ from discopy import Box, Cup, Ty, Word
 from discopy.quantum import Bra, CRz, CX, H, Ket, Rx, Rz, sqrt
 from discopy.quantum.circuit import Id
 from discoket.core.types import AtomicType
-from discoket.diagram2circuit import IQPAnsatz
+from discoket.circuit import IQPAnsatz
 from pytket.qasm import circuit_to_qasm_str
 from sympy.abc import symbols as sym
 
