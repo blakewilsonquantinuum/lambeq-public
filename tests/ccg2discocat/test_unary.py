@@ -8,8 +8,8 @@ from discoket.ccg2discocat import CCGTree
 @pytest.fixture
 def tree():
     n = biclosed.Ty('n')
-    word = CCGTree(text='word', ccg_rule='UNK', biclosed_type=n)
-    return CCGTree(text='word', ccg_rule='LEX', biclosed_type=n, children=(word,))
+    word = CCGTree(text='word', biclosed_type=n)
+    return CCGTree(text='word', ccg_rule='U', biclosed_type=n, children=(word,))
 
 
 def test_biclosed_diagram(tree):

@@ -10,8 +10,8 @@ from discoket.ccg2discocat.ccg_rule import CCGAtomicType, RPL
 def tree():
     punc = CCGAtomicType.PUNCTUATION
     s = biclosed.Ty('s')
-    comma = CCGTree(text=',', ccg_rule='UNK', biclosed_type=punc)
-    go = CCGTree(text='go', ccg_rule='UNK', biclosed_type=s)
+    comma = CCGTree(text=',', biclosed_type=punc)
+    go = CCGTree(text='go', biclosed_type=s)
     return CCGTree(text=', go', ccg_rule='LP', biclosed_type=s,
                    children=(comma, go))
 

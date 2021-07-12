@@ -81,6 +81,19 @@ class CCGTree:
         self.biclosed_type = biclosed_type
         self.children = children if children is not None else []
 
+        n_children = len(self.children)
+        child_requirements = {CCGRule.LEXICAL: 0,
+                              CCGRule.UNARY: 1,
+                              CCGRule.FORWARD_TYPE_RAISING: 1,
+                              CCGRule.BACKWARD_TYPE_RAISING: 1}
+        if (self.rule != CCGRule.UNKNOWN and
+                child_requirements.get(self.rule, 2) != n_children):
+            raise ValueError(f'Invalid number of children ({n_children}) for '
+                             f'rule "{self.rule}"')
+
+        if text and not children:
+            self.rule = CCGRule.LEXICAL
+
     @property
     def text(self) -> str:
         if self._text is None:
@@ -163,7 +176,7 @@ class CCGTree:
                             resolved_output: Optional[Ty] = None) -> Diagram:
         biclosed_type = resolved_output or self.biclosed_type
 
-        if self.is_terminal:
+        if self.rule == CCGRule.LEXICAL:
             word = biclosed.Box(self.text, Ty(), biclosed_type)
             return (word, Id(biclosed_type)) if separate_words else word
 

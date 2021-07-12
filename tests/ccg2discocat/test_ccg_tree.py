@@ -10,12 +10,12 @@ from discoket.ccg2discocat import CCGTree
 @pytest.fixture
 def tree():
     n, s = Ty('n'), Ty('s')
-    do = CCGTree(text='do', ccg_rule='UNK', biclosed_type=(n >> s) << n)
-    thing = CCGTree(text='thing', ccg_rule='UNK', biclosed_type=n)
-    thing_lexed = CCGTree(text='thing', ccg_rule='LEX', biclosed_type=n,
+    do = CCGTree(text='do', biclosed_type=(n >> s) << n)
+    thing = CCGTree(text='thing', biclosed_type=n)
+    thing_unary = CCGTree(text='thing', ccg_rule='U', biclosed_type=n,
                           children=(thing,))
     return CCGTree(text='do thing', ccg_rule='FA', biclosed_type=n >> s,
-                   children=(do, thing_lexed))
+                   children=(do, thing_unary))
 
 
 def test_json(tree):

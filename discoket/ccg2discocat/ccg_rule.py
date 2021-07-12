@@ -51,6 +51,9 @@ class RPR(Box):
 
 
 class CCGRule(str, Enum):
+    UNKNOWN = 'UNK'
+    LEXICAL = 'L'
+    UNARY = 'U'
     FORWARD_APPLICATION = 'FA'
     BACKWARD_APPLICATION = 'BA'
     FORWARD_COMPOSITION = 'FC'
@@ -62,15 +65,17 @@ class CCGRule(str, Enum):
     FORWARD_TYPE_RAISING = 'FTR'
     BACKWARD_TYPE_RAISING = 'BTR'
     CONJUNCTION = 'CONJ'
-    LEXICAL = 'LEX'
-    UNKNOWN = 'UNK'
 
     @classmethod
     def _missing_(cls, _: Any) -> 'CCGRule':
         return cls.UNKNOWN
 
     def __call__(self, input_type: Ty, output_type: Ty) -> Diagram:
-        if self == self.FORWARD_APPLICATION:
+        if self == self.LEXICAL:
+            raise CCGRuleUseError(self, 'Lexical rules are not applicable')
+        elif self == self.UNARY:
+            return Id(output_type)
+        elif self == self.FORWARD_APPLICATION:
             return Diagram.fa(output_type, input_type[1:])
         elif self == self.BACKWARD_APPLICATION:
             return Diagram.ba(input_type[:1], output_type)
@@ -108,6 +113,4 @@ class CCGRule(str, Enum):
                 return Diagram.ba(left, output_type)
             else:
                 raise CCGRuleUseError(self, 'No conjunction found.')
-        elif self == self.LEXICAL:
-            return Id(output_type)
         raise CCGRuleUseError(self, 'Unknown CCG rule.')

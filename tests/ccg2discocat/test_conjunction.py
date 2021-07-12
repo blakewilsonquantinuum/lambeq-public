@@ -10,8 +10,8 @@ from discoket.ccg2discocat.ccg_rule import CCGAtomicType
 def trees():
     conj = CCGAtomicType.CONJUNCTION
     n = biclosed.Ty('n')
-    alice = CCGTree(text='alice', ccg_rule='UNK', biclosed_type=n)
-    plus = CCGTree(text='plus', ccg_rule='UNK', biclosed_type=conj)
+    alice = CCGTree(text='alice', biclosed_type=n)
+    plus = CCGTree(text='plus', biclosed_type=conj)
 
     tree_left = CCGTree(text='plus alice', ccg_rule='CONJ',
                         biclosed_type=n >> n, children=(plus, alice))

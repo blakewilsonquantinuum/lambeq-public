@@ -9,8 +9,8 @@ from discoket.ccg2discocat.ccg_rule import CCGRuleUseError
 @pytest.fixture
 def tree():
     n = biclosed.Ty('n')
-    word = CCGTree(text='word', ccg_rule='UNK', biclosed_type=n)
-    return CCGTree(text='word', ccg_rule='UNK', biclosed_type=biclosed.Ty(),
+    word = CCGTree(text='word', ccg_rule='L', biclosed_type=n)
+    return CCGTree(ccg_rule='UNK', biclosed_type=biclosed.Ty(),
                    children=(word,))
 
 

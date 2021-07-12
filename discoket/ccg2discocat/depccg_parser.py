@@ -146,10 +146,12 @@ class DepCCGParser(CCGParser):
 
         if tree.cat.is_type_raised:
             ccg_rule = 'FTR' if tree.cat.is_forward_type_raised else 'BTR'
-        elif not tree.is_leaf:
-            ccg_rule = tree.op_string.upper()
+        elif tree.is_unary:
+            ccg_rule = 'U'
+        elif tree.is_leaf:
+            ccg_rule = 'L'
         else:
-            ccg_rule = 'UNK'
+            ccg_rule = tree.op_string.upper()
         return CCGTree(
                 text=tree.word,
                 ccg_rule=ccg_rule,

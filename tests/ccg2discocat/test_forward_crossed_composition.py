@@ -9,8 +9,8 @@ from discoket.ccg2discocat import CCGTree
 @pytest.fixture
 def tree():
     n, p, s = biclosed.Ty('n'), biclosed.Ty('p'), biclosed.Ty('s')
-    some = CCGTree(text='some', ccg_rule='UNK', biclosed_type=s << p)
-    thing = CCGTree(text='thing', ccg_rule='UNK', biclosed_type=n >> p)
+    some = CCGTree(text='some', biclosed_type=s << p)
+    thing = CCGTree(text='thing', biclosed_type=n >> p)
     return CCGTree(text='some thing', ccg_rule='FX', biclosed_type=n >> s,
                    children=(some, thing))
 
