@@ -40,9 +40,9 @@ __all__ = ['Reader', 'LinearReader', 'box_stairs_reader',
 from typing import Any, List, Sequence
 
 from discopy import Word
-from discopy.rigid import Box, Cup, Diagram, Id, Ty
+from discopy.rigid import Box, Cup, Diagram, Id, Spider, Ty
 
-from discoket.core.types import AtomicType, Spider
+from discoket.core.types import AtomicType
 
 S = AtomicType.SENTENCE
 

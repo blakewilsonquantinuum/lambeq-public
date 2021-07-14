@@ -1,9 +1,9 @@
 from discopy import Word
-from discopy.rigid import Cup
+from discopy.rigid import Cup, Spider
 import tensornetwork as tn
 import torch
 
-from discoket.core.types import AtomicType, Spider
+from discoket.core.types import AtomicType
 from discoket.tensor import TensorDiagram
 
 

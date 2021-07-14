@@ -3,11 +3,9 @@ __all__ = ['TensorDiagram']
 import dataclasses
 from typing import Any, Callable, List, Optional, Type
 
-from discopy.rigid import Box, Cup, Diagram
+from discopy.rigid import Box, Cup, Diagram, Spider
 import numpy as np
 import tensornetwork as tn
-
-from discoket.core.types import Spider
 
 # Types
 Tensor = Any

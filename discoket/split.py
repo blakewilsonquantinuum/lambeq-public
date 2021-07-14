@@ -10,9 +10,7 @@ tensor networks.
 __all__ = ['MPSSplitter', 'SpiderSplitter']
 
 from discopy import Word
-from discopy.rigid import Box, Cup, Diagram, Functor, Id, Ty
-
-from discoket.core.types import Spider
+from discopy.rigid import Box, Cup, Diagram, Functor, Id, Spider, Ty
 
 
 class MPSSplitter:
