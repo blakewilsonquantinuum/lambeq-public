@@ -42,9 +42,10 @@ from typing import Any, List, Sequence
 from discopy import Word
 from discopy.rigid import Box, Cup, Diagram, Id, Spider, Ty
 
-from discoket.core.types import AtomicType
+from discoket.core.types import AtomicType, Discard
 
 S = AtomicType.SENTENCE
+DISCARD = Discard(S)
 
 
 class Reader:
@@ -121,6 +122,6 @@ class LinearReader(Reader):
 
 box_stairs_reader = LinearReader(Box('STAIR', S @ S, S))
 box_stairs_with_discard_reader = LinearReader(
-        Box('STAIR', S @ S, S @ S) >> Box('DISCARD', S, Ty()) @ Id(S))
+        Box('STAIR', S @ S, S @ S) >> DISCARD @ Id(S))
 cups_reader = LinearReader(Cup(S, S.r), S >> S, Word('START', S))
 spiders_reader = LinearReader(Spider(2, 1, S))
