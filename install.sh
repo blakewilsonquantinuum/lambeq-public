@@ -1,23 +1,44 @@
 #!/usr/bin/env bash
 
+GLOBAL_FLAG='--global'
 if [ "$#" -ne 1 ]; then
-    echo 'Usage: install.sh VIRTUALENV_DIRECTORY'
+    echo "DisCoKet installer.
+
+Usage:
+  install.sh $GLOBAL_FLAG
+  install.sh <virtual_environment>"
     exit 1
 fi
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-VENV_DIR=$1
-
-python3 -m venv $VENV_DIR
-$VENV_DIR/bin/pip install --upgrade pip
-$VENV_DIR/bin/pip install cython numpy
-$VENV_DIR/bin/pip install --use-feature=in-tree-build "$SCRIPT_DIR"
-
-function download_depccg_parser { $VENV_DIR/bin/python -m depccg en download; }
-if download_depccg_parser 2>/dev/null; then
-    true  # success, no further action needed
+VENV=$1
+if [ $VENV != $GLOBAL_FLAG ]; then
+    if [ -d $VENV ]; then
+        echo -n "'$VENV' exists. Use this as virtual environment? [y/N] "
+        read answer
+        if [ "$answer" == "${answer#[Yy]}" ]; then exit; fi
+    else
+        echo "Creating virtual environment at '$VENV'..."
+        python3 -m venv $VENV
+    fi
+    PYTHON=$VENV/bin/python
 else
-    # See README.md for rationale
-    $VENV_DIR/bin/pip install --upgrade typing-extensions 2>/dev/null
-    download_depccg_parser
+    PYTHON=python3
+fi
+
+echo 'Installing dependencies...'
+$PYTHON -m pip install --upgrade pip wheel
+$PYTHON -m pip install cython numpy
+
+echo 'Installing DisCoKet...'
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+$PYTHON -m pip install --use-feature=in-tree-build "$SCRIPT_DIR"
+
+MODEL_DIR="$($PYTHON -c 'from depccg.download import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
+if [ ! -d "$MODEL_DIR" ]; then
+    echo -n 'Download pre-trained depccg parser? [Y/n] '
+    read answer
+    if [ -n "$answer" ] && [ "$answer" == "${answer#[Yy]}" ]; then exit; fi
+
+    echo 'Downloading parser...'
+    $PYTHON -m depccg en download
 fi
