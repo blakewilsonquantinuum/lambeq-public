@@ -11,8 +11,8 @@ from depccg.parser import EnglishCCGParser
 import discopy
 
 from discoket.ccg2discocat.ccg_parser import CCGParser
-from discoket.ccg2discocat.ccg_rule import CCGAtomicType
 from discoket.ccg2discocat.ccg_tree import CCGTree
+from discoket.ccg2discocat.ccg_types import CCGAtomicType
 
 
 class DepCCGParseError(Exception):

@@ -6,10 +6,10 @@ from discopy.rigid import Ty
 
 
 class AtomicType(Ty, Enum):
-    """Standard CCG atomic types mapping to their rigid type."""
+    """Standard pregroup atomic types mapping to their rigid type."""
 
-    def __new__(_, value: str) -> Ty:
-        return Ty(value)
+    def __new__(cls, value: str) -> Ty:
+        return object.__new__(Ty)
 
     NOUN = 'n'
     NOUN_PHRASE = 'n'

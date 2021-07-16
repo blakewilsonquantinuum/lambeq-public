@@ -1,12 +1,11 @@
-__all__ = ['CCGAtomicType', 'CCGRule', 'CCGRuleUseError']
+__all__ = ['CCGRule', 'CCGRuleUseError']
 
 from enum import Enum
 from typing import Any
 
-from discopy import rigid
 from discopy.biclosed import Box, Diagram, Id, Ty
 
-from discoket.core.types import AtomicType
+from discoket.ccg2discocat.ccg_types import CCGAtomicType
 
 
 class CCGRuleUseError(Exception):
@@ -16,24 +15,6 @@ class CCGRuleUseError(Exception):
 
     def __str__(self) -> str:
         return f'Illegal use of {self.rule}: {self.message}'
-
-
-class CCGAtomicType(Ty, Enum):
-    """Standard CCG atomic types mapping to their biclosed type."""
-
-    def __new__(cls, value: rigid.Ty) -> Ty:
-        return Ty(value[0])
-
-    NOUN = AtomicType.NOUN
-    NOUN_PHRASE = AtomicType.NOUN_PHRASE
-    SENTENCE = AtomicType.SENTENCE
-    PREPOSITION = AtomicType.PREPOSITION
-    CONJUNCTION = AtomicType.CONJUNCTION
-    PUNCTUATION = AtomicType.PUNCTUATION
-
-    @classmethod
-    def conjoinable(cls, _type: Any) -> bool:
-        return _type in (cls.CONJUNCTION, cls.PUNCTUATION)
 
 
 class RPL(Box):
