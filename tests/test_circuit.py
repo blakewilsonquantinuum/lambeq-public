@@ -1,10 +1,12 @@
 import pytest
 
 from discopy import Box, Cup, Ty, Word
-from discopy.quantum import Bra, CRz, CX, H, Ket, Rx, Rz, sqrt
+from discopy import Discard as QDiscard
+from discopy.quantum import Bra, CRz, CX, H, Ket, qubit, Rx, Rz, sqrt
 from discopy.quantum.circuit import Id
 from discoket.core.types import AtomicType
 from discoket.circuit import IQPAnsatz
+from discoket.reader import DISCARD
 from pytket.qasm import circuit_to_qasm_str
 from sympy.abc import symbols as sym
 
@@ -68,3 +70,13 @@ def test_iqp_ansatz_empty():
                Cup(N, N.r) @ Id(S))
     ansatz = IQPAnsatz({N: 0, S: 0}, n_layers=1)
     assert ansatz.diagram2circuit(diagram) == Bra() >> Bra()
+
+
+def test_special_cases():
+    ansatz1 = IQPAnsatz({S: 2}, n_layers=1)
+    assert ansatz1.diagram2circuit(DISCARD) == QDiscard(qubit ** 2)
+    ansatz2 = IQPAnsatz(
+        {S: 1}, n_layers=1, n_single_qubit_params=1,
+        special_cases=lambda x: x)
+    assert ansatz2.diagram2circuit(DISCARD) ==\
+        Rx(sym("Discard(s)_s_Ty()_0")) >> Bra(0)

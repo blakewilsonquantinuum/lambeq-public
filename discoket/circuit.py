@@ -8,7 +8,7 @@ An ansatz is used to convert a DisCoCat diagram into a quantum circuit.
 __all__ = ['Ansatz', 'IQPAnsatz']
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Mapping
+from typing import Any, Callable, List, Mapping
 
 import discopy
 from discoket.core.types import Discard
@@ -20,6 +20,8 @@ from discopy.rigid import Box, Diagram, Ty
 import numpy as np
 import pytket
 from sympy.core.symbol import Symbol
+
+AR_MAP = Callable[[Box], discopy.Circuit]
 
 
 class Ansatz(ABC):
@@ -51,7 +53,7 @@ class Ansatz(ABC):
         """Calculate the number of qubits used for a given type."""
         return sum(self.ob_map[Ty(factor.name)] for factor in pg_type)
 
-    def _special_cases(self, ar_map):
+    def _special_cases(self, ar_map: AR_MAP) -> AR_MAP:
         """Convert a discopy box into a tket Circuit element"""
         def new_ar_map(box):
             if isinstance(box, Discard):
@@ -70,7 +72,9 @@ class IQPAnsatz(Ansatz):
     """
 
     def __init__(self, ob_map: Mapping[Ty, int], n_layers: int,
-                 n_single_qubit_params: int) -> None:
+                 n_single_qubit_params: int = 3,
+                 special_cases: Callable[[AR_MAP], AR_MAP] = None
+                 ) -> None:
         """Instantiates an IQP ansatz.
 
         Parameters
@@ -82,14 +86,22 @@ class IQPAnsatz(Ansatz):
             The number of IQP layers used by the ansatz.
         n_single_qubit_params : int
             The number of single qubit rotations used by the ansatz.
+        special_cases: (function)
+            A function that transforms an arrow map `ar_map` into another one.
+            This is where you would give special cases that should not be
+            converted by the Ansatz class.
 
         """
         super().__init__(ob_map=ob_map, n_layers=n_layers,
                          n_single_qubit_params=n_single_qubit_params)
+
+        if special_cases is None:
+            special_cases = self._special_cases
+
         self.n_layers = n_layers
         self.n_single_qubit_params = n_single_qubit_params
         self.functor = Functor(ob=self.ob_map,
-                               ar=self._special_cases(self._ar))
+                               ar=special_cases(self._ar))
 
     def diagram2circuit(self, diagram: Diagram) -> discopy.Circuit:
         return self.functor(diagram)
