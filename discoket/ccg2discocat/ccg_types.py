@@ -13,7 +13,8 @@ class _CCGAtomicTypeMeta(Ty, Enum):
     def __new__(cls, value: rigid.Ty) -> Ty:
         return object.__new__(Ty)
 
-    def _generate_next_value_(  # type: ignore[override]
+    @staticmethod
+    def _generate_next_value_(
             name: str, start: int, count: int, last_values: List[Any]) -> str:
         return AtomicType[name]._value_
 

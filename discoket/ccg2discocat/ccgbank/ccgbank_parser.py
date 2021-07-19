@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Dict, Iterable, List, Optional
 from pathlib import Path
 
 from discoket.ccg2discocat.ccg_parser import CCGParser
@@ -85,7 +85,7 @@ class CCGBankParser(CCGParser):
         ccg_tree = self.build_ccgtree(ccgbank_tree)
         return ccg_tree.to_diagram()
 
-    def parse_section(self, section_id: int, suppress_exceptions: bool = False) -> List[Optional[Diagram]]:
+    def parse_section(self, section_id: int, suppress_exceptions: bool = False) -> Dict[str, Optional[Diagram]]:
         """Parses a CCGBank section."""
         auto_trees = {
             entry[0]: entry[1]
@@ -108,7 +108,8 @@ class CCGBankParser(CCGParser):
         return diagrams
 
     def sentences2trees(self,
-                        sentences: Sequence[str]) -> List[Optional[CCGTree]]:
+                        sentences: Iterable[str],
+                        suppress_exceptions: bool = False) -> List[Optional[CCGTree]]:
         raise NotImplementedError("Please use `build_ccgtree` or `parse_section`.")
 
     def sentences2diagrams(

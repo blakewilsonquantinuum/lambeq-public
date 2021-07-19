@@ -12,7 +12,7 @@ from discoket.ccg2discocat.ccg_rule import CCGRule
 from discoket.ccg2discocat.ccg_types import CCGAtomicType
 
 # Types
-JSONDict = Dict[str, Any]
+_JSONDictT = Dict[str, Any]
 
 
 class PlanarBX(biclosed.Box):
@@ -107,11 +107,11 @@ class CCGTree:
 
     @overload
     @classmethod
-    def from_json(cls, data: Union[str, JSONDict]) -> CCGTree: ...
+    def from_json(cls, data: Union[str, _JSONDictT]) -> CCGTree: ...
 
     @classmethod
     def from_json(cls,
-                  data: Union[None, str, JSONDict]) -> Optional[CCGTree]:
+                  data: Union[None, str, _JSONDictT]) -> Optional[CCGTree]:
         if data is None:
             return None
 
@@ -122,8 +122,8 @@ class CCGTree:
                    children=[cls.from_json(child)
                              for child in data_dict.get('children', [])])
 
-    def to_json(self) -> JSONDict:
-        data: JSONDict = {'type': biclosed2str(self.biclosed_type)}
+    def to_json(self) -> _JSONDictT:
+        data: _JSONDictT = {'type': biclosed2str(self.biclosed_type)}
         if self.rule != CCGRule.UNKNOWN:
             data['rule'] = self.rule.value
         if self.text != ' '.join(child.text for child in self.children):

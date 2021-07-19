@@ -8,7 +8,7 @@ An ansatz is used to convert a DisCoCat diagram into a quantum circuit.
 __all__ = ['Ansatz', 'IQPAnsatz']
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Mapping
+from typing import Any, Callable, List, Mapping, Optional
 
 import discopy
 from discoket.core.types import Discard
@@ -21,7 +21,7 @@ import numpy as np
 import pytket
 from sympy.core.symbol import Symbol
 
-AR_MAP = Callable[[Box], discopy.Circuit]
+_ArMapT = Callable[[Box], discopy.Circuit]
 
 
 class Ansatz(ABC):
@@ -53,9 +53,9 @@ class Ansatz(ABC):
         """Calculate the number of qubits used for a given type."""
         return sum(self.ob_map[Ty(factor.name)] for factor in pg_type)
 
-    def _special_cases(self, ar_map: AR_MAP) -> AR_MAP:
+    def _special_cases(self, ar_map: _ArMapT) -> _ArMapT:
         """Convert a discopy box into a tket Circuit element"""
-        def new_ar_map(box):
+        def new_ar_map(box: Box) -> discopy.Circuit:
             if isinstance(box, Discard):
                 return QDiscard(qubit ** self._arity_from_type(box.dom))
             return ar_map(box)
@@ -71,10 +71,11 @@ class IQPAnsatz(Ansatz):
 
     """
 
-    def __init__(self, ob_map: Mapping[Ty, int], n_layers: int,
+    def __init__(self,
+                 ob_map: Mapping[Ty, int],
+                 n_layers: int,
                  n_single_qubit_params: int = 3,
-                 special_cases: Callable[[AR_MAP], AR_MAP] = None
-                 ) -> None:
+                 special_cases: Optional[Callable[[_ArMapT], _ArMapT]] = None):
         """Instantiates an IQP ansatz.
 
         Parameters
@@ -86,10 +87,9 @@ class IQPAnsatz(Ansatz):
             The number of IQP layers used by the ansatz.
         n_single_qubit_params : int
             The number of single qubit rotations used by the ansatz.
-        special_cases: (function)
-            A function that transforms an arrow map `ar_map` into another one.
-            This is where you would give special cases that should not be
-            converted by the Ansatz class.
+        special_cases: callable
+            A function that transforms an arrow map into one specifying special
+            cases that should not be converted by the Ansatz class.
 
         """
         super().__init__(ob_map=ob_map, n_layers=n_layers,

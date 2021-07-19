@@ -1,6 +1,8 @@
-from typing import Sequence, Tuple, List
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Iterator, List, Tuple
+
 import discopy
 
 from discoket.ccg2discocat.ccg_rule import CCGRule, CCGAtomicType
@@ -20,7 +22,7 @@ class CCGBankNode:
     num_children: int = 0
 
 
-def read_ccgbank_section(path: str, section_id: int) -> Sequence[Tuple[str, str]]:
+def read_ccgbank_section(path: Path, section_id: int) -> Iterator[Tuple[str, str]]:
     """Read a CCGBank section and return (id, tree) tuples."""
     path = path / str(section_id).zfill(2)
     cur_id = ""
@@ -54,6 +56,7 @@ def ccg_to_biclosed(cat: str) -> discopy.biclosed.Ty:
                     if right[0] == '(':
                         right = right[1:-1]
                     return left, right, ch
+        return '', '', ''
 
     # Treatment of conjunctions. CCGBank uses the following scheme:
     #          NP
