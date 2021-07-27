@@ -74,11 +74,11 @@ class CCGTree:
     def __init__(self,
                  text: Optional[str] = None,
                  *,
-                 ccg_rule: Union[str, CCGRule] = CCGRule.UNKNOWN,
+                 rule: Union[str, CCGRule] = CCGRule.UNKNOWN,
                  biclosed_type: Ty,
                  children: Optional[Sequence[CCGTree]] = None) -> None:
         self._text = text
-        self.rule = CCGRule(ccg_rule)
+        self.rule = CCGRule(rule)
         self.biclosed_type = biclosed_type
         self.children = children if children is not None else []
 
@@ -117,7 +117,7 @@ class CCGTree:
 
         data_dict = json.loads(data) if isinstance(data, str) else data
         return cls(text=data_dict.get('text'),
-                   ccg_rule=data_dict.get('rule', CCGRule.UNKNOWN),
+                   rule=data_dict.get('rule', CCGRule.UNKNOWN),
                    biclosed_type=str2biclosed(data_dict['type']),
                    children=[cls.from_json(child)
                              for child in data_dict.get('children', [])])

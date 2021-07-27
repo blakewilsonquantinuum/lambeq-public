@@ -60,7 +60,7 @@ class CCGBankParser(CCGParser):
             children = self._extract_children(tree)
             ccgtree = CCGTree(
                 text=None,
-                ccg_rule=CCGRule.UNKNOWN,
+                rule=CCGRule.UNKNOWN,
                 biclosed_type=ccg_to_biclosed(root.cat),
                 children=list((map(self._get_ccgtree, children)))
             )
@@ -69,7 +69,7 @@ class CCGBankParser(CCGParser):
         else:
             ccgtree = CCGTree(
                 text=root.token,
-                ccg_rule=CCGRule.LEXICAL,
+                rule=CCGRule.LEXICAL,
                 biclosed_type=ccg_to_biclosed(root.cat),
                 children=[]
             )

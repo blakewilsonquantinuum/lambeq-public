@@ -154,6 +154,6 @@ class DepCCGParser(CCGParser):
             ccg_rule = tree.op_string.upper()
         return CCGTree(
                 text=tree.word,
-                ccg_rule=ccg_rule,
+                rule=ccg_rule,
                 biclosed_type=DepCCGParser._to_biclosed(tree.cat),
                 children=list(map(DepCCGParser._build_ccgtree, tree.children)))

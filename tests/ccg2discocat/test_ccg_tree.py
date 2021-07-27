@@ -12,9 +12,8 @@ def tree():
     n, s = Ty('n'), Ty('s')
     do = CCGTree(text='do', biclosed_type=(n >> s) << n)
     thing = CCGTree(text='thing', biclosed_type=n)
-    thing_unary = CCGTree(text='thing', ccg_rule='U', biclosed_type=n,
-                          children=(thing,))
-    return CCGTree(text='do thing', ccg_rule='FA', biclosed_type=n >> s,
+    thing_unary = CCGTree(text='thing', rule='U', biclosed_type=n, children=(thing,))
+    return CCGTree(text='do thing', rule='FA', biclosed_type=n >> s,
                    children=(do, thing_unary))
 
 
