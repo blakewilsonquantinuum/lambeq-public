@@ -6,7 +6,7 @@ The CCGBank is a translation of the Penn Treebank into a corpus of Combinatory
 Categorial Grammar derivations, created by Julia Hockenmaier and Mark Steedman.
 
 This module provides a parser that automatically turns parses from an existing
-CCGBank corpus into `CCGTree`s.
+CCGBank corpus into `CCGTree` s.
 
 """
 

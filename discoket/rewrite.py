@@ -12,6 +12,7 @@ rewrite rule `SimpleRewriteRule` has been provided for basic rewrites,
 as well as a number of example rules. These can be used by specifying
 their name when instantiating a `Reader`. A list of provided rules can
 be retrieved using `Rewriter.available_rules()`. They are:
+
     auxiliary
         The auxiliary rule removes auxiliary verbs (such as "do") by
         replacing them with caps.

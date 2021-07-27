@@ -20,7 +20,7 @@ class CCGParser(ABC):
             self,
             sentences: Iterable[str],
             suppress_exceptions: bool = False) -> List[Optional[CCGTree]]:
-        """Parse multiple sentences into a list of `CCGTree`s.
+        """Parse multiple sentences into a list of `CCGTree` s.
 
         If a sentence fails to parse, its list entry is `None`.
         """

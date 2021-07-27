@@ -8,3 +8,6 @@ discoket/version.py
 __pycache__/
 build/
 htmlcov/
+
+# ignore the built documentation
+docs/_*

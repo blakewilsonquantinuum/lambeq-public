@@ -40,6 +40,9 @@ def str2biclosed(cat: str, str2type: Callable[[str], Ty] = Ty) -> Ty:
     r"""Parse a CCG category string into a biclosed type.
 
     The string should follow the following grammar:
+
+    .. code-block:: text
+
         atomic_cat    = { <any character except "(", ")", "/" and "\"> }
         op            = "/" | "\"
         bracketed_cat = atomic_cat | "(" bracketed_cat [ op bracketed_cat ] ")"
@@ -67,13 +70,17 @@ def str2biclosed(cat: str, str2type: Callable[[str], Ty] = Ty) -> Ty:
     Notes
     -----
     Conjunctions follow the CCGBank convention of:
-      x   and  y
-      C  conj  C
-       \    \ /
-        \ C[conj]
-         \ /
-          C
-    thus equivalent to C\C.
+
+    .. code-block:: text
+
+         x   and  y
+         C  conj  C
+          \    \ /
+           \ C[conj]
+            \ /
+             C
+
+    thus ``C[conj]`` is equivalent to ``C\C``.
 
     """
 

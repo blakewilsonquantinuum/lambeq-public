@@ -90,3 +90,21 @@ Run all tests with the command:
 ```bash
 pytest
 ```
+
+## Building Documentation
+
+Build the documentation by running the commands:
+```bash
+cd docs
+make clean
+make html
+```
+the docs will be under `docs/_build`.
+
+To rebuild the rst files themselves, run:
+
+```bash
+sphinx-apidoc --force -o docs discoket
+mv docs/modules.rst docs/index.rst
+```
+
