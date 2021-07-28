@@ -143,19 +143,11 @@ class CCGTree:
     def __repr__(self) -> str:  # pragma: no cover
         return f'{type(self).__name__}("{self.text}")'
 
-    @property
-    def is_terminal(self) -> bool:
-        return len(self.children) == 0
-
-    @property
-    def is_unary(self) -> bool:
-        return len(self.children) == 1
-
     def deriv(self,
               use_slashes: bool = False,
               prefix: str = '') -> str:  # pragma: no cover
         output_type = biclosed2str(self.biclosed_type, not use_slashes)
-        if self.is_terminal:
+        if self.rule == CCGRule.LEXICAL:
             deriv = f' {output_type} ∋ "{self.text}"'
         else:
             deriv = (f'{self.rule}: {output_type} ← ' +
