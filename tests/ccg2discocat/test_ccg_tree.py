@@ -17,6 +17,11 @@ def tree():
                    children=(do, thing_unary))
 
 
+def test_child_reqs(tree):
+    with pytest.raises(ValueError):
+        CCGTree(rule='U', biclosed_type=tree.biclosed_type, children=tree.children)
+
+
 def test_json(tree):
     assert CCGTree.from_json(None) is None
     assert CCGTree.from_json(tree.to_json()) == tree

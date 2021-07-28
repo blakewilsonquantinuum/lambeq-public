@@ -28,7 +28,7 @@ def test_mps_splitter(diagram):
 
 def test_spider_splitter(diagram):
     with pytest.raises(ValueError):
-        MPSSplitter(max_order=1)
+        SpiderSplitter(max_order=1)
 
     for i in range(2, 6):
         splitter = SpiderSplitter(max_order=i)

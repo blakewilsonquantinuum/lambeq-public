@@ -19,7 +19,7 @@ class DepCCGParseError(Exception):
     def __init__(self, sentence: str) -> None:
         self.sentence = sentence
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return f'depccg failed to parse {repr(self.sentence)}'
 
 

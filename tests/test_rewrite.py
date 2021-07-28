@@ -1,3 +1,5 @@
+import pytest
+
 from discopy import Word
 from discopy.rigid import Cap, Cup, Diagram, Id
 
@@ -6,6 +8,15 @@ from discoket.rewrite import Rewriter
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
+
+
+def test_initialisation():
+    assert (Rewriter().rules == Rewriter(Rewriter.available_rules()).rules ==
+            Rewriter([Rewriter._default_rules[rule]
+                      for rule in Rewriter.available_rules()]).rules)
+
+    with pytest.raises(ValueError):
+        Rewriter(['nonexistent rule'])
 
 
 def test_auxiliary():

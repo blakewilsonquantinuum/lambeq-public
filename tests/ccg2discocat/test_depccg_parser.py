@@ -64,6 +64,6 @@ def test_bad_sentences(depccg_parser):
     with pytest.raises(DepCCGParseError):
         depccg_parser.sentence2tree(unparsable_sentence)
 
-    assert depccg_parser.sentences2trees(
+    assert depccg_parser.sentences2diagrams(
             ['', unparsable_sentence],
             suppress_exceptions=True) == [None, None]

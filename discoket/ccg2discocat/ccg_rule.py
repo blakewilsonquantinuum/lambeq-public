@@ -13,7 +13,7 @@ class CCGRuleUseError(Exception):
         self.rule = rule
         self.message = message
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return f'Illegal use of {self.rule}: {self.message}'
 
 
