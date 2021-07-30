@@ -8,7 +8,7 @@ from discoket.ccg2discocat.ccg_rule import CCGRuleUseError, CCGRule, RPL, RPR
 from discoket.ccg2discocat.ccg_types import CCGAtomicType
 from discoket.core.types import AtomicType
 
-from discoket.ccg2discocat.ccg_tree import PlanarBX, CCGTree
+from discoket.ccg2discocat.ccg_tree import CCGTree, PlanarBX, PlanarFX
 
 
 N = AtomicType.NOUN
@@ -162,6 +162,14 @@ class TestForwardCrossedComposition(CCGRuleTester):
     diagram = (words >>
                Id(S) @ Swap(S.l, S.r) @ Id(S) >>
                Swap(S, S.r) @ Cup(S.l, S))
+
+    do_box, not_box = biclosed_words.boxes
+    planar_biclosed_diagram = not_box >> PlanarFX(s >> s, do_box)
+
+    do_word, not_word = words.boxes
+    planar_diagram = (not_word >>
+                      Id(S.r) @ do_word @ Id(S) >>
+                      Id(S >> S) @ Cup(S.l, S))
 
 
 class TestForwardTypeRaising(CCGRuleTester):

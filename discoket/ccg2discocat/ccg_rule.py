@@ -1,34 +1,40 @@
+from __future__ import annotations
+
 __all__ = ['CCGRule', 'CCGRuleUseError']
 
 from enum import Enum
 from typing import Any
 
 from discopy.biclosed import Box, Diagram, Id, Ty
+from discopy.monoidal import BinaryBoxConstructor
 
 from discoket.ccg2discocat.ccg_types import CCGAtomicType
 
 
 class CCGRuleUseError(Exception):
-    def __init__(self, rule: 'CCGRule', message: str) -> None:
+    """Error raised when a CCGRule is applied incorrectly."""
+    def __init__(self, rule: CCGRule, message: str) -> None:
         self.rule = rule
         self.message = message
 
     def __str__(self) -> str:  # pragma: no cover
-        return f'Illegal use of {self.rule}: {self.message}'
+        return f'Illegal use of {self.rule}: {self.message}.'
 
 
-class RPL(Box):
-    """Remove left punctuation box."""
+class RPL(BinaryBoxConstructor, Box):
+    """Remove Left Punctuation box."""
     def __init__(self, left: Ty, right: Ty) -> None:
         dom, cod = left @ right, right
-        super().__init__(f'RPL({left}, {right})', dom, cod)
+        Box.__init__(self, f'RPL({left}, {right})', dom, cod)
+        BinaryBoxConstructor.__init__(self, left, right)
 
 
-class RPR(Box):
-    """Remove right punctuation box."""
+class RPR(BinaryBoxConstructor, Box):
+    """Remove Right Punctuation box."""
     def __init__(self, left: Ty, right: Ty) -> None:
         dom, cod = left @ right, left
-        super().__init__(f'RPR({left}, {right})', dom, cod)
+        Box.__init__(self, f'RPR({left}, {right})', dom, cod)
+        BinaryBoxConstructor.__init__(self, left, right)
 
 
 class CCGRule(str, Enum):
@@ -48,7 +54,7 @@ class CCGRule(str, Enum):
     CONJUNCTION = 'CONJ'
 
     @classmethod
-    def _missing_(cls, _: Any) -> 'CCGRule':
+    def _missing_(cls, _: Any) -> CCGRule:
         return cls.UNKNOWN
 
     def __call__(self, input_type: Ty, output_type: Ty) -> Diagram:
@@ -93,5 +99,5 @@ class CCGRule(str, Enum):
             elif CCGAtomicType.conjoinable(right):
                 return Diagram.ba(left, output_type)
             else:
-                raise CCGRuleUseError(self, 'No conjunction found.')
-        raise CCGRuleUseError(self, 'Unknown CCG rule.')
+                raise CCGRuleUseError(self, 'no conjunction found')
+        raise CCGRuleUseError(self, 'unknown CCG rule')

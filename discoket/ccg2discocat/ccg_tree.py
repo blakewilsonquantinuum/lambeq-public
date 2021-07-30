@@ -16,18 +16,33 @@ _JSONDictT = Dict[str, Any]
 
 
 class PlanarBX(biclosed.Box):
-    def __init__(self, left: Ty, diagram: Diagram) -> None:
-        assert isinstance(left, biclosed.Over)
+    """Planar Backward Crossed Composition Box."""
+    def __init__(self, dom: Ty, diagram: Diagram) -> None:
+        assert isinstance(dom, biclosed.Over)
         assert not diagram.dom
 
         right = diagram.cod
         assert isinstance(right, biclosed.Under)
-        assert left.left == right.left
+        assert right.left == dom.left
 
-        self.left = left
         self.diagram = diagram
-        dom, cod = left, right.right << left.right
-        super().__init__(f'PlanarBX({left}, {diagram})', dom, cod)
+        cod = right.right << dom.right
+        super().__init__(f'PlanarBX({dom}, {diagram})', dom, cod)
+
+
+class PlanarFX(biclosed.Box):
+    """Planar Forward Crossed Composition Box."""
+    def __init__(self, dom: Ty, diagram: Diagram) -> None:
+        assert isinstance(dom, biclosed.Under)
+        assert not diagram.dom
+
+        left = diagram.cod
+        assert isinstance(left, biclosed.Over)
+        assert left.right == dom.right
+
+        self.diagram = diagram
+        cod = dom.left >> left.left
+        super().__init__(f'PlanarFX({dom}, {diagram})', dom, cod)
 
 
 def biclosed2str(biclosed_type: Ty, pretty: bool = False) -> str:
@@ -184,8 +199,12 @@ class CCGTree:
 
         if planar and self.rule == CCGRule.BACKWARD_CROSSED_COMPOSITION:
             (words, left_diag), (right_words, right_diag) = children
-            diag = (left_diag >> PlanarBX(left_diag.cod,
-                                          right_words >> right_diag))
+            diag = (left_diag >>
+                    PlanarBX(left_diag.cod, right_words >> right_diag))
+        elif planar and self.rule == CCGRule.FORWARD_CROSSED_COMPOSITION:
+            (left_words, left_diag), (words, right_diag) = children
+            diag = (right_diag >>
+                    PlanarFX(right_diag.cod, left_words >> left_diag))
         else:
             words, diag = [Diagram.tensor(*d) for d in zip(*children)]
             diag >>= this_layer
@@ -201,22 +220,28 @@ class CCGTree:
                     else biclosed2rigid_ob(ob))
 
         def ar_func(box: biclosed.Box) -> rigid.Diagram:
-            # PlanarBX box          -> planar bx diagram
+            #           special box -> special diagram
             # RemovePunctuation box -> identity wire(s)
-            # or        punctuation -> empty diagram
-            # else         word box -> Word
+            #           punctuation -> empty diagram
+            #              word box -> Word
 
             if isinstance(box, PlanarBX):
-                dom = to_rigid_diagram(box.left)
-                left = to_rigid_diagram(box.left.left)
-                right = dom[len(left):]
-                rigid_box = to_rigid_diagram(box.diagram)
-                cups = rigid.cups(left, left.r)
-                return (Id(dom) >>
-                        Id(left) @ rigid_box @ Id(right) >>
-                        cups @ Id(rigid_box.cod[len(left):] @ right))
+                join = to_rigid_diagram(box.dom.left)
+                right = to_rigid_diagram(box.dom)[len(join):]
+                inner = to_rigid_diagram(box.diagram)
+                cups = rigid.cups(join, join.r)
+                return (Id(join) @ inner >>
+                        cups @ Id(inner.cod[len(join):])) @ Id(right)
 
-            cod = ob_func(box.cod)
+            if isinstance(box, PlanarFX):
+                join = to_rigid_diagram(box.dom.right)
+                left = to_rigid_diagram(box.dom)[:-len(join)]
+                inner = to_rigid_diagram(box.diagram)
+                cups = rigid.cups(join.l, join)
+                return Id(left) @ (inner @ Id(join) >>
+                                   Id(inner.cod[:-len(join)]) @ cups)
+
+            cod = to_rigid_diagram(box.cod)
             return Id(cod) if box.dom or not cod else Word(box.name, cod)
 
         to_rigid_diagram = Functor(ob=ob_func,
