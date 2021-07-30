@@ -194,3 +194,72 @@ class CCGRule(str, Enum):
             else:
                 raise CCGRuleUseError(self, 'no conjunction found')
         raise CCGRuleUseError(self, 'unknown CCG rule')
+
+    @classmethod
+    def infer_rule(cls, cod: Ty, dom: Ty) -> CCGRule:
+        """Infer the CCG rule that admits the given codomain and domain.
+
+        Return `CCGRule.UNKNOWN` if no other rule matches.
+
+        Parameters
+        ----------
+        cod : discopy.biclosed.Ty
+            The codomain of the rule.
+        dom : discopy.biclosed.Ty
+            The domain of the rule.
+
+        Returns
+        -------
+        CCGRule
+            A CCG rule that admits the required codomain and domain.
+
+        """
+
+        if len(cod) == 0:
+            return CCGRule.LEXICAL
+        elif len(cod) == 1:
+            if dom.left:
+                if dom == dom.left << (cod >> dom.left):
+                    return CCGRule.FORWARD_TYPE_RAISING
+                if dom == (dom.right << cod) >> dom.right:
+                    return CCGRule.BACKWARD_TYPE_RAISING
+            return CCGRule.UNARY
+        elif len(cod) == 2:
+            left, right = cod[:1], cod[1:]
+            if left == CCGAtomicType.PUNCTUATION:
+                return CCGRule.REMOVE_PUNCTUATION_LEFT
+            if right == CCGAtomicType.PUNCTUATION:
+                return CCGRule.REMOVE_PUNCTUATION_RIGHT
+            if left == dom << right:
+                return CCGRule.FORWARD_APPLICATION
+            if right == left >> dom:
+                return CCGRule.BACKWARD_APPLICATION
+            if CCGAtomicType.CONJUNCTION in (left, right):
+                return CCGRule.CONJUNCTION
+
+            ll = left.left or Ty()
+            lr = left.right or Ty()
+            rl = right.left or Ty()
+            rr = right.right or Ty()
+            if left == ll << lr:
+                if right == lr << rr and dom == ll << rr:
+                    return CCGRule.FORWARD_COMPOSITION
+                if right == rl >> lr and dom == rl >> ll:
+                    return CCGRule.FORWARD_CROSSED_COMPOSITION
+                if (dom, lr) == replace_cat_result(right, lr, ll, '/'):
+                    return CCGRule.GENERALIZED_FORWARD_COMPOSITION
+            if right == rl >> rr:
+                if left == ll >> rl and dom == ll >> rr:
+                    return CCGRule.BACKWARD_COMPOSITION
+                if left == rl << lr and dom == rr << lr:
+                    return CCGRule.BACKWARD_CROSSED_COMPOSITION
+                if (dom, rl) == replace_cat_result(left, rl, rr, '\\'):
+                    return CCGRule.GENERALIZED_BACKWARD_COMPOSITION
+
+                # check generalised crossed rules after everything else
+                if (dom, rl) == replace_cat_result(left, rl, rr, '/|'):
+                    return CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION
+            if (left == ll << lr and
+                    (dom, lr) == replace_cat_result(right, lr, ll, r'\|')):
+                return CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION
+        return CCGRule.UNKNOWN

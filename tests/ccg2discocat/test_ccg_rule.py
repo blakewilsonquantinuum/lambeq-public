@@ -54,6 +54,10 @@ class CCGRuleTester:
         diagram = self.planar_diagram or self.diagram
         assert self.tree.to_diagram(planar=True) == diagram
 
+    def test_infer_rule(self):
+        input_type = i.tensor(*[child.biclosed_type for child in self.tree.children])
+        assert CCGRule.infer_rule(input_type, self.tree.biclosed_type) == self.tree.rule
+
 
 class TestBackwardApplication(CCGRuleTester):
     tree = CCGTree(rule='BA', biclosed_type=s, children=(it, is_))
@@ -304,6 +308,9 @@ class TestUnknown(CCGRuleTester):
     def test_planar_diagram(self):
         with pytest.raises(CCGRuleUseError):
             self.tree.to_diagram(planar=True)
+
+    def test_infer_rule(self):
+        pass  # UNK rule is not inferable
 
     def test_initialisation(self):
         assert CCGRule('missing') == CCGRule.UNKNOWN
