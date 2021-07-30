@@ -8,7 +8,7 @@ from typing import Any
 from discopy.biclosed import Box, Diagram, Id, Ty
 from discopy.monoidal import BinaryBoxConstructor
 
-from discoket.ccg2discocat.ccg_types import CCGAtomicType
+from discoket.ccg2discocat.ccg_types import CCGAtomicType, replace_cat_result
 
 
 class CCGRuleUseError(Exception):
@@ -19,6 +19,48 @@ class CCGRuleUseError(Exception):
 
     def __str__(self) -> str:  # pragma: no cover
         return f'Illegal use of {self.rule}: {self.message}.'
+
+
+class GBC(BinaryBoxConstructor, Box):
+    """Generalized Backward Composition box."""
+    def __init__(self, left: Ty, right: Ty) -> None:
+        dom = left @ right
+        cod, old = replace_cat_result(left, right.left, right.right, '\\')
+        CCGRule.GENERALIZED_BACKWARD_COMPOSITION.check_match(old, right.left)
+        Box.__init__(self, f'GBC({left}, {right})', dom, cod)
+        BinaryBoxConstructor.__init__(self, left, right)
+
+
+class GBX(BinaryBoxConstructor, Box):
+    """Generalized Backward Crossed Composition box."""
+    def __init__(self, left: Ty, right: Ty) -> None:
+        dom = left @ right
+        cod, old = replace_cat_result(left, right.left, right.right, '/|')
+        CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION.check_match(
+                old, right.left)
+        Box.__init__(self, f'GBX({left}, {right})', dom, cod)
+        BinaryBoxConstructor.__init__(self, left, right)
+
+
+class GFC(BinaryBoxConstructor, Box):
+    """Generalized Forward Composition box."""
+    def __init__(self, left: Ty, right: Ty) -> None:
+        dom = left @ right
+        cod, old = replace_cat_result(right, left.right, left.left, '/')
+        CCGRule.GENERALIZED_FORWARD_COMPOSITION.check_match(left.right, old)
+        Box.__init__(self, f'GFC({left}, {right})', dom, cod)
+        BinaryBoxConstructor.__init__(self, left, right)
+
+
+class GFX(BinaryBoxConstructor, Box):
+    """Generalized Forward Crossed Composition box."""
+    def __init__(self, left: Ty, right: Ty) -> None:
+        dom = left @ right
+        cod, old = replace_cat_result(right, left.right, left.left, r'\|')
+        CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION.check_match(left.right,
+                                                                    old)
+        Box.__init__(self, f'GFX({left}, {right})', dom, cod)
+        BinaryBoxConstructor.__init__(self, left, right)
 
 
 class RPL(BinaryBoxConstructor, Box):
@@ -38,6 +80,8 @@ class RPR(BinaryBoxConstructor, Box):
 
 
 class CCGRule(str, Enum):
+    """An enumeration of the available CCG rules."""
+
     UNKNOWN = 'UNK'
     LEXICAL = 'L'
     UNARY = 'U'
@@ -47,6 +91,10 @@ class CCGRule(str, Enum):
     BACKWARD_COMPOSITION = 'BC'
     FORWARD_CROSSED_COMPOSITION = 'FX'
     BACKWARD_CROSSED_COMPOSITION = 'BX'
+    GENERALIZED_FORWARD_COMPOSITION = 'GFC'
+    GENERALIZED_BACKWARD_COMPOSITION = 'GBC'
+    GENERALIZED_FORWARD_CROSSED_COMPOSITION = 'GFX'
+    GENERALIZED_BACKWARD_CROSSED_COMPOSITION = 'GBX'
     REMOVE_PUNCTUATION_LEFT = 'LP'
     REMOVE_PUNCTUATION_RIGHT = 'RP'
     FORWARD_TYPE_RAISING = 'FTR'
@@ -57,47 +105,92 @@ class CCGRule(str, Enum):
     def _missing_(cls, _: Any) -> CCGRule:
         return cls.UNKNOWN
 
-    def __call__(self, input_type: Ty, output_type: Ty) -> Diagram:
+    def check_match(self, left: Ty, right: Ty) -> None:
+        """Raise an exception if `left` does not match `right`."""
+        if left != right:
+            raise CCGRuleUseError(
+                    self, f'mismatched composing types - {left} != {right}')
+
+    def __call__(self, cod: Ty, dom: Ty) -> Diagram:
+        """Produce a DisCoPy diagram for this rule.
+
+        If it is not possible to produce a valid diagram with the given
+        parameters, the codomain may be rewritten.
+
+        Parameters
+        ----------
+        cod : discopy.biclosed.Ty
+            The expected codomain of the diagram.
+        dom : discopy.biclosed.Ty
+            The expected domain of the diagram.
+
+        Returns
+        -------
+        discopy.biclosed.Diagram
+            The resulting diagram.
+
+        Raises
+        ------
+        CCGRuleUseError
+            If a diagram cannot be produced.
+
+        """
+
         if self == self.LEXICAL:
-            raise CCGRuleUseError(self, 'Lexical rules are not applicable')
+            raise CCGRuleUseError(self, 'lexical rules are not applicable')
         elif self == self.UNARY:
-            return Id(output_type)
+            return Id(dom)
         elif self == self.FORWARD_APPLICATION:
-            return Diagram.fa(output_type, input_type[1:])
+            return Diagram.fa(dom, cod[1:])
         elif self == self.BACKWARD_APPLICATION:
-            return Diagram.ba(input_type[:1], output_type)
+            return Diagram.ba(cod[:1], dom)
         elif self == self.FORWARD_COMPOSITION:
-            assert input_type[0].right == input_type[1].left
-            l, m, r = output_type.left, input_type[0].right, output_type.right
+            self.check_match(cod[0].right, cod[1].left)
+            l, m, r = dom.left, cod[0].right, dom.right
             return Diagram.fc(l, m, r)
         elif self == self.BACKWARD_COMPOSITION:
-            assert input_type[0].right == input_type[1].left
-            l, m, r = output_type.left, input_type[0].right, output_type.right
+            self.check_match(cod[0].right, cod[1].left)
+            l, m, r = dom.left, cod[0].right, dom.right
             return Diagram.bc(l, m, r)
         elif self == self.FORWARD_CROSSED_COMPOSITION:
-            assert input_type[0].right == input_type[1].right
-            l, m, r = output_type.right, input_type[0].right, output_type.left
+            self.check_match(cod[0].right, cod[1].right)
+            l, m, r = dom.right, cod[0].right, dom.left
             return Diagram.fx(l, m, r)
         elif self == self.BACKWARD_CROSSED_COMPOSITION:
-            assert input_type[0].left == input_type[1].left
-            l, m, r = output_type.right, input_type[0].left, output_type.left
+            self.check_match(cod[0].left, cod[1].left)
+            l, m, r = dom.right, cod[0].left, dom.left
             return Diagram.bx(l, m, r)
+        elif self == self.GENERALIZED_FORWARD_COMPOSITION:
+            ll, lr = cod[0].left, cod[0].right
+            right, left = replace_cat_result(dom, ll, lr, '/')
+            return GFC(left << lr, right)
+        elif self == self.GENERALIZED_BACKWARD_COMPOSITION:
+            rl, rr = cod[1].left, cod[1].right
+            left, right = replace_cat_result(dom, rr, rl, '\\')
+            return GBC(left, rl >> right)
+        elif self == self.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
+            ll, lr = cod[0].left, cod[0].right
+            right, left = replace_cat_result(dom, ll, lr, r'\|')
+            return GFX(left << lr, right)
+        elif self == self.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
+            rl, rr = cod[1].left, cod[1].right
+            left, right = replace_cat_result(dom, rr, rl, '/|')
+            return GBX(left, rl >> right)
         elif self == self.REMOVE_PUNCTUATION_LEFT:
-            return RPL(input_type[:1], output_type)
+            return RPL(cod[:1], dom)
         elif self == self.REMOVE_PUNCTUATION_RIGHT:
-            return RPR(output_type, input_type[1:])
+            return RPR(dom, cod[1:])
         elif self == self.FORWARD_TYPE_RAISING:
-            return Diagram.curry(Diagram.ba(output_type.right.left,
-                                            output_type.left))
+            return Diagram.curry(Diagram.ba(dom.right.left, dom.left))
         elif self == self.BACKWARD_TYPE_RAISING:
-            return Diagram.curry(Diagram.fa(output_type.right,
-                                            output_type.left.right), left=True)
+            return Diagram.curry(Diagram.fa(dom.right, dom.left.right),
+                                 left=True)
         elif self == self.CONJUNCTION:
-            left, right = input_type[:1], input_type[1:]
+            left, right = cod[:1], cod[1:]
             if CCGAtomicType.conjoinable(left):
-                return Diagram.fa(output_type, right)
+                return Diagram.fa(dom, right)
             elif CCGAtomicType.conjoinable(right):
-                return Diagram.ba(left, output_type)
+                return Diagram.ba(left, dom)
             else:
                 raise CCGRuleUseError(self, 'no conjunction found')
         raise CCGRuleUseError(self, 'unknown CCG rule')

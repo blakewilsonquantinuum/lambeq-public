@@ -8,8 +8,8 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union, overload
 from discopy import biclosed, rigid, Word
 from discopy.biclosed import Diagram, Functor, Id, Ty, biclosed2rigid_ob
 
-from discoket.ccg2discocat.ccg_rule import CCGRule
-from discoket.ccg2discocat.ccg_types import CCGAtomicType
+from discoket.ccg2discocat.ccg_rule import CCGRule, GBC, GBX, GFC, GFX
+from discoket.ccg2discocat.ccg_types import CCGAtomicType, replace_cat_result
 
 # Types
 _JSONDictT = Dict[str, Any]
@@ -43,6 +43,34 @@ class PlanarFX(biclosed.Box):
         self.diagram = diagram
         cod = dom.left >> left.left
         super().__init__(f'PlanarFX({dom}, {diagram})', dom, cod)
+
+
+class PlanarGBX(biclosed.Box):
+    def __init__(self, dom: Ty, diagram: Diagram):
+        assert not diagram.dom
+
+        right = diagram.cod
+        assert isinstance(right, biclosed.Under)
+
+        cod, original = replace_cat_result(dom, right.left, right.right, '/|')
+        assert original == right.left
+
+        self.diagram = diagram
+        super().__init__(f'PlanarGBX({dom}, {diagram})', dom, cod)
+
+
+class PlanarGFX(biclosed.Box):
+    def __init__(self, dom: Ty, diagram: Diagram):
+        assert not diagram.dom
+
+        left = diagram.cod
+        assert isinstance(left, biclosed.Over)
+
+        cod, original = replace_cat_result(dom, left.right, left.left, r'\|')
+        assert original == left.right
+
+        self.diagram = diagram
+        super().__init__(f'PlanarGFX({dom}, {diagram})', dom, cod)
 
 
 def biclosed2str(biclosed_type: Ty, pretty: bool = False) -> str:
@@ -205,6 +233,16 @@ class CCGTree:
             (left_words, left_diag), (words, right_diag) = children
             diag = (right_diag >>
                     PlanarFX(right_diag.cod, left_words >> left_diag))
+        elif (planar and
+              self.rule == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION):
+            (words, left_diag), (right_words, right_diag) = children
+            diag = (left_diag >>
+                    PlanarGBX(left_diag.cod, right_words >> right_diag))
+        elif (planar and
+              self.rule == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION):
+            (left_words, left_diag), (words, right_diag) = children
+            diag = (right_diag >>
+                    PlanarGFX(right_diag.cod, left_words >> left_diag))
         else:
             words, diag = [Diagram.tensor(*d) for d in zip(*children)]
             diag >>= this_layer
@@ -225,6 +263,18 @@ class CCGTree:
             #           punctuation -> empty diagram
             #              word box -> Word
 
+            def split(cat: Ty,
+                      base: Ty) -> Tuple[rigid.Ty, rigid.Ty, rigid.Ty]:
+                left = right = rigid.Ty()
+                while cat != base:
+                    if isinstance(cat, biclosed.Over):
+                        right = to_rigid_diagram(cat.right).l @ right
+                        cat = cat.left
+                    else:
+                        left @= to_rigid_diagram(cat.left).r
+                        cat = cat.right
+                return left, to_rigid_diagram(cat), right
+
             if isinstance(box, PlanarBX):
                 join = to_rigid_diagram(box.dom.left)
                 right = to_rigid_diagram(box.dom)[len(join):]
@@ -240,6 +290,46 @@ class CCGTree:
                 cups = rigid.cups(join.l, join)
                 return Id(left) @ (inner @ Id(join) >>
                                    Id(inner.cod[:-len(join)]) @ cups)
+
+            if isinstance(box, PlanarGBX):
+                left, join, right = split(box.dom, box.diagram.cod.left)
+                inner = to_rigid_diagram(box.diagram)
+                cups = rigid.cups(join, join.r)
+                mid = (Id(join) @ inner) >> (cups @ Id(inner.cod[len(join):]))
+                return Id(left) @ mid @ Id(right)
+
+            if isinstance(box, PlanarGFX):
+                left, join, right = split(box.dom, box.diagram.cod.right)
+                inner = to_rigid_diagram(box.diagram)
+                cups = rigid.cups(join.l, join)
+                mid = (inner @ Id(join)) >> (Id(inner.cod[:-len(join)]) @ cups)
+                return Id(left) @ mid @ Id(right)
+
+            if isinstance(box, GBC):
+                left = to_rigid_diagram(box.dom[0])
+                mid = to_rigid_diagram(box.dom[1].left)
+                right = to_rigid_diagram(box.dom[1].right)
+                return (Id(left[:-len(mid)]) @ rigid.cups(mid, mid.r) @
+                        Id(right))
+
+            if isinstance(box, GFC):
+                left = to_rigid_diagram(box.dom[0].left)
+                mid = to_rigid_diagram(box.dom[0].right)
+                right = to_rigid_diagram(box.dom[1])
+                return Id(left) @ rigid.cups(mid.l, mid) @ Id(right[len(mid):])
+
+            if isinstance(box, GBX):
+                mid = to_rigid_diagram(box.dom[1].right)
+                left, join, right = split(box.dom[0], box.dom[1].left)
+                swaps = rigid.Diagram.swap(right, join >> mid)
+                return Id(left) @ (Id(join) @ swaps >>
+                                   rigid.cups(join, join.r) @ Id(mid @ right))
+
+            if isinstance(box, GFX):
+                mid = to_rigid_diagram(box.dom[0].left)
+                left, join, right = split(box.dom[1], box.dom[0].right)
+                return (rigid.Diagram.swap(mid << join, left) @ Id(join) >>
+                        Id(left @ mid) @ rigid.cups(join.l, join)) @ Id(right)
 
             cod = to_rigid_diagram(box.cod)
             return Id(cod) if box.dom or not cod else Word(box.name, cod)
