@@ -8,9 +8,10 @@ from typing import Any, Iterable, List, Optional, Union
 import depccg
 import depccg.download
 from depccg.parser import EnglishCCGParser
-import discopy
+from discopy.biclosed import Ty
 
 from discoket.ccg2discocat.ccg_parser import CCGParser
+from discoket.ccg2discocat.ccg_rule import CCGRule
 from discoket.ccg2discocat.ccg_tree import CCGTree
 from discoket.ccg2discocat.ccg_types import CCGAtomicType
 
@@ -117,7 +118,7 @@ class DepCCGParser(CCGParser):
         return trees
 
     @staticmethod
-    def _to_biclosed(cat: depccg.cat.Category) -> discopy.biclosed.Ty:
+    def _to_biclosed(cat: depccg.cat.Category) -> Ty:
         """Transform a depccg category into a biclosed type."""
 
         if not cat.is_functor:
@@ -143,17 +144,21 @@ class DepCCGParser(CCGParser):
     @staticmethod
     def _build_ccgtree(tree: depccg.tree.Tree) -> CCGTree:
         """Transform a depccg derivation tree into a `CCGTree`."""
-
+        biclosed_type = DepCCGParser._to_biclosed(tree.cat)
+        children = list(map(DepCCGParser._build_ccgtree, tree.children))
         if tree.cat.is_type_raised:
-            ccg_rule = 'FTR' if tree.cat.is_forward_type_raised else 'BTR'
+            rule = 'FTR' if tree.cat.is_forward_type_raised else 'BTR'
         elif tree.is_unary:
-            ccg_rule = 'U'
+            rule = 'U'
         elif tree.is_leaf:
-            ccg_rule = 'L'
+            rule = 'L'
+        elif tree.op_string in ('gbx', 'gfc'):
+            rule = CCGRule.infer_rule(
+                Ty.tensor(*(child.biclosed_type for child in children)),
+                biclosed_type)
         else:
-            ccg_rule = tree.op_string.upper()
-        return CCGTree(
-                text=tree.word,
-                rule=ccg_rule,
-                biclosed_type=DepCCGParser._to_biclosed(tree.cat),
-                children=list(map(DepCCGParser._build_ccgtree, tree.children)))
+            rule = tree.op_string.upper()
+        return CCGTree(text=tree.word,
+                       rule=rule,
+                       biclosed_type=biclosed_type,
+                       children=children)
