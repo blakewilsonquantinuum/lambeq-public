@@ -65,7 +65,7 @@ class CCGParser(ABC):
             sentence: str,
             planar: bool = False,
             suppress_exceptions: bool = False) -> Optional[Diagram]:
-        """Parse a sentence into a discopy diagram.
+        """Parse a sentence into a DisCoPy diagram.
 
         If the sentence fails to parse, it returns `None`.
         """

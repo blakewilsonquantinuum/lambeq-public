@@ -1,60 +1,159 @@
-__all__ = ['TensorDiagram']
+"""
+Tensor Ansatz
+======
+A tensor ansatz is used to convert a DisCoCat diagram into a tensor network.
 
-import dataclasses
-from typing import Any, Callable, List, Optional, Type
+"""
 
-from discopy.rigid import Box, Cup, Diagram, Spider
-import numpy as np
-import tensornetwork as tn
-
-# Types
-Tensor = Any
+__all__ = ['TensorAnsatz', 'MPSAnsatz', 'SpiderAnsatz']
 
 
-@dataclasses.dataclass
-class TensorNetwork:
-    nodes: List[tn.AbstractNode]
-    dangling_edges: List[tn.Edge]
+from functools import reduce
+from typing import Any, Mapping
+
+from discopy import rigid, Ty, tensor, Word
+from discopy.rigid import Cup, Spider
+from discopy.tensor import Dim
+
+from discoket.ansatz import BaseAnsatz, Symbol
 
 
-class TensorDiagram:
-    def __init__(self, diagram: Diagram) -> None:
-        self.diagram = diagram
+class TensorAnsatz(BaseAnsatz):
+    """Base class for tensor network ansatz."""
 
-    def get_network(self,
-                    closure: Callable[[int, Box, Diagram], Tensor],
-                    dtype: Optional[Type[np.number]] = None) -> TensorNetwork:
-        nodes = []
-        scan: List[tn.Edge] = []
-        for i, (box, offset) in enumerate(zip(self.diagram.boxes,
-                                              self.diagram.offsets)):
-            if isinstance(box, Cup):
-                tn.connect(scan[offset], scan[offset+1])
-                del scan[offset:offset+2]
-                continue
+    def __init__(self, ob_map: Mapping[Ty, Dim], **kwargs: Any) -> None:
+        """Instantiate a tensor network ansatz.
 
-            if isinstance(box, Spider):
-                assert box.dom
-                if dtype is None:
-                    raise ValueError('`dtype` could not be inferred, please '
-                                     'pass it explicitly')
-                node: tn.AbstractNode = tn.CopyNode(len(box.dom)+len(box.cod),
-                                                    scan[offset].dimension,
-                                                    dtype=dtype)
-                for i in range(len(box.dom)):
-                    tn.connect(scan[offset+i], node[i])
-            else:
-                tensor = closure(i, box, self.diagram)
-                if dtype is None:
-                    dtype = tensor.detach().cpu().numpy().dtype
-                node = tn.Node(tensor)
-            scan[offset:offset+len(box.dom)] = node[len(box.dom):]
-            nodes.append(node)
+        Parameters
+        ----------
+        ob_map : dict
+            A mapping from `discopy.rigid.Ty` to the dimension space it
+            uses in a tensor network.
+        **kwargs : dict
+            Extra parameters for ansatz configuration.
 
-        return TensorNetwork(nodes=nodes, dangling_edges=scan)
+        """
+        self.ob_map = ob_map
+        self.functor = rigid.Functor(
+            ob=self._ob,
+            ar=self._ar, ar_factory=tensor.Diagram, ob_factory=tensor.Dim)
 
-    def __call__(self,
-                 closure: Callable[[int, Box, Diagram], Tensor],
-                 dtype: Optional[Type[np.number]] = None) -> Tensor:
-        nwk = self.get_network(closure)
-        return tn.contractors.auto(nwk.nodes, nwk.dangling_edges).tensor
+    def _ob(self, type_: Ty) -> Dim:
+        return Dim().tensor(*[self.ob_map[Ty(t.name)] for t in type_])
+
+    def _ar(self, box: rigid.Box) -> tensor.Diagram:
+        name = self._summarise_box(box)
+        dom = self._ob(box.dom)
+        cod = self._ob(box.cod)
+        n_params = reduce(lambda x, y: x * y, dom @ cod, 1)
+        syms = Symbol(name, size=n_params)
+        return tensor.Box(box.name, dom, cod, syms)
+
+    def __call__(self, diagram: rigid.Diagram) -> tensor.Diagram:
+        """Convert a DisCoPy diagram into a DisCoPy tensor."""
+        return self.functor(diagram)
+
+
+class MPSAnsatz(TensorAnsatz):
+    """Split large boxes into matrix product states."""
+
+    BOND_TYPE: Ty = Ty('B')
+
+    def __init__(self,
+                 ob_map: Mapping[Ty, Dim],
+                 bond_dim: int,
+                 max_order: int = 3) -> None:
+        """Instantiate a matrix product state ansatz.
+
+        Parameters
+        ----------
+        ob_map : dict
+            A mapping from `discopy.rigid.Ty` to the dimension space it
+            uses in a tensor network.
+        bond_dim: int
+            The size of the bonding dimension.
+        max_order: int
+            The maximum order of each tensor in the matrix product state,
+            which must be at least 3.
+
+        """
+        if max_order < 3:
+            raise ValueError('`max_order` must be at least 3')
+        if self.BOND_TYPE in ob_map:
+            raise ValueError('specify bond dimension using `bond_dim`')
+        ob_map = dict(ob_map)
+        ob_map[self.BOND_TYPE] = Dim(bond_dim)
+
+        self.ob_map = ob_map
+        self.bond_dim = bond_dim
+        self.max_order = max_order
+        self.split_functor = rigid.Functor(ob=lambda ob: ob, ar=self._ar)
+        self.tensor_functor = rigid.Functor(
+            ob=self.ob_map,
+            ar=super()._ar, ar_factory=tensor.Diagram, ob_factory=tensor.Dim)
+
+    def _ar(self, ar: Word) -> rigid.Diagram:
+        bond = self.BOND_TYPE
+        if len(ar.cod) <= self.max_order:
+            return Word(f'{ar.name}_0', ar.cod)
+
+        boxes = []
+        cups = []
+        step_size = self.max_order - 2
+        for i, start in enumerate(range(0, len(ar.cod), step_size)):
+            cod = bond.r @ ar.cod[start:start+step_size] @ bond
+            boxes.append(Word(f'{ar.name}_{i}', cod))
+            cups += [rigid.Id(cod[1:-1]), Cup(bond, bond.r)]
+        boxes[0] = Word(boxes[0].name, boxes[0].cod[1:])
+        boxes[-1] = Word(boxes[-1].name, boxes[-1].cod[:-1])
+
+        return rigid.Box.tensor(*boxes) >> rigid.Diagram.tensor(*cups[:-1])
+
+    def __call__(self, diagram: rigid.Diagram) -> tensor.Diagram:
+        return self.tensor_functor(self.split_functor(diagram))
+
+
+class SpiderAnsatz(TensorAnsatz):
+    """Split large boxes into spiders."""
+
+    def __init__(self,
+                 ob_map: Mapping[Ty, Dim],
+                 max_order: int = 2) -> None:
+        """Instantiate a spider ansatz.
+
+        Parameters
+        ----------
+        ob_map : dict
+            A mapping from `discopy.rigid.Ty` to the dimension space it
+            uses in a tensor network.
+        max_order: int
+            The maximum order of each tensor, which must be at least 2.
+
+        """
+        if max_order < 2:
+            raise ValueError('`max_order` must be at least 2')
+
+        self.ob_map = ob_map
+        self.max_order = max_order
+        self.split_functor = rigid.Functor(ob=lambda ob: ob, ar=self._ar)
+        self.tensor_functor = rigid.Functor(
+            ob=self.ob_map,
+            ar=super()._ar, ar_factory=tensor.Diagram, ob_factory=tensor.Dim)
+
+    def _ar(self, ar: Word) -> rigid.Diagram:
+        if len(ar.cod) <= self.max_order:
+            return Word(f'{ar.name}_0', ar.cod)
+
+        boxes = []
+        spiders = [rigid.Id(ar.cod[:1])]
+        step_size = self.max_order - 1
+        for i, start in enumerate(range(0, len(ar.cod)-1, step_size)):
+            cod = ar.cod[start:start + step_size + 1]
+            boxes.append(Word(f'{ar.name}_{i}', cod))
+            spiders += [rigid.Id(cod[1:-1]), Spider(2, 1, cod[-1:])]
+        spiders[-1] = rigid.Id(spiders[-1].cod)
+
+        return rigid.Diagram.tensor(*boxes) >> rigid.Diagram.tensor(*spiders)
+
+    def __call__(self, diagram: rigid.Diagram) -> tensor.Diagram:
+        return self.tensor_functor(self.split_functor(diagram))

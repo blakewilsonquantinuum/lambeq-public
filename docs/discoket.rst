@@ -13,6 +13,14 @@ Subpackages
 Submodules
 ----------
 
+discoket.ansatz module
+----------------------
+
+.. automodule:: discoket.ansatz
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 discoket.circuit module
 -----------------------
 
@@ -33,14 +41,6 @@ discoket.rewrite module
 -----------------------
 
 .. automodule:: discoket.rewrite
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-discoket.split module
----------------------
-
-.. automodule:: discoket.split
    :members:
    :undoc-members:
    :show-inheritance:

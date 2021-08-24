@@ -1,7 +1,7 @@
 """
 Reader
 ======
-A `Reader` is a parser that turn sentences into DisCoPy diagrams, but
+A `Reader` is a parser that turns sentences into DisCoPy diagrams, but
 not according to the DisCoCat model.
 
 For example, the `LinearReader` combines linearly from left-to-right.
