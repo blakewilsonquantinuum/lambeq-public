@@ -1,6 +1,6 @@
 """
 Circuit Ansatz
-======
+==============
 A circuit ansatz is used to convert a DisCoCat diagram into a quantum circuit.
 
 """
@@ -31,8 +31,8 @@ class CircuitAnsatz(BaseAnsatz):
         Parameters
         ----------
         ob_map : dict
-            A mapping from `discopy.rigid.Ty` to the number of qubits it
-            uses in a circuit.
+            A mapping from :py:class:`discopy.rigid.Ty` to the number of
+            qubits it uses in a circuit.
         **kwargs : dict
             Extra parameters for ansatz configuration.
 
@@ -61,8 +61,8 @@ class IQPAnsatz(CircuitAnsatz):
     """Instantaneous Quantum Polynomial ansatz.
 
     An IQP ansatz interleaves layers of Hadamard gates with diagonal
-    unitaries. This class uses `n-1` adjacent CRz gates to implement
-    each diagonal unitary.
+    unitaries. This class uses :py:obj:`n_layers-1` adjacent CRz gates
+    to implement each diagonal unitary.
 
     """
 
@@ -76,15 +76,16 @@ class IQPAnsatz(CircuitAnsatz):
         Parameters
         ----------
         ob_map : dict
-            A mapping from `discopy.rigid.Ty` to the number of qubits it
-            uses in a circuit.
+            A mapping from :py:class:`discopy.rigid.Ty` to the number of
+            qubits it uses in a circuit.
         n_layers : int
             The number of IQP layers used by the ansatz.
         n_single_qubit_params : int
             The number of single qubit rotations used by the ansatz.
         special_cases: callable
-            A function that transforms an arrow map into one specifying special
-            cases that should not be converted by the Ansatz class.
+            A function that transforms an arrow map into one specifying
+            special cases that should not be converted by the Ansatz
+            class.
 
         """
         super().__init__(ob_map=ob_map, n_layers=n_layers,

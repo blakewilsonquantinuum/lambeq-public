@@ -1,30 +1,36 @@
 """
 Rewrite
 =======
-A rewrite rule is a schema for transforming a diagram into a simpler but
-equivalent diagram.
+A rewrite rule is a schema for transforming/simplifying a diagram.
 
-The `Rewriter` applies a set of rewrite rules functorially to a given
-diagram.
+The :py:class:`Rewriter` applies a set of rewrite rules functorially to
+a given diagram.
 
-Subclass `RewriteRule` to define a custom rewrite rule. An example
-rewrite rule `SimpleRewriteRule` has been provided for basic rewrites,
-as well as a number of example rules. These can be used by specifying
-their name when instantiating a `Reader`. A list of provided rules can
-be retrieved using `Rewriter.available_rules()`. They are:
+Subclass :py:class:`RewriteRule` to define a custom rewrite rule. An
+example rewrite rule :py:class:`SimpleRewriteRule` has been provided for
+basic rewrites, as well as a number of example rules. These can be used
+by specifying their name when instantiating a :py:class:`Reader`. A list
+of provided rules can be retrieved using
+:py:meth:`Rewriter.available_rules`. They are:
+
+.. glossary::
 
     auxiliary
         The auxiliary rule removes auxiliary verbs (such as "do") by
         replacing them with caps.
+
     connector
         The connector rule removes sentence connectors (such as "that")
         by replacing them with caps.
+
     determiner
         The determiner rule removes determiners (such as "the") by
         replacing them with caps.
+
     postadverb, preadverb
         The adverb rules simplify adverbs by passing through the noun
         wire transparently using a cup.
+
     prepositional_phrase
         The prepositional phrase rule simplifies the preposition in a
         prepositional phrase by passing through the noun wire
@@ -70,14 +76,16 @@ class RewriteRule(ABC):
         Returns
         -------
         discopy.rigid.Diagram, optional
-            The rewritten diagram, or `None` if the rule does not apply.
+            The rewritten diagram, or :py:obj:`None` if rule
+            does not apply.
 
         Notes
         -----
-        The default implementation uses the `matches` and `rewrite`
-        methods, but derived classes may choose to not use them, since
-        the default `Rewriter` implementation does not call those
-        methods directly, only this one.
+        The default implementation uses the :py:meth:`matches` and
+        :py:meth:`rewrite`  methods, but derived classes may choose to
+        not use them, since the default :py:class:`Rewriter`
+        implementation does not call those methods directly, only this
+        one.
 
         """
         return self.rewrite(box) if self.matches(box) else None
@@ -107,7 +115,8 @@ class SimpleRewriteRule(RewriteRule):
         template : discopy.rigid.Diagram
             The diagram that a matching box is replaced with. A special
             placeholder box is replaced by the word in the matched box,
-            and can be created using `SimpleRewriteRule.placeholder`.
+            and can be created using
+            :py:meth:`SimpleRewriteRule.placeholder`.
         words : container of str, optional
             If provided, this is a list of words that are rewritten by
             this rule. If a box does not have one of these words, it is
@@ -115,7 +124,7 @@ class SimpleRewriteRule(RewriteRule):
             all words are permitted.
         case_sensitive : bool, default: False
             This indicates whether the list of words specified above are
-            compared case-sensitively. The default is `False`.
+            compared case-sensitively. The default is :py:obj:`False`.
 
         """
 
@@ -208,10 +217,11 @@ class Rewriter:
         Parameters
         ----------
         rules : iterable of str or RewriteRule, optional
-            A list of rewrite rules to use. `RewriteRule` instances are
-            used directly, `str` objects are used as names of the
-            default rules. See `Rewriter.available_rules` for the list
-            of rule names. If omitted, all the default rules are used.
+            A list of rewrite rules to use. :py:class:`RewriteRule`
+            instances are used directly, `str` objects are used as names
+            of the default rules. See
+            :py:meth:`Rewriter.available_rules` for the list of rule
+            names. If omitted, all the default rules are used.
 
         """
         if rules is None:

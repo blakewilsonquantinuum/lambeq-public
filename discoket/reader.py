@@ -1,24 +1,25 @@
 """
 Reader
 ======
-A `Reader` is a parser that turns sentences into DisCoPy diagrams, but
-not according to the DisCoCat model.
+A :py:class:`Reader` is a parser that turns sentences into DisCoPy
+diagrams, but not according to the DisCoCat model.
 
-For example, the `LinearReader` combines linearly from left-to-right.
+For example, the :py:class:`LinearReader` combines linearly from
+left-to-right.
 
-Subclass `Reader` to define a custom reader.
+Subclass :py:class:`Reader` to define a custom reader.
 
 Some simple example readers are included for use:
-    cups_reader : LinearReader
-        This combines each pair of adjacent word boxes with a cup This
-        requires each word box to have the output `S >> S` to expose two
-        output wires, and a sentinel start box is used to connect to the
-        first word box.
-    spiders_reader : LinearReader
-        This combines the first two word boxes using a spider with a
-        single output, which is combined with the next word box using
-        another spider, and so on, until a single output remains. Here,
-        each word box has an output type of `S @ S`.
+    :py:data:`cups_reader` : :py:class:`LinearReader`
+        This combines each pair of adjacent word boxes with a cup. This
+        requires each word box to have the output :py:obj:`S >> S` to
+        expose two output wires, and a sentinel start box is used to
+        connect to the first word box.
+    :py:data:`spiders_reader` : :py:class:`LinearReader`
+        This combines the first two word boxes using a spider with three
+        legs. The remaining output is combined with the next word box
+        using another spider, and so on, until a single output remains.
+        Here, each word box has an output type of :py:obj:`S @ S`.
 
 See `examples/readers.ipynb` for illustrative usage.
 
@@ -43,10 +44,10 @@ class Reader:
     """Base class for readers.
 
     This class cannot be used directly, since its methods
-    `sentence2diagram` and `sentences2diagrams` call each other. This is
-    so that a subclass only needs to implement one method of these
-    methods for full functionality (though both can be overridden if
-    needed).
+    :py:meth:`sentence2diagram` and :py:meth:`sentences2diagrams` call
+    each other. This is so that a subclass only needs to implement one
+    method of these methods for full functionality (though both can be
+    overridden if needed).
 
     """
 
@@ -85,7 +86,7 @@ class LinearReader(Reader):
             output wire remains.
         word_type : Ty, default: core.types.AtomicType.SENTENCE
             The type of each word box. By default, it uses the sentence
-            type from `core.types.AtomicType`.
+            type from :py:class:`.core.types.AtomicType`.
         start_box : Diagram, default: Id()
             The start box used as a sentinel value for combining. By
             default, the empty diagram is used.

@@ -2,11 +2,12 @@
 CCGBank parser
 --------------
 
-The CCGBank is a translation of the Penn Treebank into a corpus of Combinatory
-Categorial Grammar derivations, created by Julia Hockenmaier and Mark Steedman.
+The CCGBank is a translation of the Penn Treebank into a corpus of
+Combinatory Categorial Grammar derivations, created by Julia Hockenmaier
+and Mark Steedman.
 
-This module provides a parser that automatically turns parses from an existing
-CCGBank corpus into `CCGTree` s.
+This module provides a parser that automatically turns parses from
+CCGBank into :py:class:`.CCGTree` s.
 
 """
 
@@ -75,7 +76,7 @@ class CCGBankParser(CCGParser):
         ''', re.VERBOSE)
 
     def __init__(self, root: Union[str, os.PathLike[str]]):
-        """Instantiate a CCGBank parser.
+        """Initialise a CCGBank parser.
 
         Parameters
         ----------
@@ -97,14 +98,15 @@ class CCGBankParser(CCGParser):
         section_id : int
             The section to parse.
         suppress_exceptions : bool, default: False
-            Stop exceptions from being raised, instead returning `None` for a
-            tree.
+            Stop exceptions from being raised, instead returning
+            :py:obj:`None` for a tree.
 
         Returns
         -------
         trees : dict
-            A dictionary of trees labelled by their ID in CCGBank. If a tree
-            fails to parse and exceptions are suppressed, that entry is `None`.
+            A dictionary of trees labelled by their ID in CCGBank. If a
+            tree fails to parse and exceptions are suppressed, that
+            entry is :py:obj:`None`.
 
         Raises
         ------
@@ -148,17 +150,18 @@ class CCGBankParser(CCGParser):
         section_id : int
             The section to parse.
         planar : bool, default: False
-            Force diagrams to be planar when they contain crossed composition.
+            Force diagrams to be planar when they contain
+            crossed composition.
         suppress_exceptions : bool, default: False
-            Stop exceptions from being raised, instead returning `None` for a
-            diagram.
+            Stop exceptions from being raised, instead returning
+            :py:obj:`None` for a diagram.
 
         Returns
         -------
         diagrams : dict
-            A dictionary of diagrams labelled by their ID in CCGBank. If a
-            diagram fails to draw and exceptions are suppressed, that entry is
-            replaced by `None`.
+            A dictionary of diagrams labelled by their ID in CCGBank. If
+            a diagram fails to draw and exceptions are suppressed, that
+            entry is replaced by :py:obj:`None`.
 
         Raises
         ------
@@ -187,22 +190,22 @@ class CCGBankParser(CCGParser):
             suppress_exceptions: bool = False) -> List[Optional[CCGTree]]:
         """Parse a CCGBank sentence derivation into a CCGTree.
 
-        The sentence must be in the format outlined in the CCGBank manual
-        section D.2 and not just a list of words.
+        The sentence must be in the format outlined in the CCGBank
+        manual section D.2 and not just a list of words.
 
         Parameters
         ----------
         sentences : list of str
             List of sentences to parse.
         suppress_exceptions : bool, default: False
-            Stop exceptions from being raised, instead returning `None` for a
-            tree.
+            Stop exceptions from being raised, instead returning
+            :py:obj:`None` for a tree.
 
         Returns
         -------
         trees : list of CCGTree
             A list of trees. If a tree fails to parse and exceptions are
-            suppressed, that entry is `None`.
+            suppressed, that entry is :py:obj:`None`.
 
         Raises
         ------

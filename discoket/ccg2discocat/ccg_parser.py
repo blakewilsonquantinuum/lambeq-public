@@ -13,24 +13,51 @@ class CCGParser(ABC):
 
     @abstractmethod
     def __init__(self, **kwargs: Any) -> None:
-        """Instantiate the CCG parser."""
+        """Initialise the CCG parser."""
 
     @abstractmethod
     def sentences2trees(
             self,
             sentences: Iterable[str],
             suppress_exceptions: bool = False) -> List[Optional[CCGTree]]:
-        """Parse multiple sentences into a list of `CCGTree` s.
+        """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
 
-        If a sentence fails to parse, its list entry is `None`.
+        Parameters
+        ----------
+        sentences : iterable of str
+            The sentences to be parsed.
+        suppress_exceptions : bool, default: False
+            Whether to suppress exceptions. If :py:obj:`True`, then if a
+            sentence fails to parse, instead of raising an exception,
+            its return entry is :py:obj:`None`.
+
+        Returns
+        -------
+        list of CCGTree or None
+            The parsed trees. (may contain :py:obj:`None` if exceptions
+            are suppressed)
+
         """
 
     def sentence2tree(self,
                       sentence: str,
                       suppress_exceptions: bool = False) -> Optional[CCGTree]:
-        """Parse a sentence into a `CCGTree`.
+        """Parse a sentence into a :py:class:`.CCGTree`.
 
-        If the sentence fails to parse, it returns `None`.
+        Parameters
+        ----------
+        sentence : str
+            The sentence to be parsed.
+        suppress_exceptions : bool, default: False
+            Whether to suppress exceptions. If :py:obj:`True`, then if
+            the sentence fails to parse, instead of raising an
+            exception, returns :py:obj:`None`.
+
+        Returns
+        -------
+        CCGTree or None
+            The parsed tree, or :py:obj:`None` on failure.
+
         """
         return self.sentences2trees([sentence],
                                     suppress_exceptions=suppress_exceptions)[0]
@@ -42,7 +69,21 @@ class CCGParser(ABC):
             suppress_exceptions: bool = False) -> List[Optional[Diagram]]:
         """Parse multiple sentences into a list of discopy diagrams.
 
-        If a sentence fails to parse, its list entry is `None`.
+        Parameters
+        ----------
+        sentences : iterable of str
+            The sentences to be parsed.
+        suppress_exceptions : bool, default: False
+            Whether to suppress exceptions. If :py:obj:`True`, then if a
+            sentence fails to parse, instead of raising an exception,
+            its return entry is :py:obj:`None`.
+
+        Returns
+        -------
+        list of discopy.Diagram or None
+            The parsed diagrams. (may contain :py:obj:`None` if
+            exceptions are suppressed)
+
         """
         trees = self.sentences2trees(sentences,
                                      suppress_exceptions=suppress_exceptions)
@@ -67,7 +108,20 @@ class CCGParser(ABC):
             suppress_exceptions: bool = False) -> Optional[Diagram]:
         """Parse a sentence into a DisCoPy diagram.
 
-        If the sentence fails to parse, it returns `None`.
+        Parameters
+        ----------
+        sentence : str
+            The sentence to be parsed.
+        suppress_exceptions : bool, default: False
+            Whether to suppress exceptions. If :py:obj:`True`, then if
+            the sentence fails to parse, instead of raising an
+            exception, returns :py:obj:`None`.
+
+        Returns
+        -------
+        discopy.Diagram or None
+            The parsed diagram, or :py:obj:`None` on failure.
+
         """
         return self.sentences2diagrams(
                 [sentence],

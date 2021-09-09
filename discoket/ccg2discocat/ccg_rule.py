@@ -12,7 +12,7 @@ from discoket.ccg2discocat.ccg_types import CCGAtomicType, replace_cat_result
 
 
 class CCGRuleUseError(Exception):
-    """Error raised when a CCGRule is applied incorrectly."""
+    """Error raised when a :py:class:`CCGRule` is applied incorrectly."""
     def __init__(self, rule: CCGRule, message: str) -> None:
         self.rule = rule
         self.message = message
@@ -25,7 +25,7 @@ class GBC(BinaryBoxConstructor, Box):
     """Generalized Backward Composition box."""
     def __init__(self, left: Ty, right: Ty) -> None:
         dom = left @ right
-        cod, old = replace_cat_result(left, right.left, right.right, '\\')
+        cod, old = replace_cat_result(left, right.left, right.right, '>')
         CCGRule.GENERALIZED_BACKWARD_COMPOSITION.check_match(old, right.left)
         Box.__init__(self, f'GBC({left}, {right})', dom, cod)
         BinaryBoxConstructor.__init__(self, left, right)
@@ -35,7 +35,7 @@ class GBX(BinaryBoxConstructor, Box):
     """Generalized Backward Crossed Composition box."""
     def __init__(self, left: Ty, right: Ty) -> None:
         dom = left @ right
-        cod, old = replace_cat_result(left, right.left, right.right, '/|')
+        cod, old = replace_cat_result(left, right.left, right.right, '<|')
         CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION.check_match(
                 old, right.left)
         Box.__init__(self, f'GBX({left}, {right})', dom, cod)
@@ -46,7 +46,7 @@ class GFC(BinaryBoxConstructor, Box):
     """Generalized Forward Composition box."""
     def __init__(self, left: Ty, right: Ty) -> None:
         dom = left @ right
-        cod, old = replace_cat_result(right, left.right, left.left, '/')
+        cod, old = replace_cat_result(right, left.right, left.left, '<')
         CCGRule.GENERALIZED_FORWARD_COMPOSITION.check_match(left.right, old)
         Box.__init__(self, f'GFC({left}, {right})', dom, cod)
         BinaryBoxConstructor.__init__(self, left, right)
@@ -56,7 +56,7 @@ class GFX(BinaryBoxConstructor, Box):
     """Generalized Forward Crossed Composition box."""
     def __init__(self, left: Ty, right: Ty) -> None:
         dom = left @ right
-        cod, old = replace_cat_result(right, left.right, left.left, r'\|')
+        cod, old = replace_cat_result(right, left.right, left.left, '>|')
         CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION.check_match(left.right,
                                                                     old)
         Box.__init__(self, f'GFX({left}, {right})', dom, cod)
@@ -162,19 +162,19 @@ class CCGRule(str, Enum):
             return Diagram.bx(l, m, r)
         elif self == self.GENERALIZED_FORWARD_COMPOSITION:
             ll, lr = cod[0].left, cod[0].right
-            right, left = replace_cat_result(dom, ll, lr, '/')
+            right, left = replace_cat_result(dom, ll, lr, '<')
             return GFC(left << lr, right)
         elif self == self.GENERALIZED_BACKWARD_COMPOSITION:
             rl, rr = cod[1].left, cod[1].right
-            left, right = replace_cat_result(dom, rr, rl, '\\')
+            left, right = replace_cat_result(dom, rr, rl, '>')
             return GBC(left, rl >> right)
         elif self == self.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
             ll, lr = cod[0].left, cod[0].right
-            right, left = replace_cat_result(dom, ll, lr, r'\|')
+            right, left = replace_cat_result(dom, ll, lr, '>|')
             return GFX(left << lr, right)
         elif self == self.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
             rl, rr = cod[1].left, cod[1].right
-            left, right = replace_cat_result(dom, rr, rl, '/|')
+            left, right = replace_cat_result(dom, rr, rl, '<|')
             return GBX(left, rl >> right)
         elif self == self.REMOVE_PUNCTUATION_LEFT:
             return RPL(cod[:1], dom)
@@ -199,7 +199,7 @@ class CCGRule(str, Enum):
     def infer_rule(cls, cod: Ty, dom: Ty) -> CCGRule:
         """Infer the CCG rule that admits the given codomain and domain.
 
-        Return `CCGRule.UNKNOWN` if no other rule matches.
+        Return :py:attr:`CCGRule.UNKNOWN` if no other rule matches.
 
         Parameters
         ----------
@@ -246,20 +246,20 @@ class CCGRule(str, Enum):
                     return CCGRule.FORWARD_COMPOSITION
                 if right == rl >> lr and dom == rl >> ll:
                     return CCGRule.FORWARD_CROSSED_COMPOSITION
-                if (dom, lr) == replace_cat_result(right, lr, ll, '/'):
+                if (dom, lr) == replace_cat_result(right, lr, ll, '<'):
                     return CCGRule.GENERALIZED_FORWARD_COMPOSITION
             if right == rl >> rr:
                 if left == ll >> rl and dom == ll >> rr:
                     return CCGRule.BACKWARD_COMPOSITION
                 if left == rl << lr and dom == rr << lr:
                     return CCGRule.BACKWARD_CROSSED_COMPOSITION
-                if (dom, rl) == replace_cat_result(left, rl, rr, '\\'):
+                if (dom, rl) == replace_cat_result(left, rl, rr, '>'):
                     return CCGRule.GENERALIZED_BACKWARD_COMPOSITION
 
                 # check generalised crossed rules after everything else
-                if (dom, rl) == replace_cat_result(left, rl, rr, '/|'):
+                if (dom, rl) == replace_cat_result(left, rl, rr, '<|'):
                     return CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION
             if (left == ll << lr and
-                    (dom, lr) == replace_cat_result(right, lr, ll, r'\|')):
+                    (dom, lr) == replace_cat_result(right, lr, ll, '>|')):
                 return CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION
         return CCGRule.UNKNOWN

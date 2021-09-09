@@ -40,7 +40,7 @@ class DepCCGParser(CCGParser):
                  model: Union[str, EnglishCCGParser] = '',
                  use_model_unary_rules: bool = False,
                  **kwargs: Any) -> None:
-        """Instantiate a parser based on `depccg.parser.EnglishCCGParser`.
+        """Initialise a parser based on `depccg.parser.EnglishCCGParser`.
 
         Parameters
         ----------

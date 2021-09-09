@@ -5,8 +5,9 @@ __all__ = ['CCGTree']
 import json
 from typing import Any, Dict, Optional, Sequence, Tuple, Union, overload
 
-from discopy import biclosed, rigid, Word
-from discopy.biclosed import Diagram, Functor, Id, Ty, biclosed2rigid_ob
+from discopy import rigid, Word
+from discopy.biclosed import (Box, Diagram, Functor, Id, Over, Ty, Under,
+                              biclosed2rigid_ob)
 
 from discoket.ccg2discocat.ccg_rule import CCGRule, GBC, GBX, GFC, GFX
 from discoket.ccg2discocat.ccg_types import (CCGAtomicType, replace_cat_result,
@@ -16,14 +17,14 @@ from discoket.ccg2discocat.ccg_types import (CCGAtomicType, replace_cat_result,
 _JSONDictT = Dict[str, Any]
 
 
-class PlanarBX(biclosed.Box):
+class PlanarBX(Box):
     """Planar Backward Crossed Composition Box."""
     def __init__(self, dom: Ty, diagram: Diagram) -> None:
-        assert isinstance(dom, biclosed.Over)
+        assert isinstance(dom, Over)
         assert not diagram.dom
 
         right = diagram.cod
-        assert isinstance(right, biclosed.Under)
+        assert isinstance(right, Under)
         assert right.left == dom.left
 
         self.diagram = diagram
@@ -31,14 +32,14 @@ class PlanarBX(biclosed.Box):
         super().__init__(f'PlanarBX({dom}, {diagram})', dom, cod)
 
 
-class PlanarFX(biclosed.Box):
+class PlanarFX(Box):
     """Planar Forward Crossed Composition Box."""
     def __init__(self, dom: Ty, diagram: Diagram) -> None:
-        assert isinstance(dom, biclosed.Under)
+        assert isinstance(dom, Under)
         assert not diagram.dom
 
         left = diagram.cod
-        assert isinstance(left, biclosed.Over)
+        assert isinstance(left, Over)
         assert left.right == dom.right
 
         self.diagram = diagram
@@ -46,28 +47,28 @@ class PlanarFX(biclosed.Box):
         super().__init__(f'PlanarFX({dom}, {diagram})', dom, cod)
 
 
-class PlanarGBX(biclosed.Box):
+class PlanarGBX(Box):
     def __init__(self, dom: Ty, diagram: Diagram):
         assert not diagram.dom
 
         right = diagram.cod
-        assert isinstance(right, biclosed.Under)
+        assert isinstance(right, Under)
 
-        cod, original = replace_cat_result(dom, right.left, right.right, '/|')
+        cod, original = replace_cat_result(dom, right.left, right.right, '<|')
         assert original == right.left
 
         self.diagram = diagram
         super().__init__(f'PlanarGBX({dom}, {diagram})', dom, cod)
 
 
-class PlanarGFX(biclosed.Box):
+class PlanarGFX(Box):
     def __init__(self, dom: Ty, diagram: Diagram):
         assert not diagram.dom
 
         left = diagram.cod
-        assert isinstance(left, biclosed.Over)
+        assert isinstance(left, Over)
 
-        cod, original = replace_cat_result(dom, left.right, left.left, r'\|')
+        cod, original = replace_cat_result(dom, left.right, left.left, '>|')
         assert original == left.right
 
         self.diagram = diagram
@@ -75,9 +76,9 @@ class PlanarGFX(biclosed.Box):
 
 
 def biclosed2str(biclosed_type: Ty, pretty: bool = False) -> str:
-    if isinstance(biclosed_type, biclosed.Over):
+    if isinstance(biclosed_type, Over):
         template = '({0}↢{1})' if pretty else '({0}/{1})'
-    elif isinstance(biclosed_type, biclosed.Under):
+    elif isinstance(biclosed_type, Under):
         template = '({0}↣{1})' if pretty else r'({1}\{0})'
     else:
         return str(biclosed_type)
@@ -90,6 +91,7 @@ class CCGTree:
 
     This provides a standard derivation interface between the parser and
     the rest of the model.
+
     """
 
     def __init__(self,
@@ -98,6 +100,23 @@ class CCGTree:
                  rule: Union[str, CCGRule] = CCGRule.UNKNOWN,
                  biclosed_type: Ty,
                  children: Optional[Sequence[CCGTree]] = None) -> None:
+        """Initialise a CCG tree.
+
+        Parameters
+        ----------
+        text : str or None, default: None
+            The word or phrase associated to the whole tree. If
+            :py:obj:`None`, it is inferred from its children.
+        rule : CCGRule, default: CCGRule.UNKNOWN
+            The final :py:class:`.CCGRule` used in the derivation.
+        biclosed_type : discopy.biclosed.Ty
+            The type associated to the derived phrase.
+        children : list of CCGTree or None, default: None
+            A list of JSON subtrees. The types of these subtrees can be
+            combined with the :py:obj:`rule` to produce the output
+            :py:obj:`type`. A leaf node has an empty list of children.
+
+        """
         self._text = text
         self.rule = CCGRule(rule)
         self.biclosed_type = biclosed_type
@@ -118,6 +137,7 @@ class CCGTree:
 
     @property
     def text(self) -> str:
+        """The word or phrase associated to the tree."""
         if self._text is None:
             self._text = ' '.join(child.text for child in self.children)
         return self._text
@@ -133,6 +153,25 @@ class CCGTree:
     @classmethod
     def from_json(cls,
                   data: Union[None, str, _JSONDictT]) -> Optional[CCGTree]:
+        """Create a :py:class:`CCGTree` from a JSON representation.
+
+        A JSON representation of a derivation contains the following
+        fields:
+
+            `text` : :py:obj:`str` or :py:obj:`None`
+                The word or phrase associated to the whole tree. If
+                :py:obj:`None`, it is inferred from its children.
+            `rule` : :py:class:`.CCGRule`
+                The final :py:class:`.CCGRule` used in the derivation.
+            `type` : :py:class:`discopy.biclosed.Ty`
+                The type associated to the derived phrase.
+            `children` : :py:class:`list` or :py:class:`None`
+                A list of JSON subtrees. The types of these subtrees can
+                be combined with the :py:obj:`rule` to produce the
+                output :py:obj:`type`. A leaf node has an empty list of
+                children.
+
+        """
         if data is None:
             return None
 
@@ -144,6 +183,7 @@ class CCGTree:
                              for child in data_dict.get('children', [])])
 
     def to_json(self) -> _JSONDictT:
+        """Convert tree into JSON form."""
         data: _JSONDictT = {'type': biclosed2str(self.biclosed_type)}
         if self.rule != CCGRule.UNKNOWN:
             data['rule'] = self.rule.value
@@ -166,7 +206,15 @@ class CCGTree:
 
     def deriv(self,
               use_slashes: bool = False,
-              prefix: str = '') -> str:  # pragma: no cover
+              _prefix: str = '') -> str:  # pragma: no cover
+        """Produce a string representation of the tree.
+
+        Parameters
+        ----------
+        use_slashes : bool, default: False
+            Use slashes for CCG types instead of arrows.
+
+        """
         output_type = biclosed2str(self.biclosed_type, not use_slashes)
         if self.rule == CCGRule.LEXICAL:
             deriv = f' {output_type} ∋ "{self.text}"'
@@ -174,33 +222,45 @@ class CCGTree:
             deriv = (f'{self.rule}: {output_type} ← ' +
                      ' + '.join(biclosed2str(child.biclosed_type, True)
                                 for child in self.children))
-        deriv = f'{prefix}{deriv}'
+        deriv = f'{_prefix}{deriv}'
 
         if self.children:
-            if prefix:
-                prefix = prefix[:-1] + ('│ ' if prefix[-1] == '├' else '  ')
+            if _prefix:
+                _prefix = _prefix[:-1] + ('│ ' if _prefix[-1] == '├' else '  ')
             for child in self.children[:-1]:
-                deriv += '\n' + child.deriv(use_slashes, prefix + '├')
-            deriv += '\n' + self.children[-1].deriv(use_slashes, prefix + '└')
+                deriv += '\n' + child.deriv(use_slashes, _prefix + '├')
+            deriv += '\n' + self.children[-1].deriv(use_slashes, _prefix + '└')
         return deriv
 
-    def to_biclosed_diagram(self,
-                            separate_words: bool = False,
-                            planar: bool = False,
-                            resolved_output: Optional[Ty] = None) -> Diagram:
+    def to_biclosed_diagram(self, planar: bool = False) -> Diagram:
+        """Convert tree to a derivation in DisCoPy form.
+
+        Parameters
+        ----------
+        planar : bool, default: False
+            Force the diagram to be planar. This only affects trees
+            using cross composition.
+
+        """
+        words, grammar = self._to_biclosed_diagram(planar)
+        return words >> grammar
+
+    def _to_biclosed_diagram(
+            self,
+            planar: bool = False,
+            resolved_output: Optional[Ty] = None) -> Tuple[Diagram, Diagram]:
         biclosed_type = resolved_output or self.biclosed_type
 
         if self.rule == CCGRule.LEXICAL:
-            word = biclosed.Box(self.text, Ty(), biclosed_type)
-            return (word, Id(biclosed_type)) if separate_words else word
+            word = Box(self.text, Ty(), biclosed_type)
+            return word, Id(biclosed_type)
 
         child_types = [child.biclosed_type for child in self.children]
 
         this_layer = self.rule(Ty.tensor(*child_types), biclosed_type)
 
-        children = [child.to_biclosed_diagram(True,
-                                              planar,
-                                              this_layer.dom[i:i+1])
+        children = [child._to_biclosed_diagram(planar,
+                                               this_layer.dom[i:i+1])
                     for i, child in enumerate(self.children)]
 
         if planar and self.rule == CCGRule.BACKWARD_CROSSED_COMPOSITION:
@@ -225,17 +285,23 @@ class CCGTree:
             words, diag = [Diagram.tensor(*d) for d in zip(*children)]
             diag >>= this_layer
 
-        if separate_words:
-            return words, diag
-        else:
-            return words >> diag
+        return words, diag
 
     def to_diagram(self, planar: bool = False) -> rigid.Diagram:
+        """Convert tree to a DisCoCat diagram.
+
+        Parameters
+        ----------
+        planar : bool, default: False
+            Force the diagram to be planar. This only affects trees
+            using cross composition.
+
+        """
         def ob_func(ob: Ty) -> rigid.Ty:
             return (rigid.Ty() if ob == CCGAtomicType.PUNCTUATION
                     else biclosed2rigid_ob(ob))
 
-        def ar_func(box: biclosed.Box) -> rigid.Diagram:
+        def ar_func(box: Box) -> rigid.Diagram:
             #           special box -> special diagram
             # RemovePunctuation box -> identity wire(s)
             #           punctuation -> empty diagram
@@ -245,7 +311,7 @@ class CCGTree:
                       base: Ty) -> Tuple[rigid.Ty, rigid.Ty, rigid.Ty]:
                 left = right = rigid.Ty()
                 while cat != base:
-                    if isinstance(cat, biclosed.Over):
+                    if isinstance(cat, Over):
                         right = to_rigid_diagram(cat.right).l @ right
                         cat = cat.left
                     else:

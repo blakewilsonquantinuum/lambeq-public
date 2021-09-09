@@ -52,10 +52,10 @@ def str2biclosed(cat: str, str2type: Callable[[str], Ty] = Ty) -> Ty:
     ----------
     cat : str
         The string to be parsed.
-    str2type: callable
-        A function that parses an atomic category into a biclosed type. The
-        default uses `discopy.biclosed.Ty` to produce a type with the same
-        name as the atomic category.
+    str2type: callable, default: discopy.biclosed.Ty
+        A function that parses an atomic category into a biclosed type.
+        The default uses :py:class:`discopy.biclosed.Ty` to produce a
+        type with the same name as the atomic category.
 
     Returns
     -------
@@ -129,10 +129,10 @@ def replace_cat_result(cat: Ty,
                        direction: str = '|') -> Tuple[Ty, Optional[Ty]]:
     """Replace the innermost category result with a new category.
 
-    This attempts to replace provided result category with a replacement. If
-    the provided category cannot be found, it replaces the innermost category
-    possible. In both cases, the replaced category is returned alongside the
-    new category.
+    This attempts to replace the specified result category with a
+    replacement. If the specified category cannot be found, it replaces
+    the innermost category possible. In both cases, the replaced
+    category is returned alongside the new category.
 
     Parameters
     ----------
@@ -143,10 +143,11 @@ def replace_cat_result(cat: Ty,
     replacement : discopy.biclosed.Ty
         The replacement for the new category.
     direction : str
-        Used to check the operations in the category. Consists of either 1 or 2
-        characters, each being one of '/', '\', '|'. If 2 characters, the first
-        checks the innermost operation, and the second checks the rest. If only
-        1 character, it is used for all checks.
+        Used to check the operations in the category. Consists of either
+        1 or 2 characters, each being one of '<', '>', '|'. If 2
+        characters, the first checks the innermost operation, and the
+        second checks the rest. If only 1 character, it is used for all
+        checks.
 
     Returns
     -------
@@ -155,15 +156,59 @@ def replace_cat_result(cat: Ty,
     discopy.biclosed.Ty
         The replaced result category.
 
+    Notes
+    -----
+    This function is mainly used for substituting inner types in
+    generalised versions of CCG rules. (See :py:meth:`.infer_rule`)
+
+    Examples
+    --------
+    >>> a, b, c, x, y = map(Ty, 'abcxy')
+
+    **Example 1**: ``b >> c`` in ``a >> (b >> c)`` is matched and
+    replaced with ``x``.
+
+    >>> new, replaced = replace_cat_result(a >> (b >> c), b >> c, x)
+    >>> print(new, replaced)
+    (a >> x) (b >> c)
+
+    **Example 2**: ``b >> a`` cannot be matched, so the innermost
+    category ``c`` is replaced instead.
+
+    >>> new, replaced = replace_cat_result(a >> (b >> c), b >> a, x << y)
+    >>> print(new, replaced)
+    (a >> (b >> (x << y))) c
+
+    **Example 3**: if not all operators are ``<<``, then nothing is
+    replaced.
+
+    >>> new, replaced = replace_cat_result(a >> (c << b), x, y, '<')
+    >>> print(new, replaced)
+    (a >> (c << b)) None
+
+    **Example 4**: the innermost use of ``<<`` is on ``c`` and ``b``,
+    so the target ``c`` is replaced with ``y``.
+
+    >>> new, replaced = replace_cat_result(a >> (c << b), x, y, '<|')
+    >>> print(new, replaced)
+    (a >> (y << b)) c
+
+    **Example 5**: the innermost use of ``>>`` is on ``a`` and
+    ``(c << b)``, so its target ``(c << b)`` is replaced by ``y``.
+
+    >>> new, replaced = replace_cat_result(a >> (c << b), x, y, '>|')
+    >>> print(new, replaced)
+    (a >> y) (c << b)
+
     """
 
-    if not (len(direction) in (1, 2) and set(direction).issubset(r'\|/')):
+    if not (len(direction) in (1, 2) and set(direction).issubset('<|>')):
         raise ValueError(f'Invalid direction: "{direction}"')
     if not cat.left:
         return cat, None
 
-    cat_dir = '/' if cat == cat.left << cat.right else '\\'
-    arg, res = ((cat.right, cat.left) if cat_dir == '/' else
+    cat_dir = '<' if cat == cat.left << cat.right else '>'
+    arg, res = ((cat.right, cat.left) if cat_dir == '<' else
                 (cat.left, cat.right))
 
     # `replace` indicates whether `res` should be replaced, due to one of the
@@ -187,4 +232,4 @@ def replace_cat_result(cat: Ty,
             return cat, None
         new, old = replacement, res
 
-    return new << arg if cat_dir == '/' else arg >> new, old
+    return new << arg if cat_dir == '<' else arg >> new, old

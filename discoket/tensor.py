@@ -1,6 +1,6 @@
 """
 Tensor Ansatz
-======
+=============
 A tensor ansatz is used to convert a DisCoCat diagram into a tensor network.
 
 """
@@ -27,8 +27,8 @@ class TensorAnsatz(BaseAnsatz):
         Parameters
         ----------
         ob_map : dict
-            A mapping from `discopy.rigid.Ty` to the dimension space it
-            uses in a tensor network.
+            A mapping from :py:class:`discopy.rigid.Ty` to the dimension
+            space it uses in a tensor network.
         **kwargs : dict
             Extra parameters for ansatz configuration.
 
@@ -68,13 +68,13 @@ class MPSAnsatz(TensorAnsatz):
         Parameters
         ----------
         ob_map : dict
-            A mapping from `discopy.rigid.Ty` to the dimension space it
-            uses in a tensor network.
+            A mapping from :py:class:`discopy.rigid.Ty` to the dimension
+            space it uses in a tensor network.
         bond_dim: int
             The size of the bonding dimension.
         max_order: int
-            The maximum order of each tensor in the matrix product state,
-            which must be at least 3.
+            The maximum order of each tensor in the matrix product
+            state, which must be at least 3.
 
         """
         if max_order < 3:
@@ -124,8 +124,8 @@ class SpiderAnsatz(TensorAnsatz):
         Parameters
         ----------
         ob_map : dict
-            A mapping from `discopy.rigid.Ty` to the dimension space it
-            uses in a tensor network.
+            A mapping from :py:class:`discopy.rigid.Ty` to the dimension
+            space it uses in a tensor network.
         max_order: int
             The maximum order of each tensor, which must be at least 2.
 
