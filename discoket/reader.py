@@ -40,6 +40,7 @@ See `examples/readers.ipynb` for illustrative usage.
 """
 
 from __future__ import annotations
+from abc import ABC, abstractmethod
 
 __all__ = ['Reader', 'LinearReader', 'cups_reader', 'spiders_reader']
 
@@ -54,29 +55,12 @@ S = AtomicType.SENTENCE
 DISCARD = Discard(S)
 
 
-class Reader:
-    """Base class for readers.
+class Reader(ABC):
+    """Base class for readers."""
 
-    This class cannot be used directly, since its methods
-    :py:meth:`sentence2diagram` and :py:meth:`sentences2diagrams` call
-    each other. This is so that a subclass only needs to implement one
-    method of these methods for full functionality (though both can be
-    overridden if needed).
-
-    """
-
-    def __new__(cls, *args: Any, **kwargs: Any) -> Reader:
-        if (cls.sentence2diagram == Reader.sentence2diagram and
-                cls.sentences2diagrams == Reader.sentences2diagrams):
-            raise TypeError(
-                    'This class cannot be directly instantiated since neither '
-                    '`sentence2diagram` and `sentences2diagrams` have been '
-                    'implemented. See `help(Reader)` for more details.')
-        return super().__new__(cls)
-
+    @abstractmethod
     def sentence2diagram(self, sentence: str) -> Diagram:
         """Parse a sentence into a DisCoPy diagram."""
-        return self.sentences2diagrams([sentence])[0]
 
     def sentences2diagrams(self, sentences: Sequence[str]) -> List[Diagram]:
         """Parse multiple sentences into a list of DisCoPy diagrams."""

@@ -85,8 +85,6 @@ class DepCCGParser(CCGParser):
         if not isinstance(model, str):
             raise TypeError('`model` must be an `EnglishCCGParser` or a str.')
 
-        if model in ('basic', 'tri_headfirst'):  # possible aliases
-            model = ''
         model_dir, config_file = depccg.download.load_model_directory(
                 f'en[{model}]' if model else 'en')
 

@@ -1,5 +1,7 @@
 import pytest
 
+from unittest.mock import Mock
+
 from discopy import Word
 from discopy.rigid import Cup, Diagram, Id, Swap, Ty
 
@@ -18,6 +20,15 @@ def test_model_initialisation(depccg_parser):
 
     parser = depccg_parser.parser
     assert DepCCGParser(model=parser).parser == parser
+
+
+def test_to_biclosed(depccg_parser):
+    mock_type = Mock(is_functor=False, is_NorNP=False, base='PP')
+    assert depccg_parser._to_biclosed(mock_type) == AtomicType.PREPOSITION
+
+    mock_type.base = 'UNK'
+    with pytest.raises(Exception):
+        depccg_parser._to_biclosed(mock_type)
 
 
 def test_sentence2diagram(depccg_parser):

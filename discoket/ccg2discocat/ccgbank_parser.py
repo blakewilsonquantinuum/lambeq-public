@@ -149,7 +149,7 @@ class CCGBankParser(CCGParser):
                         trees[match['id']] = tree
                     elif not suppress_exceptions:
                         raise CCGBankParseError('Failed to parse ID in '
-                                                f'"{file}" line {line_no}.')
+                                                f'"{file}" line {line_no}')
         return trees
 
     def section2diagrams(
@@ -234,7 +234,7 @@ class CCGBankParser(CCGParser):
                 tree, pos = CCGBankParser._build_ccgtree(sentence, 0)
                 if pos < len(sentence):
                     raise CCGBankParseError('extra text starting at character '
-                                            f'{pos+1} - "{sentence[pos:]}".')
+                                            f'{pos+1} - "{sentence[pos:]}"')
             except Exception as e:
                 if not suppress_exceptions:
                     raise CCGBankParseError(sentence, str(e))
@@ -246,7 +246,7 @@ class CCGBankParser(CCGParser):
         tree_match = CCGBankParser.tree_regex.match(sentence, pos=start)
         if not tree_match:
             raise CCGBankParseError('malformed tree starting from character '
-                                    f'{start+1} - "tree[start:]".')
+                                    f'{start+1} - "{sentence[start:]}"')
 
         biclosed_type = str2biclosed(tree_match['ccg_str'],
                                      str2type=CCGBankParser._parse_atomic_type)
@@ -276,7 +276,7 @@ class CCGBankParser(CCGParser):
     def _parse_atomic_type(cat: str) -> Ty:
         match = CCGBankParser.ccg_type_regex.fullmatch(cat)
         if not match:
-            raise CCGBankParseError(f'failed to parse atomic type "{cat}".')
+            raise CCGBankParseError(f'failed to parse atomic type "{cat}"')
         cat = match['bare_cat'] or cat
         if cat in ('N', 'NP'):
             return CCGAtomicType.NOUN

@@ -220,7 +220,7 @@ class TestGeneralizedBackwardCrossedComposition(CCGRuleTester):
                       Id(N.r) @ Cup(S, S.r) @ Id(S @ N.l))
 
 
-class GeneralizedForwardComposition(CCGRuleTester):
+class TestGeneralizedForwardComposition(CCGRuleTester):
     word = CCGTree('word', biclosed_type=(n << s) << n)
     tree = CCGTree(rule='GFC', biclosed_type=(s << s) << n, children=(be, word))
 
@@ -231,7 +231,7 @@ class GeneralizedForwardComposition(CCGRuleTester):
     diagram = words >> (Id(S) @ Cup(N.l, N) @ Id(S.l @ N.l))
 
 
-class GeneralizedForwardCrossedComposition(CCGRuleTester):
+class TestGeneralizedForwardCrossedComposition(CCGRuleTester):
     have = CCGTree('have', biclosed_type=(n >> s) << n)
     tree = CCGTree(rule='GFX', biclosed_type=(n >> s) << n, children=(do, have))
 
@@ -291,7 +291,7 @@ class TestUnary(CCGRuleTester):
 
 
 class TestUnknown(CCGRuleTester):
-    tree = CCGTree(rule='UNK', biclosed_type=i, children=[the])
+    tree = CCGTree(rule='UNK', biclosed_type=n, children=[it, it, it])
 
     def test_biclosed_diagram(self):
         with pytest.raises(CCGRuleUseError):
@@ -309,8 +309,10 @@ class TestUnknown(CCGRuleTester):
         with pytest.raises(CCGRuleUseError):
             self.tree.to_diagram(planar=True)
 
-    def test_infer_rule(self):
-        pass  # UNK rule is not inferable
-
     def test_initialisation(self):
         assert CCGRule('missing') == CCGRule.UNKNOWN
+
+
+def test_check_match():
+    with pytest.raises(CCGRuleUseError):
+        CCGRule.UNKNOWN.check_match(i, n)

@@ -114,6 +114,10 @@ def str2biclosed(cat: str, str2type: Callable[[str], Ty] = Ty) -> Ty:
 def _clean_str2biclosed(cat: str,
                         str2type: Callable[[str], Ty] = Ty,
                         start: int = 0) -> Tuple[Ty, int]:
+    if cat[start] == ')':
+        raise CCGParseError(
+                f'Failed to parse "{cat}: unexpected ")" '
+                f'at character {start+1}.')
     if cat[start] != '(':
         # base case
         end = start + 1
@@ -124,15 +128,15 @@ def _clean_str2biclosed(cat: str,
         biclosed_type = str2type(cat[start:end])
     else:
         biclosed_type, end = _clean_str2biclosed(cat, str2type, start + 1)
+        if end >= len(cat):
+            raise CCGParseError(
+                    f'Failed to parse "{cat}": unmatched "(" at character '
+                    f'{start+1}, expected at character {end+1}.')
         op = cat[end]
         if op in r'\/':
             right, end = _clean_str2biclosed(cat, str2type, end + 1)
             biclosed_type = (biclosed_type << right if op == '/' else
                              right >> biclosed_type)
-        if cat[end] != ')':
-            raise CCGParseError(
-                    f'Failed to parse "{cat}": unmatched "(" at character '
-                    f'{start+1}, expected at character {end+1}.')
         end += 1
     return biclosed_type, end
 

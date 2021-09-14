@@ -19,11 +19,6 @@ def words(sentence):
     return words
 
 
-def test_reader():
-    with pytest.raises(TypeError):
-        Reader()
-
-
 def test_spiders_reader(sentence, words):
     S = AtomicType.SENTENCE
     combining_diagram = spiders_reader.combining_diagram

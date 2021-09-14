@@ -29,6 +29,7 @@ from discopy.quantum import Circuit, qubit
 from discopy.quantum.circuit import Functor, Id, IQPansatz as IQP
 from discopy.quantum.gates import Bra, Ket, Rx, Rz
 from discopy.rigid import Box, Diagram, Ty
+import numpy as np
 
 from discoket.ansatz import BaseAnsatz, Symbol
 from discoket.core.types import Discard
@@ -132,7 +133,7 @@ class IQPAnsatz(CircuitAnsatz):
         else:
             n_params = n_layers * (n_qubits-1)
             syms = [Symbol(f'{label}_{i}') for i in range(n_params)]
-            params = Tensor.np.array(syms).reshape((n_layers, n_qubits-1))
+            params = np.array(syms).reshape((n_layers, n_qubits-1))
             circuit = IQP(n_qubits, params)
 
         if cod <= dom:

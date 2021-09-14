@@ -1,10 +1,10 @@
 import pytest
 
 from discopy import Word
-from discopy.rigid import Cap, Cup, Diagram, Id
+from discopy.rigid import Box, Cap, Cup, Diagram, Id
 
 from discoket.core.types import AtomicType
-from discoket.rewrite import Rewriter
+from discoket.rewrite import Rewriter, SimpleRewriteRule
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -17,6 +17,16 @@ def test_initialisation():
 
     with pytest.raises(ValueError):
         Rewriter(['nonexistent rule'])
+
+
+def test_custom_rewriter():
+    placeholder = SimpleRewriteRule.placeholder(S)
+    not_box = Box('NOT', S, S)
+    not_rewriter = SimpleRewriteRule(
+        cod=S, template=placeholder >> not_box)
+
+    diagram = Word('I think', S)
+    assert not_rewriter(diagram) == diagram >> not_box
 
 
 def test_auxiliary():

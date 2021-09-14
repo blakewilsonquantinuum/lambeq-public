@@ -11,7 +11,7 @@ from discoket.ccg2discocat.ccg_tree import CCGTree
 def tree():
     n, s = Ty('n'), Ty('s')
     the = CCGTree(text='the', biclosed_type=n << n)
-    do = CCGTree(text='do', biclosed_type=s)
+    do = CCGTree(text='do', biclosed_type=s >> s)
     do_unary = CCGTree(text='do', rule='U', biclosed_type=n, children=(do,))
     return CCGTree(text='the do', rule='FA', biclosed_type=n, children=(the, do_unary))
 
