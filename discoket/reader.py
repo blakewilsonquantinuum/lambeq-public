@@ -9,24 +9,16 @@ For example, the `LinearReader` combines linearly from left-to-right.
 Subclass `Reader` to define a custom reader.
 
 Some simple example readers are included for use:
-    box_stairs_reader : LinearReader
-        This combines the first two word boxes with a combining box that
-        has a single output. Then, each word box is combined with the
-        output from the previous combining box to produce a stair
-        pattern.
-    box_stairs_with_discard_reader : LinearReader
-        This is similar to the `box_stairs_reader`, but the combining
-        box has two outputs to match the number of inputs, so one output
-        is discarded before the remaining output is combined with the
-        next word box.
     cups_reader : LinearReader
         This combines each pair of adjacent word boxes with a cup This
         requires each word box to have the output `S >> S` to expose two
         output wires, and a sentinel start box is used to connect to the
         first word box.
     spiders_reader : LinearReader
-        This is a special case of the `box_stairs_reader` where the
-        combining box is a spider with three legs.
+        This combines the first two word boxes using a spider with a
+        single output, which is combined with the next word box using
+        another spider, and so on, until a single output remains. Here,
+        each word box has an output type of `S @ S`.
 
 See `examples/readers.ipynb` for illustrative usage.
 
@@ -34,13 +26,12 @@ See `examples/readers.ipynb` for illustrative usage.
 
 from __future__ import annotations
 
-__all__ = ['Reader', 'LinearReader', 'box_stairs_reader',
-           'box_stairs_with_discard_reader', 'cups_reader', 'spiders_reader']
+__all__ = ['Reader', 'LinearReader', 'cups_reader', 'spiders_reader']
 
 from typing import Any, List, Sequence
 
 from discopy import Word
-from discopy.rigid import Box, Cup, Diagram, Id, Spider, Ty
+from discopy.rigid import Cup, Diagram, Id, Spider, Ty
 
 from discoket.core.types import AtomicType, Discard
 
@@ -120,8 +111,5 @@ class LinearReader(Reader):
         return diagram
 
 
-box_stairs_reader = LinearReader(Box('STAIR', S @ S, S))
-box_stairs_with_discard_reader = LinearReader(
-        Box('STAIR', S @ S, S @ S) >> DISCARD @ Id(S))
 cups_reader = LinearReader(Cup(S, S.r), S >> S, Word('START', S))
 spiders_reader = LinearReader(Spider(2, 1, S))
