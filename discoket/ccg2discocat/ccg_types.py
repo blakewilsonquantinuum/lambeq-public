@@ -29,6 +29,13 @@ CONJ_TAG = '[conj]'
 class CCGParseError(Exception):
     """Error when parsing a CCG type string."""
 
+    def __init__(self, cat: str, message: str) -> None:
+        self.cat = cat
+        self.message = message
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f'Failed to parse "{self.cat}": {self.message}.'
+
 
 class _CCGAtomicTypeMeta(Ty, Enum):
     def __new__(cls, value: rigid.Ty) -> Ty:
@@ -97,47 +104,63 @@ def str2biclosed(cat: str, str2type: Callable[[str], Ty] = Ty) -> Ty:
     thus ``C[conj]`` is equivalent to ``C\C``.
 
     """
+    is_conj = cat.endswith(CONJ_TAG)
+    clean_cat = cat[:-len(CONJ_TAG)] if is_conj else cat
 
-    if cat.endswith(CONJ_TAG):
-        clean_cat = f'({cat[:-len(CONJ_TAG)]})'
-        base_type, end = _clean_str2biclosed(clean_cat, str2type)
-        biclosed_type = base_type >> base_type
-    else:
-        clean_cat = f'({cat})'
-        biclosed_type, end = _clean_str2biclosed(clean_cat, str2type)
-    if end != len(clean_cat):
-        raise CCGParseError(f'Failed to parse "{cat}": extra text after '
-                            f'character {end} - "{cat[end-1:]}".')
+    try:
+        biclosed_type, end = _compound_str2biclosed(clean_cat, str2type, 0)
+    except CCGParseError as e:
+        raise CCGParseError(cat, e.message)  # reraise with original cat string
+
+    if is_conj:
+        biclosed_type = biclosed_type >> biclosed_type
+
+    extra = clean_cat[end:]
+    if extra:
+        raise CCGParseError(cat, f'extra text after index {end-1} - "{extra}"')
     return biclosed_type
 
 
-def _clean_str2biclosed(cat: str,
-                        str2type: Callable[[str], Ty] = Ty,
-                        start: int = 0) -> Tuple[Ty, int]:
-    if cat[start] == ')':
-        raise CCGParseError(
-                f'Failed to parse "{cat}: unexpected ")" '
-                f'at character {start+1}.')
-    if cat[start] != '(':
-        # base case
-        end = start + 1
-        while end < len(cat):
-            if cat[end] in r'/\)':
-                break
-            end += 1
-        biclosed_type = str2type(cat[start:end])
-    else:
-        biclosed_type, end = _clean_str2biclosed(cat, str2type, start + 1)
-        if end >= len(cat):
-            raise CCGParseError(
-                    f'Failed to parse "{cat}": unmatched "(" at character '
-                    f'{start+1}, expected at character {end+1}.')
+def _compound_str2biclosed(cat: str,
+                           str2type: Callable[[str], Ty],
+                           start: int) -> Tuple[Ty, int]:
+    biclosed_type, end = _clean_str2biclosed(cat, str2type, start)
+    try:
         op = cat[end]
+    except IndexError:
+        pass
+    else:
         if op in r'\/':
             right, end = _clean_str2biclosed(cat, str2type, end + 1)
             biclosed_type = (biclosed_type << right if op == '/' else
                              right >> biclosed_type)
+    return biclosed_type, end
+
+
+def _clean_str2biclosed(cat: str,
+                        str2type: Callable[[str], Ty],
+                        start: int) -> Tuple[Ty, int]:
+    if not cat[start:]:
+        raise CCGParseError(cat, 'unexpected end of input')
+    if cat[start] != '(':
+        # base case
+        if cat[start] in r'/\)':
+            raise CCGParseError(cat,
+                                f'unexpected "{cat[start]}" at index {start}')
+        end = start
+        while end < len(cat) and cat[end] not in r'/\)':
+            if cat[end] == '(':
+                raise CCGParseError(cat, f'unexpected "(" at index {end}')
+            end += 1
+        biclosed_type = str2type(cat[start:end])
+    else:
+        biclosed_type, end = _compound_str2biclosed(cat, str2type, start+1)
+        if end >= len(cat):
+            raise CCGParseError(
+                    cat, f'input ended with unmatched "(" at index {start}')
+        assert cat[end] == ')'
         end += 1
+
     return biclosed_type, end
 
 

@@ -2,13 +2,13 @@ import pytest
 
 from discopy.biclosed import Ty
 
-from discoket.ccg2discocat.ccg_tree import replace_cat_result, str2biclosed
+from discoket.ccg2discocat.ccg_types import CCGParseError, replace_cat_result, str2biclosed
 
 
 def test_str2biclosed():
-    for s in ('(a', '(a)a', '()', '))'):
-        with pytest.raises(Exception):
-            str2biclosed(s)
+    for cat in ('', ')', '(a', 'a(', 'a)'):
+        with pytest.raises(CCGParseError):
+            str2biclosed(cat)
 
 
 def test_replace_cat_result():
