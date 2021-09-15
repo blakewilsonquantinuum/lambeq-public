@@ -21,7 +21,7 @@ from typing import Any, Callable, List, Optional, Tuple
 from discopy import rigid
 from discopy.biclosed import Ty
 
-from discoket.core.types import AtomicType
+from lambeq.core.types import AtomicType
 
 CONJ_TAG = '[conj]'
 

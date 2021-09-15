@@ -3,8 +3,8 @@ import pytest
 from discopy import Word
 from discopy.rigid import Diagram, Id
 
-from discoket.core.types import AtomicType
-from discoket.reader import (Reader, cups_reader, spiders_reader)
+from lambeq.core.types import AtomicType
+from lambeq.reader import cups_reader, spiders_reader
 
 
 @pytest.fixture

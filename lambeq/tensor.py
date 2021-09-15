@@ -29,7 +29,7 @@ from discopy import rigid, Ty, tensor, Word
 from discopy.rigid import Cup, Spider
 from discopy.tensor import Dim
 
-from discoket.ansatz import BaseAnsatz, Symbol
+from lambeq.ansatz import BaseAnsatz, Symbol
 
 
 class TensorAnsatz(BaseAnsatz):

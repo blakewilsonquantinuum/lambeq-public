@@ -17,9 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'DisCoKet'
-copyright = '2021, CQ QNLP Dev Team'
-author = 'CQ QNLP Dev Team'
+project = 'Lambeq'
+copyright = '2021, Cambridge Quantum Computing Ltd.'
+author = 'Cambridge Quantum QNLP Dev Team'
 
 
 # -- General configuration ---------------------------------------------------

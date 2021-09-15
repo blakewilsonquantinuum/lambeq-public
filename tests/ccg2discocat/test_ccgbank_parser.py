@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import Mock
 
-from discoket.ccg2discocat.ccg_types import CCGAtomicType
-from discoket.ccg2discocat.ccgbank_parser import CCGBankParseError, CCGBankParser
+from lambeq.ccg2discocat.ccg_types import CCGAtomicType
+from lambeq.ccg2discocat.ccgbank_parser import CCGBankParseError, CCGBankParser
 
 
 class BadParser(CCGBankParser):

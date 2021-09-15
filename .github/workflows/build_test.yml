@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  SRC_DIR: discoket
+  SRC_DIR: lambeq
 
 jobs:
   lint:

@@ -11,4 +11,4 @@ module = ["depccg.*", "discopy.*", "sympy.*", "tensornetwork"]
 ignore_missing_imports = true
 
 [tool.setuptools_scm]
-write_to = "discoket/version.py"
+write_to = "lambeq/version.py"

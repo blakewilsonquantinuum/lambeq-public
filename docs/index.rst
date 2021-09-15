@@ -1,7 +1,7 @@
-discoket
-========
+lambeq
+======
 
 .. toctree::
    :maxdepth: 4
 
-   discoket
+   lambeq

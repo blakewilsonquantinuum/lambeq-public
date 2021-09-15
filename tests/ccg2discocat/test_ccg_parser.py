@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 
-from discoket.ccg2discocat.ccg_parser import CCGParser
+from lambeq.ccg2discocat.ccg_parser import CCGParser
 
 
 class BadParser(CCGParser):

@@ -1,5 +1,5 @@
-# `discoket/version.py` is generated automatically by setuptools-scm
-discoket/version.py
+# `lambeq/version.py` is generated automatically by setuptools-scm
+lambeq/version.py
 
 # development files
 *.egg-info/

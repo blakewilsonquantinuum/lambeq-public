@@ -34,14 +34,13 @@ from pathlib import Path
 import re
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
-from discoket.ccg2discocat.ccg_parser import CCGParser
-from discoket.ccg2discocat.ccg_rule import CCGRule
-from discoket.ccg2discocat.ccg_tree import CCGTree
-from discoket.ccg2discocat.ccg_types import (CONJ_TAG, CCGAtomicType,
-                                             str2biclosed)
-
 from discopy.biclosed import Ty
 from discopy.rigid import Diagram
+
+from lambeq.ccg2discocat.ccg_parser import CCGParser
+from lambeq.ccg2discocat.ccg_rule import CCGRule
+from lambeq.ccg2discocat.ccg_tree import CCGTree
+from lambeq.ccg2discocat.ccg_types import CONJ_TAG, CCGAtomicType, str2biclosed
 
 
 class CCGBankParseError(Exception):

@@ -23,9 +23,9 @@ from discopy import rigid, Word
 from discopy.biclosed import (Box, Diagram, Functor, Id, Over, Ty, Under,
                               biclosed2rigid_ob)
 
-from discoket.ccg2discocat.ccg_rule import CCGRule, GBC, GBX, GFC, GFX
-from discoket.ccg2discocat.ccg_types import (CCGAtomicType, replace_cat_result,
-                                             str2biclosed)
+from lambeq.ccg2discocat.ccg_rule import CCGRule, GBC, GBX, GFC, GFX
+from lambeq.ccg2discocat.ccg_types import (CCGAtomicType, replace_cat_result,
+                                           str2biclosed)
 
 # Types
 _JSONDictT = Dict[str, Any]

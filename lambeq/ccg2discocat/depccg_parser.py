@@ -24,10 +24,10 @@ import depccg.download
 from depccg.parser import EnglishCCGParser
 from discopy.biclosed import Ty
 
-from discoket.ccg2discocat.ccg_parser import CCGParser
-from discoket.ccg2discocat.ccg_rule import CCGRule
-from discoket.ccg2discocat.ccg_tree import CCGTree
-from discoket.ccg2discocat.ccg_types import CCGAtomicType
+from lambeq.ccg2discocat.ccg_parser import CCGParser
+from lambeq.ccg2discocat.ccg_rule import CCGRule
+from lambeq.ccg2discocat.ccg_tree import CCGTree
+from lambeq.ccg2discocat.ccg_types import CCGAtomicType
 
 
 class DepCCGParseError(Exception):

@@ -2,10 +2,11 @@ import pytest
 
 from discopy import Dim, Word
 from discopy.rigid import Diagram, Id, Ty
-from discoket.tensor import MPSAnsatz, TensorAnsatz, SpiderAnsatz
 import numpy as np
 from sympy.core.compatibility import default_sort_key
 import tensornetwork as tn
+
+from lambeq.tensor import MPSAnsatz, TensorAnsatz, SpiderAnsatz
 
 
 @pytest.fixture

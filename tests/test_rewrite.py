@@ -3,8 +3,8 @@ import pytest
 from discopy import Word
 from discopy.rigid import Box, Cap, Cup, Diagram, Id
 
-from discoket.core.types import AtomicType
-from discoket.rewrite import Rewriter, SimpleRewriteRule
+from lambeq.core.types import AtomicType
+from lambeq.rewrite import Rewriter, SimpleRewriteRule
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

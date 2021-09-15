@@ -2,7 +2,7 @@
 
 GLOBAL_FLAG='--global'
 if [ "$#" -ne 1 ]; then
-    echo "DisCoKet installer.
+    echo "Lambeq installer.
 
 Usage:
   install.sh $GLOBAL_FLAG
@@ -29,7 +29,7 @@ echo 'Installing dependencies...'
 $PYTHON -m pip install --upgrade pip wheel
 $PYTHON -m pip install cython numpy
 
-echo 'Installing DisCoKet...'
+echo 'Installing Lambeq...'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 $PYTHON -m pip install --use-feature=in-tree-build "$SCRIPT_DIR"
 

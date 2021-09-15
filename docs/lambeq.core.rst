@@ -1,13 +1,13 @@
-discoket.core package
-=====================
+lambeq.core package
+===================
 
 Submodules
 ----------
 
-discoket.core.types module
---------------------------
+lambeq.core.types module
+------------------------
 
-.. automodule:: discoket.core.types
+.. automodule:: lambeq.core.types
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ discoket.core.types module
 Module contents
 ---------------
 
-.. automodule:: discoket.core
+.. automodule:: lambeq.core
    :members:
    :undoc-members:
    :show-inheritance:

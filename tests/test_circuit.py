@@ -1,14 +1,12 @@
-import pytest
-
 from discopy import Box, Cup, Ty, Word
 from discopy import Discard as QDiscard
 from discopy.quantum import Bra, CRz, CX, H, Ket, qubit, Rx, Rz, sqrt
 from discopy.quantum.circuit import Id
-from discoket.core.types import AtomicType
-from discoket.circuit import IQPAnsatz
-from discoket.reader import DISCARD
-from pytket.qasm import circuit_to_qasm_str
-from discoket.ansatz import Symbol as sym
+
+from lambeq.ansatz import Symbol as sym
+from lambeq.circuit import IQPAnsatz
+from lambeq.core.types import AtomicType
+from lambeq.reader import DISCARD
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

@@ -49,7 +49,7 @@ from typing import Any, List, Sequence
 from discopy import Word
 from discopy.rigid import Cup, Diagram, Id, Spider, Ty
 
-from discoket.core.types import AtomicType, Discard
+from lambeq.core.types import AtomicType, Discard
 
 S = AtomicType.SENTENCE
 DISCARD = Discard(S)

@@ -5,8 +5,8 @@ from unittest.mock import Mock
 from discopy import Word
 from discopy.rigid import Cup, Diagram, Id, Swap, Ty
 
-from discoket.ccg2discocat.depccg_parser import DepCCGParser, DepCCGParseError
-from discoket.core.types import AtomicType
+from lambeq.ccg2discocat.depccg_parser import DepCCGParser, DepCCGParseError
+from lambeq.core.types import AtomicType
 
 
 @pytest.fixture(scope='module')

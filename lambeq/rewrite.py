@@ -62,7 +62,7 @@ from typing import Container, Iterable, List, Optional, Union
 from discopy import Word
 from discopy.rigid import Box, Cap, Diagram, Functor, Id, Ty
 
-from discoket.core.types import AtomicType
+from lambeq.core.types import AtomicType
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

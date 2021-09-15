@@ -31,8 +31,8 @@ from discopy.quantum.gates import Bra, Ket, Rx, Rz
 from discopy.rigid import Box, Diagram, Ty
 import numpy as np
 
-from discoket.ansatz import BaseAnsatz, Symbol
-from discoket.core.types import Discard
+from lambeq.ansatz import BaseAnsatz, Symbol
+from lambeq.core.types import Discard
 
 _ArMapT = Callable[[Box], Circuit]
 

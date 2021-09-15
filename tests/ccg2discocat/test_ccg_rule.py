@@ -4,13 +4,11 @@ from discopy import biclosed, Word
 from discopy.biclosed import Box
 from discopy.rigid import Cap, Cup, Diagram, Id, Swap, caps
 
-from discoket.ccg2discocat.ccg_rule import (CCGRuleUseError, CCGRule, GBC, GBX,
-                                            GFC, GFX, RPL, RPR)
-from discoket.ccg2discocat.ccg_types import CCGAtomicType
-from discoket.core.types import AtomicType
+from lambeq.ccg2discocat.ccg_rule import CCGRuleUseError, CCGRule, GBC, GBX, GFC, GFX, RPL, RPR
+from lambeq.ccg2discocat.ccg_types import CCGAtomicType
+from lambeq.core.types import AtomicType
 
-from discoket.ccg2discocat.ccg_tree import (CCGTree, PlanarBX, PlanarFX,
-                                            PlanarGBX, PlanarGFX)
+from lambeq.ccg2discocat.ccg_tree import CCGTree, PlanarBX, PlanarFX, PlanarGBX, PlanarGFX
 
 
 N = AtomicType.NOUN
