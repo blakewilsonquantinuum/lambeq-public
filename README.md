@@ -65,11 +65,12 @@ bash install.sh <installation-directory>
 
 ## Usage
 
-The [`examples`](examples) directory contains notebooks demonstrating
+The [docs/examples](https://github.com/CQCL-DEV/lambeq-beta/blob/main/examples/ccg2discocat.ipynb)
+directory contains notebooks demonstrating
 usage of the various tools in Lambeq.
 
 Example - parsing a sentence into a diagram (see
-[`examples/ccg2discocat.ipynb`](examples/ccg2discokat.ipynb)):
+[docs/examples/ccg2discocat.ipynb](https://github.com/CQCL/lambeq-beta/blob/main/docs/examples/ccg2discocat.ipynb)):
 
 ```python
 from lambeq.ccg2discocat import DepCCGParser
@@ -105,6 +106,5 @@ To rebuild the rst files themselves, run:
 
 ```bash
 sphinx-apidoc --force -o docs lambeq
-mv docs/modules.rst docs/index.rst
 ```
 

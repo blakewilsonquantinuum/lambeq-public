@@ -1,7 +1,7 @@
-lambeq
-======
+.. mdinclude:: ../README.md
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
-   lambeq
+   modules 
+   notebooks
