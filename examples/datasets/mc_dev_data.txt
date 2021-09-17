@@ -1,30 +1,30 @@
-0  skillful_ADJ person_N prepares_TV application_N
-1  man_N prepares_TV tasty_ADJ meal_N
-1  man_N prepares_TV tasty_ADJ sauce_N
-1  person_N bakes_TV tasty_ADJ meal_N
-0  man_N prepares_TV useful_ADJ program_N
-0  man_N runs_TV program_N
-1  person_N prepares_TV dinner_N
-1  man_N bakes_TV sauce_N
-0  woman_N prepares_TV software_N
-0  person_N prepares_TV useful_ADJ software_N
-0  skillful_ADJ person_N debugs_TV program_N
-0  person_N debugs_TV application_N
-1  person_N cooks_TV tasty_ADJ dinner_N
-0  skillful_ADJ person_N debugs_TV software_N
-1  woman_N bakes_TV tasty_ADJ sauce_N
-0  skillful_ADJ woman_N runs_TV software_N
-1  skillful_ADJ person_N prepares_TV sauce_N
-0  person_N debugs_TV useful_ADJ program_N
-0  man_N runs_TV application_N
-1  person_N prepares_TV tasty_ADJ dinner_N
-0  woman_N debugs_TV useful_ADJ software_N
-0  man_N runs_TV useful_ADJ application_N
-1  woman_N bakes_TV tasty_ADJ dinner_N
-0  person_N prepares_TV program_N
-0  woman_N debugs_TV useful_ADJ application_N
-0  skillful_ADJ woman_N prepares_TV application_N
-0  man_N debugs_TV application_N
-0  woman_N prepares_TV useful_ADJ application_N
-0  man_N debugs_TV useful_ADJ program_N
-1  woman_N cooks_TV sauce_N
+0  skillful person prepares application
+1  man prepares tasty meal
+1  man prepares tasty sauce
+1  person bakes tasty meal
+0  man prepares useful program
+0  man runs program
+1  person prepares dinner
+1  man bakes sauce
+0  woman prepares software
+0  person prepares useful software
+0  skillful person debugs program
+0  person debugs application
+1  person cooks tasty dinner
+0  skillful person debugs software
+1  woman bakes tasty sauce
+0  skillful woman runs software
+1  skillful person prepares sauce
+0  person debugs useful program
+0  man runs application
+1  person prepares tasty dinner
+0  woman debugs useful software
+0  man runs useful application
+1  woman bakes tasty dinner
+0  person prepares program
+0  woman debugs useful application
+0  skillful woman prepares application
+0  man debugs application
+0  woman prepares useful application
+0  man debugs useful program
+1  woman cooks sauce

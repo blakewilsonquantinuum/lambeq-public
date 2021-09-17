@@ -1,30 +1,30 @@
-1  woman_N prepares_TV tasty_ADJ dinner_N
-1  woman_N cooks_TV tasty_ADJ sauce_N
-0  skillful_ADJ woman_N prepares_TV software_N
-1  skillful_ADJ man_N prepares_TV dinner_N
-1  skillful_ADJ woman_N cooks_TV sauce_N
-0  woman_N runs_TV useful_ADJ program_N
-0  skillful_ADJ person_N runs_TV software_N
-0  skillful_ADJ person_N prepares_TV program_N
-1  man_N prepares_TV sauce_N
-1  person_N cooks_TV tasty_ADJ sauce_N
-1  man_N cooks_TV sauce_N
-0  man_N prepares_TV program_N
-0  skillful_ADJ person_N prepares_TV software_N
-1  woman_N bakes_TV meal_N
-1  skillful_ADJ man_N bakes_TV sauce_N
-0  man_N prepares_TV useful_ADJ software_N
-0  woman_N debugs_TV program_N
-0  skillful_ADJ woman_N runs_TV application_N
-0  man_N debugs_TV software_N
-0  skillful_ADJ woman_N debugs_TV application_N
-0  person_N debugs_TV software_N
-1  person_N bakes_TV meal_N
-1  skillful_ADJ woman_N bakes_TV dinner_N
-1  skillful_ADJ woman_N cooks_TV dinner_N
-0  woman_N runs_TV useful_ADJ software_N
-1  man_N cooks_TV meal_N
-0  person_N debugs_TV program_N
-1  woman_N bakes_TV sauce_N
-0  skillful_ADJ woman_N debugs_TV software_N
-1  woman_N prepares_TV meal_N
+1  woman prepares tasty dinner
+1  woman cooks tasty sauce
+0  skillful woman prepares software
+1  skillful man prepares dinner
+1  skillful woman cooks sauce
+0  woman runs useful program
+0  skillful person runs software
+0  skillful person prepares program
+1  man prepares sauce
+1  person cooks tasty sauce
+1  man cooks sauce
+0  man prepares program
+0  skillful person prepares software
+1  woman bakes meal
+1  skillful man bakes sauce
+0  man prepares useful software
+0  woman debugs program
+0  skillful woman runs application
+0  man debugs software
+0  skillful woman debugs application
+0  person debugs software
+1  person bakes meal
+1  skillful woman bakes dinner
+1  skillful woman cooks dinner
+0  woman runs useful software
+1  man cooks meal
+0  person debugs program
+1  woman bakes sauce
+0  skillful woman debugs software
+1  woman prepares meal
