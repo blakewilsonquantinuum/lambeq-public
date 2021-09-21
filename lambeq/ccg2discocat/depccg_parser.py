@@ -17,17 +17,34 @@ from __future__ import annotations
 __all__ = ['DepCCGParser', 'DepCCGParseError']
 
 import json
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Iterable, List, Optional, TYPE_CHECKING, Union
 
-import depccg
-import depccg.download
-from depccg.parser import EnglishCCGParser
 from discopy.biclosed import Ty
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_rule import CCGRule
 from lambeq.ccg2discocat.ccg_tree import CCGTree
 from lambeq.ccg2discocat.ccg_types import CCGAtomicType
+
+if TYPE_CHECKING:
+    import depccg
+    from depccg.parser import EnglishCCGParser
+
+
+def _import_depccg() -> None:
+    global depccg, EnglishCCGParser
+    try:
+        import depccg
+    except ImportError:  # pragma: no cover
+        raise ImportError('depccg not found. Please install it using '
+                          '`pip install depccg==1.1.0`.')
+
+    try:
+        import depccg.download
+        from depccg.parser import EnglishCCGParser
+    except ImportError:  # pragma: no cover
+        raise ImportError('Invalid depccg version detected. Please install '
+                          'v1.1.0 using `pip install depccg==1.1.0`.')
 
 
 class DepCCGParseError(Exception):
@@ -78,6 +95,8 @@ class DepCCGParser(CCGParser):
             If the provided model name is not valid.
 
         """
+
+        _import_depccg()
 
         if isinstance(model, EnglishCCGParser):
             self.parser = model

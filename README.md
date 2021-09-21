@@ -11,14 +11,47 @@ stability.
 
 ### Prerequisites
 
-- Git
 - Python 3.7+
 
 ### Installation
 
+#### Direct pip install
+
+The base Lambeq can be installed with the command:
+```bash
+pip install git+https://github.com/CQCL/lambeq-beta
+```
+
+This does not include optional dependencies such as depccg and PyTorch,
+which have to be installed separately. In particular, depccg has a
+complicated installation procedure. To install Lambeq with depccg and
+other extra features, see the following methods.
+
+#### Experimental "no git" method
+
+This will become the default recommendation once Lambeq has been
+released publicly, which will remove this inconvenient initial step.
+
+1. Open this link to the install script: [https://github.com/CQCL/lambeq-beta/raw/main/install.sh](https://github.com/CQCL/lambeq-beta/raw/main/install.sh)
+
+2. Copy the link in the address bar. It should look like:
+```
+https://raw.githubusercontent.com/CQCL/lambeq-beta/main/install.sh?token=XXXXXX
+```
+(the token has to be generated specially each time)
+
+3. Run:
+   ```bash
+   bash <(curl '<copied link from previous step>')
+   ```
+
+#### Installation from Git repository
+
+This required Git to be installed.
+
 1. Download this repository:
    ```bash
-   git clone https://github.com/CQCL/lambeq
+   git clone https://github.com/CQCL/lambeq-beta
    ```
 
 2. Enter the repository:
@@ -26,26 +59,26 @@ stability.
    cd lambeq
    ```
 
-#### Automatic Installation
+##### Automatic Installation
 
-The repository contains a script `install.sh` which, given a directory
-name, creates a Python virtual environment and installs Lambeq.
+The repository contains an interactive script `install.sh` which guides
+you through an installation.
 
 To install Lambeq using this script, run:
 ```bash
-bash install.sh <installation-directory>
+bash install.sh
 ```
 
-#### Manual Installation
+##### Manual Installation
 
 3. Make sure `pip` is up-to-date:
 
    ```bash
-   pip install --upgrade pip
+   pip install --upgrade pip wheel
    ```
 
-4. Lambeq has the dependency `depccg` which requires the following
-   packages to be installed *before* installing `depccg`:
+4. (Optional) If installing the optional dependency `depccg`, the
+   following packages must be installed *before* installing `depccg`:
    ```bash
    pip install cython numpy
    ```
@@ -57,6 +90,11 @@ bash install.sh <installation-directory>
    pip install --use-feature=in-tree-build .
    ```
 
+   To include all optional dependencies, run:
+   ```bash
+   pip install --use-feature=in-tree-build .[all]
+   ```
+
 6. If using a pretrained depccg parser,
 [download a pretrained model](//github.com/masashi-y/depccg#using-a-pretrained-english-parser):
    ```bash
@@ -65,7 +103,7 @@ bash install.sh <installation-directory>
 
 ## Usage
 
-The [docs/examples](https://github.com/CQCL-DEV/lambeq-beta/blob/main/examples/ccg2discocat.ipynb)
+The [docs/examples](https://github.com/CQCL/lambeq-beta/tree/main/docs/examples)
 directory contains notebooks demonstrating
 usage of the various tools in Lambeq.
 
@@ -91,6 +129,9 @@ Run all tests with the command:
 ```bash
 pytest
 ```
+
+Note: if you have installed in a virtual environment, remember to
+install pytest in the same environment using pip.
 
 ## Building Documentation
 

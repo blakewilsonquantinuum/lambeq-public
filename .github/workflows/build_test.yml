@@ -57,8 +57,7 @@ jobs:
           build_and_test-${{ runner.os }}-pip-
     - name: Install package and tester
       run: |
-        yes n | bash install.sh --global
-        python -m pip install .[test]
+        bash install.sh --global
     - name: Locate depccg pre-trained model cache
       id: loc-depccg-cache
       run: echo "::set-output name=dir::$(python -c 'from depccg.download import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
@@ -70,7 +69,7 @@ jobs:
         key: depccg
     - name: Download pre-trained model if needed
       if: steps.depccg-cache.outputs.cache-hit != 'true'
-      run: yes | bash install.sh --global
+      run: python -m depccg en download
     - name: Test with pytest
       run:
         # run test of depccg parser separately because it keeps breaking

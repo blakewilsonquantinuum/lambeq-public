@@ -1,44 +1,108 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
-GLOBAL_FLAG='--global'
-if [ "$#" -ne 1 ]; then
-    echo "Lambeq installer.
+global_flag='--global'
+if [ $# -gt 1 ] || [ $# -eq 1 ] && [ "$1" != "$global_flag" ]; then
+    printf 'Lambeq installer.\n\nUsage:\n'
+    printf '  install.sh %-9s Run the interactive installer.\n' ''
+    printf '  install.sh %-9s Install globally without prompts (not recommended).\n' "$global_flag"
+    exit
+elif [ $# -eq 0 ]; then
+    cat <<EOF
+Lambeq installer
+----------------
+This script is primarily for installing Lambeq with depccg, but can also be
+used in the following ways:
 
-Usage:
-  install.sh $GLOBAL_FLAG
-  install.sh <virtual_environment>"
-    exit 1
-fi
+    1. Install Lambeq and depccg only.
+    2. Install base Lambeq only, no extra features.
+    3. Install Lambeq with all extra features (including depccg).
 
-VENV=$1
-if [ $VENV != $GLOBAL_FLAG ]; then
-    if [ -d $VENV ]; then
-        echo -n "'$VENV' exists. Use this as virtual environment? [y/N] "
-        read answer
-        if [ "$answer" == "${answer#[Yy]}" ]; then exit; fi
-    else
-        echo "Creating virtual environment at '$VENV'..."
-        python3 -m venv $VENV
+EOF
+    printf 'Choose an option (default: 1): [1-3] '
+    read -r install_option
+
+    if [ "${install_option:=1}" != 1 ] && [ "$install_option" != 2 ] && [ "$install_option" != 3 ]; then
+        echo 'Invalid response. Exiting.'
+        exit
     fi
-    PYTHON=$VENV/bin/python
+
+    if [ "$VIRTUAL_ENV" ]; then
+        echo 'Virtual environment detected.'
+        option_text="Install in current virtual environment '$VIRTUAL_ENV'"
+    else
+        option_text='Install globally (not recommended)'
+    fi
+
+    cat <<EOF
+
+Choose a location to install Lambeq:
+    1. Install in a new virtual environment.
+    2. $option_text.
+
+EOF
+    printf 'Choose an option (default: 1): [1/2] '
+    read -r answer
+
+    if [ "${answer:-1}" = 1 ]; then
+        printf 'Enter location for virtual environment: '
+        read -r venv
+        if [ ! "$venv" ]; then
+            echo 'No location entered. Exiting.'
+            exit
+        elif [ -d "$venv" ]; then
+            printf '\n'%s' exists.\n\n' "$venv"
+            printf 'Overwrite with new virtual environment (not recommended)? [y/N] '
+            read -r answer
+            if [ "$answer" = "${answer#[Yy]}" ]; then exit; fi
+        fi
+
+        echo "Creating virtual environment at '$venv'..."
+        if ! python3 -m venv "$venv"; then
+            echo "Failed to create virtual environment at '$venv'. Exiting."
+            exit
+        fi
+
+        . "$venv/bin/activate"
+    elif [ "$answer" != 2 ]; then
+        echo 'Invalid response. Exiting.'
+        exit
+    fi
 else
-    PYTHON=python3
+    install_option=3  # default for non-interactive (i.e. global) install
 fi
 
-echo 'Installing dependencies...'
-$PYTHON -m pip install --upgrade pip wheel
-$PYTHON -m pip install cython numpy
+# determine installation source
+lambeq="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+if [ ! -r "$lambeq/pyproject.toml" ]; then
+    lambeq='git+https://github.com/CQCL/lambeq-beta'
+fi
 
-echo 'Installing Lambeq...'
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-$PYTHON -m pip install --use-feature=in-tree-build "$SCRIPT_DIR"
+echo 'Preparing installation environment...'
+python3 -m pip install --upgrade pip wheel
+if [ "$install_option" != 2 ]; then
+    python3 -m pip install cython numpy
 
-MODEL_DIR="$($PYTHON -c 'from depccg.download import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
-if [ ! -d "$MODEL_DIR" ]; then
-    echo -n 'Download pre-trained depccg parser? [Y/n] '
-    read answer
-    if [ -n "$answer" ] && [ "$answer" == "${answer#[Yy]}" ]; then exit; fi
+    if [ "$install_option" = 1 ]; then
+        extras='depccg'
+    else
+        extras='all,test'
+    fi
 
-    echo 'Downloading parser...'
-    $PYTHON -m depccg en download
+    if [ "$lambeq" = "${lambeq#git}" ]; then
+        lambeq_extras="$lambeq""[$extras]"
+    else
+        lambeq_extras="lambeq[$extras] @ $lambeq"
+    fi
+    python3 -m pip install --use-feature=in-tree-build "$lambeq_extras"
+
+    echo 'Downloading pre-trained depccg parser...'
+    python3 -m depccg en download
+else
+    echo 'Installing base Lambeq...'
+    python3 -m pip install --use-feature=in-tree-build "$lambeq"
+fi
+
+echo 'Installation complete.'
+if [ "$venv" ]; then
+    echo "To use Lambeq, activate the virtual environment at '$venv'."
 fi
