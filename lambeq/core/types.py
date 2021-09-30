@@ -28,5 +28,5 @@ class Discard(Box):
         super().__init__(name, dom, cod)
         self.type = _type
 
-    def __repr__(self) -> str:  # pragma: no cover
+    def __repr__(self) -> str:
         return self.name

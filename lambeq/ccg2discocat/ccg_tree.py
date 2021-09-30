@@ -215,7 +215,7 @@ class CCGTree:
                 len(self.children) == len(other.children) and
                 all(c1 == c2 for c1, c2 in zip(self.children, other.children)))
 
-    def __repr__(self) -> str:  # pragma: no cover
+    def __repr__(self) -> str:
         return f'{type(self).__name__}("{self.text}")'
 
     def deriv(self,

@@ -54,7 +54,7 @@ class CCGBankParseError(Exception):
             self.sentence = ''
             self.message = sentence
 
-    def __str__(self) -> str:  # pragma: no cover
+    def __str__(self) -> str:
         if self.sentence:
             return f'Failed to parse "{self.sentence}": {self.message}.'
         return self.message

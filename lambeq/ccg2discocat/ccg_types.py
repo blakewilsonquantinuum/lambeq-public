@@ -33,7 +33,7 @@ class CCGParseError(Exception):
         self.cat = cat
         self.message = message
 
-    def __str__(self) -> str:  # pragma: no cover
+    def __str__(self) -> str:
         return f'Failed to parse "{self.cat}": {self.message}.'
 
 
