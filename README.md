@@ -135,7 +135,13 @@ install pytest in the same environment using pip.
 
 ## Building Documentation
 
-Build the documentation by running the commands:
+To build the documentation, first install the required dependencies:
+
+```bash
+pip install -r docs/requirements.txt
+```
+then run the commands:
+
 ```bash
 cd docs
 make clean
