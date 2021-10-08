@@ -1,14 +1,17 @@
 name: Build and deploy documentation
 
 on:
-  push:
+  workflow_run:
+    workflows: [ "Build, lint and test package" ]
     branches: [ main ]
+    types: [ completed ]
 
 env:
   WORKFLOWS_DIR: .github/workflows
 
 jobs:
   docs:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Build and deploy documentation
     runs-on: ubuntu-20.04
     steps:
