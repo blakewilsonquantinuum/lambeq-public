@@ -74,7 +74,7 @@ fi
 # determine installation source
 lambeq="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 if [ ! -r "$lambeq/pyproject.toml" ]; then
-    lambeq='git+https://github.com/CQCL/lambeq-beta'
+    lambeq='git+https://github.com/CQCL/lambeq'
 fi
 
 echo 'Preparing installation environment...'

@@ -1,8 +1,8 @@
-# Lambeq
+# lambeq
 
 ## About
 
-Lambeq is a toolkit for quantum natural language processing (QNLP).
+lambeq is a toolkit for quantum natural language processing (QNLP).
 
 This project is in early development, so there is no guarantee of
 stability.
@@ -17,59 +17,46 @@ stability.
 
 #### Direct pip install
 
-The base Lambeq can be installed with the command:
+The base lambeq can be installed with the command:
 ```bash
-pip install git+https://github.com/CQCL/lambeq-beta
+pip install lambeq
 ```
 
 This does not include optional dependencies such as depccg and PyTorch,
-which have to be installed separately. In particular, depccg has a
-complicated installation procedure. To install Lambeq with depccg and
-other extra features, see the following methods.
+which have to be installed separately. In particular, depccg is required
+for `lambeq.ccg2discocat.DepCCGParser`.
 
-#### Experimental "no git" method
-
-This will become the default recommendation once Lambeq has been
-released publicly, which will remove this inconvenient initial step.
-
-1. Open this link to the install script: [https://github.com/CQCL/lambeq-beta/raw/main/install.sh](https://github.com/CQCL/lambeq-beta/raw/main/install.sh)
-
-2. Copy the link in the address bar. It should look like:
+To install lambeq with depccg, run instead:
+```bash
+pip install cython numpy
+pip install lambeq[depccg]
+depccg_en download
 ```
-https://raw.githubusercontent.com/CQCL/lambeq-beta/main/install.sh?token=XXXXXX
-```
-(the token has to be generated specially each time)
+See below for further explanation.
 
-3. Run:
+#### Automatic installer (recommended)
+
+This runs an interactive installer to help pick the installation
+destination and configuration.
+
+1. Run:
    ```bash
-   bash <(curl '<copied link from previous step>')
+   bash <(curl 'https://cqcl.github.io/lambeq/install.sh')
    ```
 
-#### Installation from Git repository
+#### Git installation
 
 This required Git to be installed.
 
 1. Download this repository:
    ```bash
-   git clone https://github.com/CQCL/lambeq-beta
+   git clone https://github.com/CQCL/lambeq
    ```
 
 2. Enter the repository:
    ```bash
    cd lambeq
    ```
-
-##### Automatic Installation
-
-The repository contains an interactive script `install.sh` which guides
-you through an installation.
-
-To install Lambeq using this script, run:
-```bash
-bash install.sh
-```
-
-##### Manual Installation
 
 3. Make sure `pip` is up-to-date:
 
@@ -85,12 +72,17 @@ bash install.sh
    Further information can be found on the
    [depccg homepage](//github.com/masashi-y/depccg).
 
-5. Install Lambeq from the local repository using pip:
+5. Install lambeq from the local repository using pip:
    ```bash
    pip install --use-feature=in-tree-build .
    ```
 
-   To include all optional dependencies, run:
+   To include depccg, run instead:
+   ```bash
+   pip install --use-feature=in-tree-build .[depccg]
+   ```
+
+   To include all optional dependencies, run instead:
    ```bash
    pip install --use-feature=in-tree-build .[all]
    ```
@@ -103,12 +95,12 @@ bash install.sh
 
 ## Usage
 
-The [docs/examples](https://github.com/CQCL/lambeq-beta/tree/main/docs/examples)
-directory contains notebooks demonstrating
-usage of the various tools in Lambeq.
+The [docs/examples](//github.com/CQCL/lambeq/tree/main/docs/examples)
+directory contains notebooks demonstrating usage of the various tools in
+lambeq.
 
 Example - parsing a sentence into a diagram (see
-[docs/examples/ccg2discocat.ipynb](https://github.com/CQCL/lambeq-beta/blob/main/docs/examples/ccg2discocat.ipynb)):
+[docs/examples/ccg2discocat.ipynb](//github.com/CQCL/lambeq/blob/main/docs/examples/ccg2discocat.ipynb)):
 
 ```python
 from lambeq.ccg2discocat import DepCCGParser

@@ -28,6 +28,8 @@ jobs:
         pip install -r docs/requirements.txt
     - name: Build documentation
       run: ${{ env.WORKFLOWS_DIR }}/build-docs
+    - name: Move install script
+      run: mv install.sh docs/_build/html
     - name: Deploy documentation
       uses: s0/git-publish-subdir-action@develop
       env:
