@@ -37,14 +37,14 @@ def _import_depccg() -> None:
         import depccg
     except ImportError:  # pragma: no cover
         raise ImportError('depccg not found. Please install it using '
-                          '`pip install depccg==1.1.0`.')
+                          '`pip install lambeq[depccg]`.')
 
     try:
         import depccg.download
         from depccg.parser import EnglishCCGParser
     except ImportError:  # pragma: no cover
-        raise ImportError('Invalid depccg version detected. Please install '
-                          'v1.1.0 using `pip install depccg==1.1.0`.')
+        raise ImportError('Invalid depccg version detected. Please re-install '
+                          'it using `pip install lambeq[depccg]`.')
 
 
 class DepCCGParseError(Exception):
