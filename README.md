@@ -147,3 +147,22 @@ To rebuild the rst files themselves, run:
 sphinx-apidoc --force -o docs lambeq
 ```
 
+## License
+
+Distributed under the Apache 2.0 license. See `LICENSE.md` for more details.
+
+## Citation
+
+If you wish to attribute our work, please cite
+[the accompanying paper](//arxiv.org/abs/2110.04236):
+
+```
+@misc{kartsaklis2021lambeq,
+ title={lambeq: An Efficient High-Level Python Library for Quantum NLP},
+ author={Dimitri Kartsaklis and Ian Fan and Richie Yeung and Anna Pearson and Robin Lorenz and Alexis Toumi and Giovanni de Felice and Konstantinos Meichanetzidis and Stephen Clark and Bob Coecke},
+ year={2021},
+ eprint={2110.04236},
+ archivePrefix={arXiv},
+ primaryClass={cs.CL}
+}
+```
