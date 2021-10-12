@@ -21,8 +21,8 @@ project = 'lambeq'
 copyright = '2021, Cambridge Quantum Computing Ltd.'
 author = 'Cambridge Quantum QNLP Dev Team'
 
-version = '0.1'
-release = '0.1.0' 
+version = '0.1.0'
+release = '0.1.0'
 
 # -- General configuration ---------------------------------------------------
 
@@ -79,5 +79,5 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
 def setup(app):
     app.connect('autodoc-skip-member', autodoc_skip_member)
 
-numfig = True
 
+numfig = True
