@@ -32,9 +32,9 @@ pip install cython numpy
 pip install lambeq[depccg]
 depccg_en download
 ```
-See below for further explanation.
+See below for further options.
 
-#### Automatic installer (recommended)
+#### Automatic installation (recommended)
 
 This runs an interactive installer to help pick the installation
 destination and configuration.
@@ -157,12 +157,10 @@ If you wish to attribute our work, please cite
 [the accompanying paper](//arxiv.org/abs/2110.04236):
 
 ```
-@misc{kartsaklis2021lambeq,
- title={lambeq: An Efficient High-Level Python Library for Quantum NLP},
- author={Dimitri Kartsaklis and Ian Fan and Richie Yeung and Anna Pearson and Robin Lorenz and Alexis Toumi and Giovanni de Felice and Konstantinos Meichanetzidis and Stephen Clark and Bob Coecke},
- year={2021},
- eprint={2110.04236},
- archivePrefix={arXiv},
- primaryClass={cs.CL}
+@article{kartsaklis2021lambeq,
+   title={lambeq: {A}n {E}fficient {H}igh-{L}evel {P}ython {L}ibrary for {Q}uantum {NLP}},
+   author={Dimitri Kartsaklis and Ian Fan and Richie Yeung and Anna Pearson and Robin Lorenz and Alexis Toumi and Giovanni de Felice and Konstantinos Meichanetzidis and Stephen Clark and Bob Coecke},
+   year={2021},
+   journal={arXiv preprint arXiv:2110.04236},
 }
 ```

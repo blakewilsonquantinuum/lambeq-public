@@ -17,10 +17,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Lambeq'
+project = 'lambeq'
 copyright = '2021, Cambridge Quantum Computing Ltd.'
 author = 'Cambridge Quantum QNLP Dev Team'
 
+version = '0.1'
+release = '0.1.0' 
 
 # -- General configuration ---------------------------------------------------
 
@@ -53,6 +55,7 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -75,3 +78,6 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
 
 def setup(app):
     app.connect('autodoc-skip-member', autodoc_skip_member)
+
+numfig = True
+
