@@ -17,12 +17,12 @@
 
 # -- Project information -----------------------------------------------------
 
+from lambeq import __version__
+release = version = __version__
+
 project = 'lambeq'
 copyright = '2021, Cambridge Quantum Computing Ltd.'
 author = 'Cambridge Quantum QNLP Dev Team'
-
-version = '0.1.0'
-release = '0.1.0'
 
 # -- General configuration ---------------------------------------------------
 
@@ -67,6 +67,8 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_logo = '_static/images/lambeq_logo.png'
+html_favicon = '_static/images/favicon.ico'
 
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
