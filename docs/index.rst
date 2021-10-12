@@ -17,7 +17,7 @@ If you need help with ``lambeq`` or you think you have found a bug, please send 
 Licence
 -------
 
-Licensed under the `Apache 2 License <http://www.apache.org/licenses/LICENSE-2.0>`_.
+Licensed under the `Apache 2.0 License <http://www.apache.org/licenses/LICENSE-2.0>`_.
 
 How to cite
 -----------
