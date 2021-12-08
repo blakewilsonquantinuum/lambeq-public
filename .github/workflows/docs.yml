@@ -3,7 +3,6 @@ name: Build and deploy documentation
 on:
   workflow_run:
     workflows: [ "Build, lint and test package" ]
-    branches: [ main ]
     types: [ completed ]
 
 env:
@@ -33,6 +32,7 @@ jobs:
     - name: Move install script
       run: mv install.sh docs/_build/html
     - name: Deploy documentation
+      if: ${{ github.event.ref_name == 'main' }}
       uses: s0/git-publish-subdir-action@develop
       env:
         REPO: self

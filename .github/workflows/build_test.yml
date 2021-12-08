@@ -2,9 +2,9 @@ name: Build, lint and test package
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, development ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, development ]
 
 env:
   SRC_DIR: lambeq
