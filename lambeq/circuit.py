@@ -23,10 +23,8 @@ __all__ = ['CircuitAnsatz', 'IQPAnsatz']
 
 from typing import Any, Callable, Mapping, Optional
 
-from discopy import Tensor
-from discopy.quantum import Discard as QDiscard
-from discopy.quantum import Circuit, qubit
-from discopy.quantum.circuit import Functor, Id, IQPansatz as IQP
+from discopy.quantum.circuit import (Circuit, Discard as QDiscard, Functor, Id,
+                                     IQPansatz as IQP, qubit)
 from discopy.quantum.gates import Bra, Ket, Rx, Rz
 from discopy.rigid import Box, Diagram, Ty
 import numpy as np

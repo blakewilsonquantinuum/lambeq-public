@@ -44,7 +44,7 @@ from abc import ABC, abstractmethod
 
 __all__ = ['Reader', 'LinearReader', 'cups_reader', 'spiders_reader']
 
-from typing import Any, List, Sequence
+from typing import List, Sequence
 
 from discopy import Word
 from discopy.rigid import Cup, Diagram, Id, Spider, Ty
