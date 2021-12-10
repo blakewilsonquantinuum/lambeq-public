@@ -37,9 +37,17 @@ of provided rules can be retrieved using
         The connector rule removes sentence connectors (such as "that")
         by replacing them with caps.
 
+    coordination
+        The coordination rule simplifies "and" based on [Kar2016]_
+        by replacing it with a layer of interleaving spiders.
+
     determiner
         The determiner rule removes determiners (such as "the") by
         replacing them with caps.
+
+    object_relative_pronoun
+        The object relative pronoun rule simplifies object relative pronouns
+        based on [SCC2014a]_ using cups, spiders and a loop.
 
     postadverb, preadverb
         The adverb rules simplify adverbs by passing through the noun
@@ -50,17 +58,23 @@ of provided rules can be retrieved using
         prepositional phrase by passing through the noun wire
         transparently using a cup.
 
+    subject_relative_pronoun
+        The subject relative pronoun rule simplifies subject relative pronouns
+        based on [SCC2014a]_ using cups and spiders.
+
 See `examples/rewrite.ipynb` for illustrative usage.
 
 """
 
-__all__ = ['Rewriter', 'RewriteRule', 'SimpleRewriteRule']
+__all__ = [
+    'CoordinationRewriteRule', 'Rewriter', 'RewriteRule', 'SimpleRewriteRule']
 
 from abc import ABC, abstractmethod
 from typing import Container, Iterable, List, Optional, Union
 
 from discopy import Word
-from discopy.rigid import Box, Cap, Diagram, Functor, Id, Ty
+from discopy.rigid import Box, Cap, Cup, Diagram, Functor, Id, Spider, Swap, Ty
+from discopy.rigid import caps, spiders
 
 from lambeq.core.types import AtomicType
 
@@ -207,6 +221,59 @@ prepositional_phrase_rule = SimpleRewriteRule(
     template=(SimpleRewriteRule.placeholder(S >> S << N) >>
               Id(S.r) @ Cap(N.r.r, N.r) @ Id(S @ N.l)))
 
+_noun_loop = ((Cap(N.l, N.l.l) >> Swap(N.l, N.l.l)) @ Id(N) >>
+              Id(N.l.l) @ Cup(N.l, N))
+object_relative_pronoun_rule = SimpleRewriteRule(
+    words=['that', 'which', 'who', 'whom', 'whose'],
+    cod=N.r @ N @ N.l.l @ S.l,
+    template=(Cap(N.r, N) >>
+              Id(N.r) @ Spider(1, 2, N) @ Spider(0, 1, S.l) >>
+              Id(N.r @ N) @ _noun_loop @ Id(S.l)))
+
+subject_relative_pronoun_rule = SimpleRewriteRule(
+    words=['that', 'which', 'who', 'whom', 'whose'],
+    cod=N.r @ N @ S.l @ N,
+    template=(Cap(N.r, N) >>
+              Id(N.r) @ Spider(1, 2, N) >>
+              Id(N.r @ N) @ Spider(0, 1, S.l) @ Id(N)))
+
+
+class CoordinationRewriteRule(RewriteRule):
+    """A rewrite rule for coordination.
+
+    This rule matches the word 'and' with codomain
+    :py:obj:`a.r @ a @ a.l` for pregroup type :py:obj:`a`, and replaces
+    the word, based on [Kar2016]_, with a layer of interleaving spiders.
+
+    """
+    def __init__(self, words: Optional[Container[str]] = None) -> None:
+        """Instantiate a CoordinationRewriteRule.
+
+        Parameters
+        ----------
+        words : container of str, optional
+            If provided, this is a list of words that will be rewritten by
+            this rule. If a box does not have one of these words, it will
+            not be rewritten, even if the codomain matches. If omitted,
+            the rewrite applies only to the word "and".
+
+        """
+        self.words = ['and'] if words is None else words
+
+    def matches(self, box: Box) -> bool:
+        if box.name in self.words and len(box.cod) % 3 == 0:
+            n = len(box.cod) // 3
+            left, mid, right = box.cod[:n], box.cod[n:2*n], box.cod[2*n:]
+            return right.r == mid == left.l
+        return False
+
+    def rewrite(self, box: Box) -> Diagram:
+        n = len(box.cod) // 3
+        left, mid, right = box.cod[:n], box.cod[n:2*n], box.cod[2*n:]
+        assert right.r == mid == left.l
+        return (caps(left, mid) @ caps(mid, right) >>
+                Id(left) @ spiders(2, 1, mid) @ Id(right))
+
 
 class Rewriter:
     """Class that rewrites diagrams.
@@ -220,7 +287,14 @@ class Rewriter:
         'determiner': determiner_rule,
         'postadverb': postadverb_rule,
         'preadverb': preadverb_rule,
-        'prepositional_phrase': prepositional_phrase_rule
+        'prepositional_phrase': prepositional_phrase_rule,
+    }
+
+    _available_rules = {
+        **_default_rules,
+        'coordination': CoordinationRewriteRule(),
+        'object_relative_pronoun': object_relative_pronoun_rule,
+        'subject_relative_pronoun': subject_relative_pronoun_rule
     }
 
     def __init__(
@@ -248,7 +322,7 @@ class Rewriter:
     @classmethod
     def available_rules(cls) -> List[str]:
         """The list of default rule names."""
-        return [*cls._default_rules.keys()]
+        return [*cls._available_rules.keys()]
 
     def add_rules(self, *rules: Union[str, RewriteRule]) -> None:
         """Add rules to this rewriter."""
@@ -257,7 +331,7 @@ class Rewriter:
                 self.rules.append(rule)
             else:
                 try:
-                    self.rules.append(self._default_rules[rule])
+                    self.rules.append(self._available_rules[rule])
                 except KeyError:
                     raise ValueError(f'`{rule}` is not a valid rewrite rule.')
 
