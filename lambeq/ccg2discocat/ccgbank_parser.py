@@ -88,6 +88,8 @@ class CCGBankParser(CCGParser):
                                             #    a matching ")"
         ''', re.VERBOSE)
 
+    escaped_words = {'-LCB-': '{', '-RCB-': '}', '-LRB-': '(', '-RRB-': ')'}
+
     def __init__(self, root: Union[str, os.PathLike[str]]):
         """Initialise a CCGBank parser.
 
@@ -129,7 +131,7 @@ class CCGBankParser(CCGParser):
         """
         path = self.root / 'data' / 'AUTO' / f'{section_id:02}'
         trees = {}
-        for file in path.iterdir():
+        for file in sorted(path.iterdir()):
             with open(file) as f:
                 line_no = 0
                 for line in f:
@@ -247,12 +249,19 @@ class CCGBankParser(CCGParser):
             raise CCGBankParseError('malformed tree starting from character '
                                     f'{start+1} - "{sentence[start:]}"')
 
-        biclosed_type = str2biclosed(tree_match['ccg_str'],
+        ccg_str = tree_match['ccg_str']
+        if ccg_str == r'((S[b]\NP)/NP)/':  # fix mistake in CCGBank
+            ccg_str = r'(S[b]\NP)/NP'
+        biclosed_type = str2biclosed(ccg_str,
                                      str2type=CCGBankParser._parse_atomic_type)
         pos = tree_match.end()
         if tree_match['is_leaf']:
-            ccg_tree = CCGTree(text=tree_match['word'],
-                               biclosed_type=biclosed_type)
+            word = tree_match['word']
+            try:
+                word = CCGBankParser.escaped_words[word]
+            except KeyError:
+                pass
+            ccg_tree = CCGTree(text=word, biclosed_type=biclosed_type)
         else:
             children = []
             while not sentence[pos] == ')':
