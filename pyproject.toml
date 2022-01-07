@@ -10,6 +10,7 @@ exclude_lines = [
 ]
 
 [tool.mypy]
+plugins = "numpy.typing.mypy_plugin"
 pretty = true
 show_error_codes = true
 warn_unused_configs = true
