@@ -1,9 +1,7 @@
 import pytest
 
-from lambeq.reader import cups_reader
 from discopy import Word, Id, Ty, Cup, Swap
-from lambeq.pregroups import TextDiagramPrinter
-from lambeq.core.types import AtomicType
+from lambeq import AtomicType, diagram2str, cups_reader
 
 
 n = AtomicType.NOUN
@@ -78,8 +76,7 @@ def test_diagram_with_just_caps(diagram1):
                       " │     ╰────────────────────────────────────────╯    │  │  ╰──────────────────────────╯\n" \
                       " ╰───────────────────────────────────────────────────╯  │                              \n"
 
-    printer = TextDiagramPrinter()
-    assert printer.diagram2str(diagram1) == expected_output
+    assert diagram2str(diagram1) == expected_output
 
 
 def test_diagram_with_cups_and_swaps(diagram2):
@@ -98,8 +95,7 @@ def test_diagram_with_cups_and_swaps(diagram2):
                       "                         ╭─╰──╮         │          \n" \
                       "                         │    ╰─────────╯          \n"
 
-    printer = TextDiagramPrinter()
-    assert printer.diagram2str(diagram2) == expected_output
+    assert diagram2str(diagram2) == expected_output
 
 
 def test_diagram_from_cups_reader():
@@ -108,9 +104,8 @@ def test_diagram_from_cups_reader():
                       "  s    s.r·s  s.r·s  s.r·s  s.r·s  s.r·s \n" \
                       "  ╰─────╯  ╰───╯  ╰───╯  ╰───╯  ╰───╯  │ \n"
 
-    printer = TextDiagramPrinter()
     diagram = cups_reader.sentence2diagram("John gave Mary a flower")
-    assert printer.diagram2str(diagram) == expected_output
+    assert diagram2str(diagram) == expected_output
 
 
 def test_diagram_with_just_identities_1():
@@ -122,8 +117,7 @@ def test_diagram_with_just_identities_1():
                       " n  \n" \
                       " │  \n"
 
-    printer = TextDiagramPrinter()
-    assert printer.diagram2str(diagram) == expected_output
+    assert diagram2str(diagram) == expected_output
 
 
 def test_diagram_with_just_identities_2():
@@ -135,14 +129,12 @@ def test_diagram_with_just_identities_2():
                       "n.r·s\n" \
                       " │  │\n"
 
-    printer = TextDiagramPrinter()
-    assert printer.diagram2str(diagram) == expected_output
+    assert diagram2str(diagram) == expected_output
 
 
 def test_diagram_no_pregroup(diagram1):
-    printer = TextDiagramPrinter()
     try:
-        printer.diagram2str(diagram1.normal_form())
+        diagram2str(diagram1.normal_form())
         assert False
     except ValueError:
         assert True

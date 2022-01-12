@@ -1,8 +1,5 @@
-__all__ = ['CoordinationRewriteRule', 'Rewriter', 'RewriteRule',
-           'SimpleRewriteRule']
+__all__ = ['RewriteRule', 'CoordinationRewriteRule', 'SimpleRewriteRule',
+           'Rewriter']
 
-from lambeq.rewrite.base import CoordinationRewriteRule, RewriteRule, \
-    Rewriter, SimpleRewriteRule, auxiliary_rule, connector_rule, \
-    determiner_rule, object_relative_pronoun_rule, postadverb_rule, \
-    preadverb_rule, prepositional_phrase_rule, \
-    subject_relative_pronoun_rule
+from lambeq.rewrite.base import (RewriteRule, CoordinationRewriteRule,
+                                 SimpleRewriteRule, Rewriter)

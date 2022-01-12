@@ -67,8 +67,8 @@ See `examples/rewrite.ipynb` for illustrative usage.
 """
 from __future__ import annotations
 
-__all__ = ['CoordinationRewriteRule', 'Rewriter',
-           'RewriteRule', 'SimpleRewriteRule']
+__all__ = ['RewriteRule', 'CoordinationRewriteRule', 'SimpleRewriteRule',
+           'Rewriter']
 
 from abc import ABC, abstractmethod
 from collections.abc import Container, Iterable

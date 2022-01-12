@@ -3,9 +3,8 @@ from discopy import Discard
 from discopy.quantum import Bra, CRz, CX, H, Ket, qubit, Rx, Rz, sqrt
 from discopy.quantum.circuit import Id
 
+from lambeq import AtomicType, IQPAnsatz
 from lambeq.ansatz import Symbol as sym
-from lambeq.circuit import IQPAnsatz
-from lambeq.core.types import AtomicType
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

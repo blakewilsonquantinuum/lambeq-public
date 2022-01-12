@@ -3,10 +3,7 @@ import pytest
 from discopy import Word
 from discopy.rigid import Box, Cap, Cup, Diagram, Id, Spider, Swap, Ty, cups
 
-from lambeq.core.types import AtomicType
-from lambeq.rewrite import (
-        CoordinationRewriteRule, Rewriter, SimpleRewriteRule,
-        object_relative_pronoun_rule, subject_relative_pronoun_rule)
+from lambeq import AtomicType, Rewriter, CoordinationRewriteRule, SimpleRewriteRule
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -123,7 +120,7 @@ def test_relative_pronoun():
     eat = Word('eat', N >> S << N)
     grass = Word('grass', N)
 
-    rewriter = Rewriter([subject_relative_pronoun_rule, object_relative_pronoun_rule])
+    rewriter = Rewriter(['subject_relative_pronoun', 'object_relative_pronoun'])
 
     diagram_subj = Id().tensor(cows, that_subj, eat, grass)
     diagram_subj >>= Cup(N, N.r) @ Id(N) @ cups(S.l @ N, N.r @ S) @ Cup(N.l, N)

@@ -29,7 +29,7 @@ from enum import Enum
 
 from discopy import Box, Cup, Diagram, Swap
 from discopy.grammar import Word
-from lambeq.pregroups import is_pregroup_diagram
+from lambeq.pregroups.utils import is_pregroup_diagram
 
 
 def diagram2str(diagram: Diagram, word_spacing: int = 2,

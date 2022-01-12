@@ -1,5 +1,5 @@
-__all_ = ['BaseAnsatz', 'CircuitAnsatz', 'IQPAnsatz',
-          'MPSAnsatz', 'SpiderAnsatz', 'Symbol', 'TensorAnsatz']
+__all__ = ['BaseAnsatz', 'CircuitAnsatz', 'IQPAnsatz',
+           'MPSAnsatz', 'SpiderAnsatz', 'Symbol', 'TensorAnsatz']
 
 from lambeq.ansatz.base import BaseAnsatz, Symbol
 from lambeq.ansatz.circuit import CircuitAnsatz, IQPAnsatz

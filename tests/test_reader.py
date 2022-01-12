@@ -3,9 +3,8 @@ import pytest
 from discopy import Word
 from discopy.rigid import Box, Diagram, Id
 
-from lambeq.core.types import AtomicType
-from lambeq.reader import (cups_reader, spiders_reader, stairs_reader,
-                           TreeReader, TreeReaderMode)
+from lambeq import (AtomicType, TreeReader, TreeReaderMode,
+                    cups_reader, spiders_reader, stairs_reader)
 from lambeq.ccg2discocat.web_parser import WebParser
 
 

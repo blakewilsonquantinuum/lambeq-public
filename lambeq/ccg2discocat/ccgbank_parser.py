@@ -14,7 +14,7 @@
 
 """
 CCGBank parser
---------------
+==============
 
 The CCGBank is a translation of the Penn Treebank into a corpus of
 Combinatory Categorial Grammar derivations, created by Julia Hockenmaier
