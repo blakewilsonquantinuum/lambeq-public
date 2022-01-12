@@ -57,7 +57,7 @@ def create_pregroup_diagram(
     cod: Ty,
     morphisms: Optional[list[tuple[type, int, int]]] = None
 ) -> Diagram:
-    """Create a DisCoPy pregroup diagram from a list of cups and swaps.
+    r"""Create a DisCoPy pregroup diagram from a list of cups and swaps.
 
     Parameters
     ----------

@@ -107,7 +107,7 @@ class ArgumentListValidator(argparse.Action):
                  dest: Any,
                  choices: ArgumentList,
                  nargs: str = '*',
-                 **kwargs) -> None:
+                 **kwargs: Any) -> None:
         self.available_args = choices
         super().__init__(option_strings,
                          dest,
@@ -346,13 +346,14 @@ class CLIModule(ABC):
 
 class FileReaderModule(CLIModule):
     """Reads the text from the input file or the command line."""
-    def __call__(self, cl_args: argparse.Namespace, module_input=None) -> str:
+    def __call__(self,
+                 cl_args: argparse.Namespace,
+                 module_input: Any = None) -> str:
         if cl_args.input_sentence != '':
-            return cl_args.input_sentence
+            return cl_args.input_sentence  # type: ignore[no-any-return]
         elif cl_args.input_file is not None:
             with open(cl_args.input_file, 'r') as f:
-                text = f.read().strip()
-            return text
+                return f.read().strip()
         else:
             return input('Text: ').strip()
 

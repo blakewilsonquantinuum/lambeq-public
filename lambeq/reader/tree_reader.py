@@ -83,7 +83,7 @@ class TreeReader(Reader):
 
         """
         if not isinstance(mode, TreeReaderMode):
-            raise ValueError(f'Mode should be one of {self.available_modes()}.')
+            raise ValueError(f'Mode must be one of {self.available_modes()}.')
 
         if not isinstance(ccg_parser, CCGParser):
             raise ValueError(f'{ccg_parser} should be a CCGParser.')
@@ -118,7 +118,9 @@ class TreeReader(Reader):
 
         ccg_words, ccg_parse = tree._to_biclosed_diagram()
 
-        def make_box(box):
+        tree_words = [Word(word.name, typ) for word in ccg_words.boxes]
+        tree_boxes = []
+        for box in ccg_parse.boxes:
             dom = typ ** len(box.dom)
             cod = typ ** len(box.cod)
             if self.mode == TreeReaderMode.NO_TYPE:
@@ -128,10 +130,7 @@ class TreeReader(Reader):
             else:
                 assert self.mode == TreeReaderMode.RULE_TYPE
                 name = box.name
-            return Box(name, dom, cod)
-
-        tree_words = [Word(word.name, typ) for word in ccg_words.boxes]
-        tree_boxes = [make_box(box) for box in ccg_parse.boxes]
+            tree_boxes.append(Box(name, dom, cod))
 
         diagram = Diagram(
             dom=Ty(),

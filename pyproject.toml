@@ -10,7 +10,6 @@ exclude_lines = [
 ]
 
 [tool.mypy]
-plugins = "numpy.typing.mypy_plugin"
 pretty = true
 show_error_codes = true
 warn_unused_configs = true
@@ -18,6 +17,10 @@ warn_unused_configs = true
 [[tool.mypy.overrides]]
 module = ["depccg.*", "discopy.*", "jax.*", "sympy.*", "tensornetwork.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["spacy.*", "torch.*"]
+implicit_reexport = true
 
 [tool.setuptools_scm]
 write_to = "lambeq/version.py"
