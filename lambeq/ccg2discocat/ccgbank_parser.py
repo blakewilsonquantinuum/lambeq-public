@@ -32,7 +32,7 @@ __all__ = ['CCGBankParseError', 'CCGBankParser']
 import os
 from pathlib import Path
 import re
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from discopy.biclosed import Ty
 from discopy.rigid import Diagram
@@ -41,6 +41,7 @@ from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_rule import CCGRule
 from lambeq.ccg2discocat.ccg_tree import CCGTree
 from lambeq.ccg2discocat.ccg_types import CONJ_TAG, CCGAtomicType, str2biclosed
+from lambeq.core.utils import SentenceBatchType
 
 
 class CCGBankParseError(Exception):
@@ -201,8 +202,9 @@ class CCGBankParser(CCGParser):
 
     def sentences2trees(
             self,
-            sentences: Iterable[str],
-            suppress_exceptions: bool = False) -> List[Optional[CCGTree]]:
+            sentences: SentenceBatchType,
+            suppress_exceptions: bool = False,
+            tokenised: bool = False) -> List[Optional[CCGTree]]:
         """Parse a CCGBank sentence derivation into a CCGTree.
 
         The sentence must be in the format outlined in the CCGBank
@@ -215,6 +217,9 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a tree.
+        tokenised : bool, default: False
+            Whether the sentence has been passed as a list of tokens.
+            For CCGBankParser, it should be kept `False`.
 
         Returns
         -------
@@ -226,10 +231,16 @@ class CCGBankParser(CCGParser):
         ------
         CCGBankParseError
             If parsing fails and exceptions are not suppressed.
+        ValueError
+            If `tokenised` flag is True (not valid for CCGBankParser).
 
         """
         trees = []
         for sentence in sentences:
+            if tokenised:
+                raise ValueError('`tokenised` set to `True`, but this is not '
+                                 'a valid value for CCGBankParser.')
+            assert isinstance(sentence, str)
             tree = None
             try:
                 tree, pos = CCGBankParser._build_ccgtree(sentence, 0)

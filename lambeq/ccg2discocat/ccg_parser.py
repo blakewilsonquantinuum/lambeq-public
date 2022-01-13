@@ -15,11 +15,13 @@
 __all__ = ['CCGParser']
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, List, Optional
+from typing import Any, List, Optional
 
 from discopy import Diagram
 
 from lambeq.ccg2discocat.ccg_tree import CCGTree
+from lambeq.core.utils import SentenceBatchType, SentenceType,\
+        tokenised_sentence_type_check
 
 
 class CCGParser(ABC):
@@ -32,18 +34,22 @@ class CCGParser(ABC):
     @abstractmethod
     def sentences2trees(
             self,
-            sentences: Iterable[str],
-            suppress_exceptions: bool = False) -> List[Optional[CCGTree]]:
+            sentences: SentenceBatchType,
+            suppress_exceptions: bool = False,
+            tokenised: bool = False) -> List[Optional[CCGTree]]:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
 
         Parameters
         ----------
-        sentences : iterable of str
-            The sentences to be parsed.
+        sentences : list of str, or list of list of str
+            The sentences to be parsed, passed either as strings or as lists
+            of tokens.
         suppress_exceptions : bool, default: False
             Whether to suppress exceptions. If :py:obj:`True`, then if a
             sentence fails to parse, instead of raising an exception,
             its return entry is :py:obj:`None`.
+        tokenised : bool, default: False
+            Whether each sentence has been passed as a list of tokens.
 
         Returns
         -------
@@ -54,18 +60,22 @@ class CCGParser(ABC):
         """
 
     def sentence2tree(self,
-                      sentence: str,
-                      suppress_exceptions: bool = False) -> Optional[CCGTree]:
+                      sentence: SentenceType,
+                      suppress_exceptions: bool = False,
+                      tokenised: bool = False) -> Optional[CCGTree]:
         """Parse a sentence into a :py:class:`.CCGTree`.
 
         Parameters
         ----------
-        sentence : str
-            The sentence to be parsed.
+        sentence : str, List[str]
+            The sentence to be parsed, passed either as a string, or as a list
+            of tokens.
         suppress_exceptions : bool, default: False
             Whether to suppress exceptions. If :py:obj:`True`, then if
             the sentence fails to parse, instead of raising an
             exception, returns :py:obj:`None`.
+        tokenised : bool, default: False
+            Whether the sentence has been passed as a list of tokens.
 
         Returns
         -------
@@ -73,19 +83,36 @@ class CCGParser(ABC):
             The parsed tree, or :py:obj:`None` on failure.
 
         """
-        return self.sentences2trees([sentence],
-                                    suppress_exceptions=suppress_exceptions)[0]
+        if tokenised:
+            if not tokenised_sentence_type_check(sentence):
+                raise ValueError('`tokenised` set to `True`, but variable '
+                                 '`sentence` does not have type '
+                                 '`List[str]`.')
+            sent: List[str] = [str(token) for token in sentence]
+            return self.sentences2trees(
+                            [sent],
+                            suppress_exceptions=suppress_exceptions,
+                            tokenised=tokenised)[0]
+        else:
+            if not isinstance(sentence, str):
+                raise ValueError('`tokenised` set to `False`, but variable '
+                                 '`sentence` does not have type `str`.')
+            return self.sentences2trees(
+                            [sentence],
+                            suppress_exceptions=suppress_exceptions,
+                            tokenised=tokenised)[0]
 
     def sentences2diagrams(
             self,
-            sentences: Iterable[str],
+            sentences: SentenceBatchType,
             planar: bool = False,
-            suppress_exceptions: bool = False) -> List[Optional[Diagram]]:
+            suppress_exceptions: bool = False,
+            tokenised: bool = False) -> List[Optional[Diagram]]:
         """Parse multiple sentences into a list of discopy diagrams.
 
         Parameters
         ----------
-        sentences : iterable of str
+        sentences : list of str, or list of list of str
             The sentences to be parsed.
         planar : bool, default: False
             Force diagrams to be planar when they contain
@@ -94,6 +121,8 @@ class CCGParser(ABC):
             Whether to suppress exceptions. If :py:obj:`True`, then if a
             sentence fails to parse, instead of raising an exception,
             its return entry is :py:obj:`None`.
+        tokenised : bool, default: False
+            Whether each sentence has been passed as a list of tokens.
 
         Returns
         -------
@@ -103,7 +132,8 @@ class CCGParser(ABC):
 
         """
         trees = self.sentences2trees(sentences,
-                                     suppress_exceptions=suppress_exceptions)
+                                     suppress_exceptions=suppress_exceptions,
+                                     tokenised=tokenised)
         diagrams = []
         for tree in trees:
             if tree is not None:
@@ -120,14 +150,15 @@ class CCGParser(ABC):
 
     def sentence2diagram(
             self,
-            sentence: str,
+            sentence: SentenceType,
             planar: bool = False,
-            suppress_exceptions: bool = False) -> Optional[Diagram]:
+            suppress_exceptions: bool = False,
+            tokenised: bool = False) -> Optional[Diagram]:
         """Parse a sentence into a DisCoPy diagram.
 
         Parameters
         ----------
-        sentence : str
+        sentence : str or list of str
             The sentence to be parsed.
         planar : bool, default: False
             Force diagrams to be planar when they contain
@@ -136,6 +167,8 @@ class CCGParser(ABC):
             Whether to suppress exceptions. If :py:obj:`True`, then if
             the sentence fails to parse, instead of raising an
             exception, returns :py:obj:`None`.
+        tokenised : bool, default: False
+            Whether the sentence has been passed as a list of tokens.
 
         Returns
         -------
@@ -143,7 +176,23 @@ class CCGParser(ABC):
             The parsed diagram, or :py:obj:`None` on failure.
 
         """
-        return self.sentences2diagrams(
-                [sentence],
-                planar=planar,
-                suppress_exceptions=suppress_exceptions)[0]
+        if tokenised:
+            if not tokenised_sentence_type_check(sentence):
+                raise ValueError('`tokenised` set to `True`, but variable '
+                                 '`sentence` does not have type '
+                                 '`List[str]`.')
+            sent: List[str] = [str(token) for token in sentence]
+            return self.sentences2diagrams(
+                            [sent],
+                            planar=planar,
+                            suppress_exceptions=suppress_exceptions,
+                            tokenised=tokenised)[0]
+        else:
+            if not isinstance(sentence, str):
+                raise ValueError('`tokenised` set to `False`, but variable '
+                                 '`sentence` does not have type `str`.')
+            return self.sentences2diagrams(
+                            [sentence],
+                            planar=planar,
+                            suppress_exceptions=suppress_exceptions,
+                            tokenised=tokenised)[0]

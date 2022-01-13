@@ -33,6 +33,7 @@ def test_to_biclosed(depccg_parser):
 
 def test_sentence2diagram(depccg_parser):
     sentence = 'What Alice is and is not .'
+    tokenised_sentence = sentence.split()
 
     n, s = AtomicType.NOUN, AtomicType.SENTENCE
     dom = Ty.tensor(n, n.l.l, s.l, n, n.r, s, n.l, n, s.r, n.r.r, n.r, s, n.l,
@@ -65,6 +66,16 @@ def test_sentence2diagram(depccg_parser):
                         fa2)
 
     assert depccg_parser.sentence2diagram(sentence) == expected_diagram
+    assert depccg_parser.sentence2diagram(tokenised_sentence, tokenised=True) == expected_diagram
+
+
+def test_sentence2diagram_bad_tokenised_flag(depccg_parser):
+    sentence = 'What Alice is and is not .'
+    sentence_tokenised = sentence.split()
+    with pytest.raises(ValueError):
+        depccg_parser.sentence2diagram(sentence, tokenised=True)
+    with pytest.raises(ValueError):
+        depccg_parser.sentence2diagram(sentence_tokenised)
 
 
 def test_bad_sentences(depccg_parser):

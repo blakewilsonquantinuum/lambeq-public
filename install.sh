@@ -80,7 +80,7 @@ fi
 echo 'Preparing installation environment...'
 python3 -m pip install --upgrade pip wheel
 if [ "$install_option" != 2 ]; then
-    python3 -m pip install cython numpy
+    python3 -m pip install cython numpy spacy
 
     if [ "$install_option" = 1 ]; then
         extras='depccg'

@@ -17,7 +17,7 @@ from __future__ import annotations
 __all__ = ['DepCCGParser', 'DepCCGParseError']
 
 import json
-from typing import Any, Iterable, List, Optional, TYPE_CHECKING, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Union
 
 from discopy.biclosed import Ty
 
@@ -25,6 +25,8 @@ from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_rule import CCGRule
 from lambeq.ccg2discocat.ccg_tree import CCGTree
 from lambeq.ccg2discocat.ccg_types import CCGAtomicType
+from lambeq.core.utils import SentenceBatchType,\
+        tokenised_batch_type_check, untokenised_batch_type_check
 
 if TYPE_CHECKING:
     import depccg
@@ -95,7 +97,6 @@ class DepCCGParser(CCGParser):
             If the provided model name is not valid.
 
         """
-
         _import_depccg()
 
         if isinstance(model, EnglishCCGParser):
@@ -117,9 +118,21 @@ class DepCCGParser(CCGParser):
 
     def sentences2trees(
             self,
-            sentences: Iterable[str],
-            suppress_exceptions: bool = False) -> List[Optional[CCGTree]]:
-        sentences = [' '.join(sentence.split()) for sentence in sentences]
+            sentences: SentenceBatchType,
+            suppress_exceptions: bool = False,
+            tokenised: bool = False) -> List[Optional[CCGTree]]:
+        if tokenised:
+            if not tokenised_batch_type_check(sentences):
+                raise ValueError('`tokenised` set to `True`, but variable '
+                                 '`sentences` does not have type '
+                                 '`List[List[str]]`.')
+        else:
+            if not untokenised_batch_type_check(sentences):
+                raise ValueError('`tokenised` set to `False`, but variable '
+                                 '`sentences` does not have type '
+                                 '`List[str]`.')
+            sent_list: List[str] = [str(s) for s in sentences]
+            sentences = [sentence.split() for sentence in sent_list]
         empty_indices = []
         for i, sentence in enumerate(sentences):
             if not sentence:
@@ -141,7 +154,7 @@ class DepCCGParser(CCGParser):
                 elif suppress_exceptions:
                     trees.append(None)
                 else:
-                    raise DepCCGParseError(sentence)
+                    raise DepCCGParseError(' '.join(sentence))
 
         for i in empty_indices:
             trees.insert(i, None)

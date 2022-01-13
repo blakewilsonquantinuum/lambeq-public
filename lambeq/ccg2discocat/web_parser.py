@@ -15,13 +15,15 @@
 __all__ = ['WebParser', 'WebParseError']
 
 import json
-from typing import Iterable, List, Optional
+from typing import List, Optional
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_tree import CCGTree
+from lambeq.core.utils import SentenceBatchType, tokenised_batch_type_check,\
+        untokenised_batch_type_check
 
 SERVICE_URL = 'https://cqc.pythonanywhere.com/tree/json'
 
@@ -53,13 +55,14 @@ class WebParser(CCGParser):
 
     def sentences2trees(
             self,
-            sentences: Iterable[str],
-            suppress_exceptions: bool = False) -> List[Optional[CCGTree]]:
+            sentences: SentenceBatchType,
+            suppress_exceptions: bool = False,
+            tokenised: bool = False) -> List[Optional[CCGTree]]:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
 
         Parameters
         ----------
-        sentences : iterable of str
+        sentences : list of str, or list of list of str
             The sentences to be parsed.
         suppress_exceptions : bool, default: False
             Whether to suppress exceptions. If :py:obj:`True`, then if a
@@ -77,13 +80,25 @@ class WebParser(CCGParser):
         URLError
             If the service URL is not well formed.
         ValueError
-            If a sentence is blank.
+            If a sentence is blank or type of the sentence does not match
+            `tokenised` flag.
         WebParseError
             If the parser fails to obtain a parse tree from the server.
 
         """
-
-        sentences = [' '.join(sentence.split()) for sentence in sentences]
+        if tokenised:
+            if not tokenised_batch_type_check(sentences):
+                raise ValueError('`tokenised` set to `True`, but variable '
+                                 '`sentences` does not have type '
+                                 '`List[List[str]]`.')
+                sentences = [' '.join(sentence) for sentence in sentences]
+        else:
+            if not untokenised_batch_type_check(sentences):
+                raise ValueError('`tokenised` set to `False`, but variable '
+                                 '`sentences` does not have type '
+                                 '`List[str]`.')
+            sent_list: List[str] = [str(s) for s in sentences]
+            sentences = [' '.join(sentence.split()) for sentence in sent_list]
         empty_indices = []
         for i, sentence in enumerate(sentences):
             if not sentence:
@@ -107,7 +122,7 @@ class WebParser(CCGParser):
                 if suppress_exceptions:
                     tree = None
                 else:
-                    raise WebParseError(sentence, e.code)
+                    raise WebParseError(str(sentence), e.code)
             else:
                 tree = CCGTree.from_json(data)
             trees.append(tree)

@@ -6,7 +6,7 @@ from lambeq.ccg2discocat.ccgbank_parser import CCGBankParseError, CCGBankParser
 
 
 class BadParser(CCGBankParser):
-    def sentences2trees(self, sentences, suppress_exceptions=False):
+    def sentences2trees(self, sentences, suppress_exceptions=False, tokenised=False):
         mock_tree = Mock()
         mock_tree.attach_mock(Mock(side_effect=Exception("I can't parse anything.")), 'to_diagram')
         return [mock_tree for _ in sentences]
