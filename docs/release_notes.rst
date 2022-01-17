@@ -3,6 +3,14 @@
 Release notes
 =============
 
+.. _rel-0.2.0:
+
+`0.2.0 <https://github.com/CQCL/lambeq/releases/tag/0.2.0>`_
+------------------------------------------------------------
+
+- Add command-line interface.
+- ...
+
 .. _rel-0.1.2:
 
 `0.1.2 <https://github.com/CQCL/lambeq/releases/tag/0.1.2>`_
