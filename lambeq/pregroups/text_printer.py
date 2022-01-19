@@ -26,31 +26,21 @@ from dataclasses import dataclass
 from copy import deepcopy
 from enum import Enum
 
-from discopy import Box, Cup, Diagram, Swap, Id, Ty
+from discopy import Box, Cup, Diagram, Swap
 from discopy.grammar import Word
+from lambeq.pregroups import is_pregroup_diagram
 
 
-def is_pregroup_diagram(diagram: Diagram) -> bool:
-    """Checks if a DisCoPy diagram is a pregroup diagram. This
-    code is taken from `discopy.grammar.pregroup.draw()`."""
-    if not isinstance(diagram, Diagram):
-        return False
-    words, is_pregroup = Id(Ty()), True
-    for _, box, right in diagram.layers:
-        if isinstance(box, Word):
-            if right:  # word boxes should be tensored left to right.
-                is_pregroup = False
-                break
-            words = words @ box
-        else:
-            break
-    cups = diagram[len(words):].foliation().boxes\
-        if len(words) < len(diagram) else []
-    is_pregroup = is_pregroup and words and all(
-        isinstance(box, (Cup, Swap))
-        for s in cups for box in s.boxes)
-
-    return is_pregroup
+def diagram2str(diagram: Diagram, word_spacing: int = 2,
+                discopy_types: bool = False, compress_layers: bool = True,
+                use_ascii: bool = False) -> str:
+    """Produces a string that graphically represents the input diagram
+    with text characters, without the need of first creating a printer.
+    For specific arguments, see the constructor of the
+    :py:class:`.TextDiagramPrinter` class."""
+    printer = TextDiagramPrinter(word_spacing, discopy_types,
+                                 compress_layers, use_ascii)
+    return printer.diagram2str(diagram)
 
 
 class _MorphismType(Enum):

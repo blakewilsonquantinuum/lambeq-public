@@ -1,6 +1,6 @@
 import pytest
 
-from lambeq.spacytokeniser import SpacyTokeniser
+from lambeq.tokeniser.spacytokeniser import SpacyTokeniser
 
 
 @pytest.fixture

@@ -2,7 +2,7 @@ import pytest
 
 from lambeq.reader import cups_reader
 from discopy import Word, Id, Ty, Cup, Swap
-from lambeq.text_printer import TextDiagramPrinter
+from lambeq.pregroups import TextDiagramPrinter
 from lambeq.core.types import AtomicType
 
 

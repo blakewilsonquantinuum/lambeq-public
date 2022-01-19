@@ -36,8 +36,8 @@ from lambeq.ansatz import BaseAnsatz
 from lambeq.circuit import IQPAnsatz, CircuitAnsatz
 from lambeq.tensor import TensorAnsatz, SpiderAnsatz, MPSAnsatz
 from lambeq.reader import Reader, spiders_reader, cups_reader
-from lambeq.spacytokeniser import SpacyTokeniser
-from lambeq import text_printer
+from lambeq.tokeniser import SpacyTokeniser
+from lambeq.pregroups import text_printer
 
 import discopy
 

@@ -66,8 +66,8 @@ See `examples/rewrite.ipynb` for illustrative usage.
 
 """
 
-__all__ = [
-    'CoordinationRewriteRule', 'Rewriter', 'RewriteRule', 'SimpleRewriteRule']
+__all__ = ['CoordinationRewriteRule', 'Rewriter',
+           'RewriteRule', 'SimpleRewriteRule']
 
 from abc import ABC, abstractmethod
 from typing import Container, Iterable, List, Optional, Union
