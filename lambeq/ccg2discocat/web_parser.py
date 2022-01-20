@@ -91,7 +91,7 @@ class WebParser(CCGParser):
                 raise ValueError('`tokenised` set to `True`, but variable '
                                  '`sentences` does not have type '
                                  '`List[List[str]]`.')
-                sentences = [' '.join(sentence) for sentence in sentences]
+            sentences = [' '.join(sentence) for sentence in sentences]
         else:
             if not untokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `False`, but variable '
@@ -123,6 +123,11 @@ class WebParser(CCGParser):
                     tree = None
                 else:
                     raise WebParseError(str(sentence), e.code)
+            except Exception as e:
+                if suppress_exceptions:
+                    tree = None
+                else:
+                    raise e
             else:
                 tree = CCGTree.from_json(data)
             trees.append(tree)

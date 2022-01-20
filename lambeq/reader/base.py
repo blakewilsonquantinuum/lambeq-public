@@ -34,6 +34,11 @@ Some simple example readers are included for use:
         legs. The remaining output is combined with the next word box
         using another spider, and so on, until a single output remains.
         Here, each word box has an output type of :py:obj:`S @ S`.
+    :py:data:`stairs_reader` : :py:class:`LinearReader`
+        This combines the first two word boxes with a combining box that
+        has a single output. Then, each word box is combined with the
+        output from the previous combining box to produce a stair-like
+        pattern.
 
 See `examples/readers.ipynb` for illustrative usage.
 
@@ -42,19 +47,18 @@ See `examples/readers.ipynb` for illustrative usage.
 from __future__ import annotations
 from abc import ABC, abstractmethod
 
-__all__ = ['Reader', 'LinearReader', 'cups_reader', 'spiders_reader']
+__all__ = ['Reader', 'LinearReader', 'cups_reader', 'spiders_reader', 'stairs_reader']
 
 from typing import List
 
 from discopy import Word
-from discopy.rigid import Cup, Diagram, Id, Spider, Ty
+from discopy.rigid import Box, Cup, Diagram, Id, Spider, Ty
 
-from lambeq.core.types import AtomicType, Discard
+from lambeq.core.types import AtomicType
 from lambeq.core.utils import SentenceBatchType, SentenceType,\
         tokenised_sentence_type_check
 
 S = AtomicType.SENTENCE
-DISCARD = Discard(S)
 
 
 class Reader(ABC):
@@ -116,12 +120,18 @@ class LinearReader(Reader):
         ----------
         sentence : str or list of str
             The input sentence, passed either as a string or as a list of
-            tokens
+            tokens.
         tokenised : bool, default: False
             Set to :py:obj:`True`, if the sentence is passed as a list of
             tokens instead of a single string.
             If set to :py:obj:`False`, words are split by
             whitespace.
+
+        Raises
+        ------
+        ValueError
+            If sentence does not match `tokenised` flag, or if an invalid mode
+            or parser is passed to the initialiser.
 
         """
         if tokenised:
@@ -144,3 +154,4 @@ class LinearReader(Reader):
 
 cups_reader = LinearReader(Cup(S, S.r), S >> S, Word('START', S))
 spiders_reader = LinearReader(Spider(2, 1, S))
+stairs_reader = LinearReader(Box('STAIR', S @ S, S))

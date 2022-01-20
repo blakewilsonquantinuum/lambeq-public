@@ -1,10 +1,12 @@
 import pytest
 
 from discopy import Word
-from discopy.rigid import Diagram, Id
+from discopy.rigid import Box, Diagram, Id
 
 from lambeq.core.types import AtomicType
-from lambeq.reader import cups_reader, spiders_reader
+from lambeq.reader import (stairs_reader, cups_reader, spiders_reader,
+                           TreeReader, TreeReaderMode)
+from lambeq.ccg2discocat.web_parser import WebParser
 
 
 @pytest.fixture
@@ -31,6 +33,7 @@ def test_spiders_reader(sentence, words):
     assert (spiders_reader.sentences2diagrams([sentence])[0] ==
             spiders_reader.sentence2diagram(sentence) == expected_diagram)
 
+
 def test_spiders_reader_tokenised(sentence, words):
     S = AtomicType.SENTENCE
     combining_diagram = spiders_reader.combining_diagram
@@ -52,7 +55,48 @@ def test_sentence2diagram_bad_tokenised_flag(sentence):
         spiders_reader.sentence2diagram(sentence_tokenised)
 
 
+def make_parse(*names):
+    S = AtomicType.SENTENCE
+    boxes = [Box(name, S @ S, S) for name in names]
+    return Id(S @ S) @ boxes[0] >> Id(S) @ boxes[1] >> boxes[2]
+
+
+def test_tree_reader(sentence, words):
+    S = AtomicType.SENTENCE
+    with pytest.raises(ValueError):
+        TreeReader(ccg_parser='parser')
+
+    with pytest.raises(ValueError):
+        TreeReader(mode='party mode')
+
+    the_words = Id().tensor(*[Word(w, S) for w in words])
+
+    reader0 = TreeReader(mode=TreeReaderMode.NO_TYPE)
+    mode0_expect = the_words >> make_parse('UNIBOX', 'UNIBOX', 'UNIBOX')
+    assert reader0.sentence2diagram(sentence) == mode0_expect
+
+    reader1 = TreeReader(mode=TreeReaderMode.RULE_ONLY)
+    mode1_expect = the_words >> make_parse('FA', 'FA', 'BA')
+    assert reader1.sentence2diagram(sentence) == mode1_expect
+
+    reader2 = TreeReader(mode=TreeReaderMode.RULE_TYPE)
+    mode2_expect = the_words >> make_parse('FA(n << n)', 'FA((n >> s) << n)', 'BA(n >> s)')
+    assert reader2.sentence2diagram(sentence) == mode2_expect
+
+
+def test_suppress_exceptions(sentence):
+    service_url = 'bad..url..'
+    bad_parser = WebParser(service_url=service_url)
+
+    bad_reader = TreeReader(bad_parser, suppress_exceptions=True)
+    assert bad_reader.sentence2diagram(sentence) is None
+
+    bad_reader = TreeReader(bad_parser, suppress_exceptions=False)
+    with pytest.raises(ValueError):
+        bad_reader.sentence2diagram(sentence)
+
 
 def test_other_readers(sentence):
     # since all the readers share behaviour, just test that they don't fail
+    assert stairs_reader.sentence2diagram(sentence)
     assert cups_reader.sentence2diagram(sentence)

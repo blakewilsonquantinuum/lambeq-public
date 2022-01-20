@@ -30,6 +30,7 @@ def test_sentence2diagram(web_parser):
     diagram = web_parser.sentence2diagram(sentence, planar=True)
     assert diagram == expected_diagram
 
+
 def test_no_exceptions(web_parser):
     assert web_parser.sentences2diagrams(
         [''], suppress_exceptions=True) == [None]
@@ -37,13 +38,12 @@ def test_no_exceptions(web_parser):
     with pytest.raises(ValueError):
         assert web_parser.sentence2diagram('')
 
+
 def test_bad_url():
     service_url = "https://cqc.pythonanywhere.com/monoidal/foo"
-
     bad_parser = WebParser(service_url=service_url)
 
     assert bad_parser.sentence2diagram(
-        "Need a proper url", suppress_exceptions=True) == None
+        "Need a proper url", suppress_exceptions=True) is None
     with pytest.raises(WebParseError):
         bad_parser.sentence2diagram("Need a proper url")
-
