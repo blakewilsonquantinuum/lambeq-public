@@ -33,8 +33,8 @@ import lambeq
 from lambeq.ccg2discocat import DepCCGParser
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ansatz import BaseAnsatz
-from lambeq.circuit import IQPAnsatz, CircuitAnsatz
-from lambeq.tensor import TensorAnsatz, SpiderAnsatz, MPSAnsatz
+from lambeq.ansatz.circuit import IQPAnsatz, CircuitAnsatz
+from lambeq.ansatz.tensor import TensorAnsatz, SpiderAnsatz, MPSAnsatz
 from lambeq.reader import Reader, spiders_reader, cups_reader
 from lambeq.tokeniser import SpacyTokeniser
 from lambeq.pregroups import text_printer
@@ -167,7 +167,7 @@ def prepare_parser() -> argparse.ArgumentParser:
                  f'{DEFAULT_ARG_VALUES["image_format"]}')
     output_arglist = ArgumentList([('fig_width', int, None),
                                    ('fig_height', int, None),
-                                   ('font_size', int, None)])
+                                   ('fontsize', int, None)])
 
     output_group.add_argument(
             '-u',
@@ -210,7 +210,7 @@ def prepare_parser() -> argparse.ArgumentParser:
             default=None,
             choices=AVAILABLE_PARSERS.keys(),
             help='Choice of a parser. Mutually exclussive with using a '
-                 f'reader. If `None`, DepCCGParser is used.')
+                 'reader. If `None`, DepCCGParser is used.')
     parser_group.add_argument(
             '-t',
             '--tokenise',
@@ -436,11 +436,8 @@ class CircuitSaveModule(CLIModule):
                  module_input: List[
                              Union[discopy.Diagram, discopy.Circuit]]) -> None:
         if cl_args.output_format == 'json':
-            if cl_args.output_file is not None:
-                with open(cl_args.output_file, 'w') as f:
-                    json.dump([d.to_tree() for d in module_input], f)
-            else:
-                print(json.dumps([d.to_tree() for d in module_input]))
+            with open(cl_args.output_file, 'w') as f:
+                json.dump([d.to_tree() for d in module_input], f)
         elif cl_args.output_format in ['text-ascii', 'text-unicode']:
             printer = text_printer.TextDiagramPrinter(use_ascii=(
                                     cl_args.output_format == 'text-ascii'))
@@ -498,18 +495,20 @@ def main() -> None:
                   AnsatzModule(),
                   CircuitSaveModule()]
     if cl_args.load_args is not None:
-        saved_args = yaml.load(open(cl_args.load_args),
+        saved_args = yaml.load(open(cl_args.load_args, 'r'),
                                Loader=yaml.FullLoader)
         for key, value in saved_args.items():
             if not hasattr(cl_args, key) or\
                getattr(cl_args, key) is None or\
                getattr(cl_args, key) is False or\
+               getattr(cl_args, key) == '' or\
                getattr(cl_args, key) == {}:
                 setattr(cl_args, key, value)
     for key, value in DEFAULT_ARG_VALUES.items():
         if not hasattr(cl_args, key) or\
            getattr(cl_args, key) is None or\
            getattr(cl_args, key) is False or\
+           getattr(cl_args, key) == '' or\
            getattr(cl_args, key) == {}:
             setattr(cl_args, key, value)
     validate_args(cl_args)

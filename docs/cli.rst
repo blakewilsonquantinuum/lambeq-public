@@ -65,7 +65,7 @@ It is also possible to parse a single sentence and store it as an image -- for e
 
 .. code-block:: console
 
-    $ lambeq -f image -u fig_width=16 fig_height=3 font_size=12
+    $ lambeq -f image -u fig_width=16 fig_height=3 fontsize=12
     >        -o diagram.pdf
     >        "Mary does not like John"
 
