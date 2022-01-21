@@ -28,12 +28,14 @@ Some simple example readers are included for use:
         This combines each pair of adjacent word boxes with a cup. This
         requires each word box to have the output :py:obj:`S >> S` to
         expose two output wires, and a sentinel start box is used to
-        connect to the first word box.
+        connect to the first word box. Also available under the name
+        :py:data:`word_sequence_reader`.
     :py:data:`spiders_reader` : :py:class:`LinearReader`
         This combines the first two word boxes using a spider with three
         legs. The remaining output is combined with the next word box
         using another spider, and so on, until a single output remains.
         Here, each word box has an output type of :py:obj:`S @ S`.
+        Also available under the name :py:data:`bag_of_words_reader`.
     :py:data:`stairs_reader` : :py:class:`LinearReader`
         This combines the first two word boxes with a combining box that
         has a single output. Then, each word box is combined with the
@@ -47,7 +49,8 @@ See `examples/readers.ipynb` for illustrative usage.
 from __future__ import annotations
 from abc import ABC, abstractmethod
 
-__all__ = ['Reader', 'LinearReader', 'cups_reader', 'spiders_reader', 'stairs_reader']
+__all__ = ['Reader', 'LinearReader', 'bag_of_words_reader', 'cups_reader',
+           'spiders_reader', 'stairs_reader', 'word_sequence_reader']
 
 from typing import List
 
@@ -155,3 +158,5 @@ class LinearReader(Reader):
 cups_reader = LinearReader(Cup(S, S.r), S >> S, Word('START', S))
 spiders_reader = LinearReader(Spider(2, 1, S))
 stairs_reader = LinearReader(Box('STAIR', S @ S, S))
+bag_of_words_reader = spiders_reader
+word_sequence_reader = cups_reader
