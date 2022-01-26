@@ -32,7 +32,7 @@ __all__ = ['CCGBankParseError', 'CCGBankParser']
 import os
 from pathlib import Path
 import re
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Tuple, Union
 
 from discopy.biclosed import Ty
 from discopy.rigid import Diagram
@@ -130,8 +130,41 @@ class CCGBankParser(CCGParser):
             If parsing fails and exceptions are not suppressed.
 
         """
+        return {key: tree for key, tree in self.section2trees_gen(
+            section_id,
+            suppress_exceptions=suppress_exceptions)}
+
+    def section2trees_gen(
+            self,
+            section_id: int,
+            suppress_exceptions: bool = False) -> Iterator[
+                                        Tuple[str, Optional[CCGTree]]]:
+        """Parse a CCGBank section into trees, given as a generator. 
+        The generator only reads data when it is accessed, providing the user
+        with control over the reading process.
+
+        Parameters
+        ----------
+        section_id : int
+            The section to parse.
+        suppress_exceptions : bool, default: False
+            Stop exceptions from being raised, instead returning
+            :py:obj:`None` for a tree.
+
+        Yields
+        ------
+        ID, tree : tuple of str and CCGTree
+            ID in CCGBank and the corresponding tree. If a
+            tree fails to parse and exceptions are suppressed, that
+            entry is :py:obj:`None`.
+
+        Raises
+        ------
+        CCGBankParseError
+            If parsing fails and exceptions are not suppressed.
+
+        """
         path = self.root / 'data' / 'AUTO' / f'{section_id:02}'
-        trees = {}
         for file in sorted(path.iterdir()):
             with open(file) as f:
                 line_no = 0
@@ -148,11 +181,10 @@ class CCGBankParser(CCGParser):
                                 raise CCGBankParseError(
                                         f'Failed to parse tree in "{file}" '
                                         f'line {line_no}: {e.message}')
-                        trees[match['id']] = tree
+                        yield match['id'], tree
                     elif not suppress_exceptions:
                         raise CCGBankParseError('Failed to parse ID in '
                                                 f'"{file}" line {line_no}')
-        return trees
 
     def section2diagrams(
             self,
@@ -185,20 +217,58 @@ class CCGBankParser(CCGParser):
             If parsing fails and exceptions are not suppressed.
 
         """
-        trees = self.section2trees(section_id, suppress_exceptions)
-        diagrams = {}
-        for k, tree in trees.items():
+        return {key: diagram for key, diagram in self.section2diagrams_gen(
+            section_id,
+            planar=planar,
+            suppress_exceptions=suppress_exceptions)}
+
+    def section2diagrams_gen(
+            self,
+            section_id: int,
+            planar: bool = False,
+            suppress_exceptions: bool = False) -> Iterator[
+                                        Tuple[str, Optional[Diagram]]]:
+        """Parse a CCGBank section into diagrams, given as a generator. 
+        The generator only reads data when it is accessed, providing the user
+        with control over the reading process.
+
+        Parameters
+        ----------
+        section_id : int
+            The section to parse.
+        planar : bool, default: False
+            Force diagrams to be planar when they contain
+            crossed composition.
+        suppress_exceptions : bool, default: False
+            Stop exceptions from being raised, instead returning
+            :py:obj:`None` for a diagram.
+
+        Yields
+        ------
+        ID, diagram : tuple of str and Diagram
+            ID in CCGBank and the corresponding diagram. If a
+            diagram fails to draw and exceptions are suppressed, that
+            entry is replaced by :py:obj:`None`.
+
+        Raises
+        ------
+        CCGBankParseError
+            If parsing fails and exceptions are not suppressed.
+
+        """
+        trees = self.section2trees_gen(section_id, suppress_exceptions)
+        for k, tree in trees:
             if tree is not None:
                 try:
-                    diagrams[k] = tree.to_diagram(planar)
+                    diagram = tree.to_diagram(planar)
                 except Exception as e:
                     if suppress_exceptions:
-                        diagrams[k] = None
+                        diagram = None
                     else:
                         raise e
             else:
-                diagrams[k] = None
-        return diagrams
+                diagram = None
+            yield k, diagram
 
     def sentences2trees(
             self,
