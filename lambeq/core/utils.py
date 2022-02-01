@@ -1,4 +1,5 @@
-from typing import List, Union
+import importlib
+from typing import Any, List, Union
 
 SentenceType = Union[str, List[str]]
 SentenceBatchType = Union[List[str], List[List[str]]]
@@ -17,3 +18,7 @@ def untokenised_batch_type_check(sentence: SentenceBatchType) -> bool:
 def tokenised_batch_type_check(batch: SentenceBatchType) -> bool:
     return isinstance(batch, list) and all(
             tokenised_sentence_type_check(s) for s in batch)
+
+
+def is_torch_available() -> bool:
+    return importlib.util.find_spec('torch') is not None
