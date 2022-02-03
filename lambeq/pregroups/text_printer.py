@@ -21,9 +21,10 @@ e.g. for the purpose of outputting them graphically in a terminal.
 
 """
 
-from typing import Dict, List, Tuple
-from dataclasses import dataclass
+from __future__ import annotations
+
 from copy import deepcopy
+from dataclasses import dataclass
 from enum import Enum
 
 from discopy import Box, Cup, Diagram, Swap
@@ -62,7 +63,7 @@ class _Morphism:
 class _Layer:
     """Represents a layer as a collection of `Morphism`s, and provides
     helper methods for the printing."""
-    def __init__(self, morphisms: List[_Morphism]):
+    def __init__(self, morphisms: list[_Morphism]):
         self.morphisms = morphisms
 
     def morphism_allowed(self, morphism: _Morphism):
@@ -82,7 +83,7 @@ class _Layer:
 class TextDiagramPrinter:
     """A text printer for pregroup diagrams."""
 
-    UNICODE_CHAR_SET: Dict[str, str] = {
+    UNICODE_CHAR_SET: dict[str, str] = {
         "BAR": '│',
         "TOP_R_CORNER": '╮',
         "TOP_L_CORNER": '╭',
@@ -92,7 +93,7 @@ class TextDiagramPrinter:
         "DOT": '·'
     }
 
-    ASCII_CHAR_SET: Dict[str, str] = {
+    ASCII_CHAR_SET: dict[str, str] = {
         "BAR": '|',
         "TOP_R_CORNER": chr(160),
         "TOP_L_CORNER": chr(160),
@@ -132,8 +133,8 @@ class TextDiagramPrinter:
             else self.ASCII_CHAR_SET
 
     @staticmethod
-    def _induce_layers(atomic_types: List[str],
-                       offsets: List[Tuple[Box, int]]) -> List[_Layer]:
+    def _induce_layers(atomic_types: list[str],
+                       offsets: list[tuple[Box, int]]) -> list[_Layer]:
         """Prepares a list of `_Layer`s from the DisCoPy diagram, in which
         the start and end of each cup/swap point to the original positions
         of the involved atomic types (before any application of cups)."""
@@ -156,7 +157,7 @@ class TextDiagramPrinter:
         return layers
 
     @staticmethod
-    def _compress_layers(layers: List[_Layer]) -> List[_Layer]:
+    def _compress_layers(layers: list[_Layer]) -> list[_Layer]:
         """Compresses the layers of the diagram from top to bottom."""
         new_layers = deepcopy(layers)
         for l_idx in range(1, len(layers)):
@@ -182,8 +183,8 @@ class TextDiagramPrinter:
 
         return [l for l in new_layers if not l.is_empty()]
 
-    def _add_identities(self, previous_rows: List[str], current_row: str,
-                        type_positions: List[int], start: int, end: int) -> str:
+    def _add_identities(self, previous_rows: list[str], current_row: str,
+                        type_positions: list[int], start: int, end: int) -> str:
         """Scans the current printing row from left to right in the given part
         and adds identities when nececessary, based on the previous row."""
         for typ_id in range(start, end):
@@ -202,10 +203,10 @@ class TextDiagramPrinter:
         """Replaces a substring in a string."""
         return string[:start] + substring + string[end:]
 
-    def _layers_to_printing_rows(self, width: int, positions: List[int],
-                                 layers: List[_Layer]) -> List[str]:
+    def _layers_to_printing_rows(self, width: int, positions: list[int],
+                                 layers: list[_Layer]) -> list[str]:
         """Converts the layers into printing rows."""
-        rows: List[str] = []
+        rows: list[str] = []
         for layer in layers:
             row = ' ' * width
             cur_col = 0

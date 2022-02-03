@@ -29,10 +29,11 @@ from __future__ import annotations
 
 __all__ = ['CCGBankParseError', 'CCGBankParser']
 
+from collections.abc import Iterator
 import os
 from pathlib import Path
 import re
-from typing import Dict, Iterator, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 from discopy.biclosed import Ty
 from discopy.rigid import Diagram
@@ -106,7 +107,7 @@ class CCGBankParser(CCGParser):
     def section2trees(
             self,
             section_id: int,
-            suppress_exceptions: bool = False) -> Dict[str, Optional[CCGTree]]:
+            suppress_exceptions: bool = False) -> dict[str, Optional[CCGTree]]:
         """Parse a CCGBank section into trees.
 
         Parameters
@@ -138,8 +139,8 @@ class CCGBankParser(CCGParser):
             self,
             section_id: int,
             suppress_exceptions: bool = False) -> Iterator[
-                                        Tuple[str, Optional[CCGTree]]]:
-        """Parse a CCGBank section into trees, given as a generator. 
+                                        tuple[str, Optional[CCGTree]]]:
+        """Parse a CCGBank section into trees, given as a generator.
         The generator only reads data when it is accessed, providing the user
         with control over the reading process.
 
@@ -190,7 +191,7 @@ class CCGBankParser(CCGParser):
             self,
             section_id: int,
             planar: bool = False,
-            suppress_exceptions: bool = False) -> Dict[str, Optional[Diagram]]:
+            suppress_exceptions: bool = False) -> dict[str, Optional[Diagram]]:
         """Parse a CCGBank section into diagrams.
 
         Parameters
@@ -227,8 +228,8 @@ class CCGBankParser(CCGParser):
             section_id: int,
             planar: bool = False,
             suppress_exceptions: bool = False) -> Iterator[
-                                        Tuple[str, Optional[Diagram]]]:
-        """Parse a CCGBank section into diagrams, given as a generator. 
+                                        tuple[str, Optional[Diagram]]]:
+        """Parse a CCGBank section into diagrams, given as a generator.
         The generator only reads data when it is accessed, providing the user
         with control over the reading process.
 
@@ -274,7 +275,7 @@ class CCGBankParser(CCGParser):
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> List[Optional[CCGTree]]:
+            tokenised: bool = False) -> list[Optional[CCGTree]]:
         """Parse a CCGBank sentence derivation into a CCGTree.
 
         The sentence must be in the format outlined in the CCGBank
@@ -324,7 +325,7 @@ class CCGBankParser(CCGParser):
         return trees
 
     @staticmethod
-    def _build_ccgtree(sentence: str, start: int) -> Tuple[CCGTree, int]:
+    def _build_ccgtree(sentence: str, start: int) -> tuple[CCGTree, int]:
         tree_match = CCGBankParser.tree_regex.match(sentence, pos=start)
         if not tree_match:
             raise CCGBankParseError('malformed tree starting from character '

@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from __future__ import annotations
+
 from enum import Enum
 
 __all__ = ['TreeReader', 'TreeReaderMode']
-
-from typing import List
 
 from discopy import Word
 from discopy.rigid import Box, Diagram, Ty
@@ -26,7 +24,7 @@ from discopy.rigid import Box, Diagram, Ty
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.web_parser import WebParser
 from lambeq.core.types import AtomicType
-from lambeq.core.utils import SentenceType, tokenised_sentence_type_check
+from lambeq.core.utils import SentenceType
 from lambeq.reader.base import Reader
 
 S = AtomicType.SENTENCE
@@ -95,7 +93,7 @@ class TreeReader(Reader):
         self.suppress_exceptions = suppress_exceptions
 
     @classmethod
-    def available_modes(cls) -> List[str]:
+    def available_modes(cls) -> list[str]:
         """The list of modes for initialising a tree reader."""
         return list(TreeReaderMode)
 

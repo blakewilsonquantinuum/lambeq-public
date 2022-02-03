@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import importlib
-from typing import Any, List, Union
+from typing import List, Union
 
 SentenceType = Union[str, List[str]]
 SentenceBatchType = Union[List[str], List[List[str]]]

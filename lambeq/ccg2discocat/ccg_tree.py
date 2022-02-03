@@ -16,8 +16,9 @@ from __future__ import annotations
 
 __all__ = ['CCGTree']
 
+from collections.abc import Sequence
 import json
-from typing import Any, Dict, Optional, Sequence, Tuple, Union, overload
+from typing import Any, Dict, Optional, Union, overload
 
 from discopy import rigid, Word
 from discopy.biclosed import (Box, Diagram, Functor, Id, Over, Ty, Under,
@@ -262,7 +263,7 @@ class CCGTree:
     def _to_biclosed_diagram(
             self,
             planar: bool = False,
-            resolved_output: Optional[Ty] = None) -> Tuple[Diagram, Diagram]:
+            resolved_output: Optional[Ty] = None) -> tuple[Diagram, Diagram]:
         biclosed_type = resolved_output or self.biclosed_type
 
         if self.rule == CCGRule.LEXICAL:
@@ -322,7 +323,7 @@ class CCGTree:
             #              word box -> Word
 
             def split(cat: Ty,
-                      base: Ty) -> Tuple[rigid.Ty, rigid.Ty, rigid.Ty]:
+                      base: Ty) -> tuple[rigid.Ty, rigid.Ty, rigid.Ty]:
                 left = right = rigid.Ty()
                 while cat != base:
                     if isinstance(cat, Over):

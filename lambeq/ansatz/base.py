@@ -18,12 +18,13 @@ Ansatz
 An ansatz is used to convert a DisCoCat diagram into a quantum circuit.
 
 """
+from __future__ import annotations
 
 __all__ = ['BaseAnsatz', 'Symbol']
 
-
 from abc import ABC, abstractmethod
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from discopy import monoidal, rigid
 import sympy

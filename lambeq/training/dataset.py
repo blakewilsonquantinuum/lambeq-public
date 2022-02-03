@@ -18,18 +18,20 @@ Dataset
 A module containing a Dataset class for training lambeq models.
 
 """
+from __future__ import annotations
 
+from collections.abc import Iterator
 from math import ceil
 import random
-from typing import Any, Iterator, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 
 class Dataset:
     """Dataset class for the training of a lambeq model."""
 
     def __init__(self,
-                 data: List[Any],
-                 targets: List[Any],
+                 data: list[Any],
+                 targets: list[Any],
                  batch_size: int = 0,
                  shuffle: bool = True,
                  rnd_seed: Optional[int] = None) -> None:
@@ -63,7 +65,7 @@ class Dataset:
 
         self.batches_per_epoch = ceil(len(self.data) / self.batch_size)
 
-    def __getitem__(self, index: Union[int, slice]) -> Tuple[Any, Any]:
+    def __getitem__(self, index: Union[int, slice]) -> tuple[Any, Any]:
         """Get a single item or a subset from the dataset."""
         x = self.data[index]
         y = self.targets[index]
@@ -72,7 +74,7 @@ class Dataset:
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self) -> Iterator[Tuple[List[Any], List[Any]]]:
+    def __iter__(self) -> Iterator[tuple[list[Any], list[Any]]]:
         """Iterate over data batches.
 
         Yields
@@ -92,8 +94,8 @@ class Dataset:
                    new_targets[start_idx : start_idx+self.batch_size])
 
     @staticmethod
-    def shuffle_data(data: List[Any],
-                     targets: List[Any]) -> Tuple[List[Any], List[Any]]:
+    def shuffle_data(data: list[Any],
+                     targets: list[Any]) -> tuple[list[Any], list[Any]]:
         """Shuffle a given dataset.
 
         Parameters

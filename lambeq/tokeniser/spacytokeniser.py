@@ -24,8 +24,8 @@ from __future__ import annotations
 
 __all__ = ['SpacyTokeniser']
 
+from collections.abc import Iterable
 import logging
-from typing import Iterable, List
 
 from lambeq.tokeniser import Tokeniser
 
@@ -49,7 +49,7 @@ class SpacyTokeniser(Tokeniser):
         self.spacy_nlp = English()
         self.spacy_nlp.add_pipe('sentencizer')
 
-    def split_sentences(self, text: str) -> List[str]:
+    def split_sentences(self, text: str) -> list[str]:
         """Split input text into a list of sentences.
 
         Parameters
@@ -65,7 +65,7 @@ class SpacyTokeniser(Tokeniser):
         """
         return [str(sent) for sent in self.spacy_nlp(text).sents]
 
-    def tokenise_sentences(self, sentences: Iterable[str]) -> List[List[str]]:
+    def tokenise_sentences(self, sentences: Iterable[str]) -> list[list[str]]:
         """Tokenise a list of sentences.
 
         Parameters

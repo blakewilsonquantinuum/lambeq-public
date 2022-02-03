@@ -18,12 +18,13 @@ Tensor Ansatz
 A tensor ansatz is used to convert a DisCoCat diagram into a tensor network.
 
 """
+from __future__ import annotations
 
 __all__ = ['TensorAnsatz', 'MPSAnsatz', 'SpiderAnsatz']
 
-
+from collections.abc import Mapping
 from functools import reduce
-from typing import Any, Mapping
+from typing import Any
 
 from discopy import rigid, Ty, tensor, Word
 from discopy.rigid import Cup, Spider

@@ -17,7 +17,7 @@ from __future__ import annotations
 __all__ = ['DepCCGParser', 'DepCCGParseError']
 
 import json
-from typing import Any, List, Optional, TYPE_CHECKING, Union
+from typing import Any, Optional, TYPE_CHECKING, Union
 
 from discopy.biclosed import Ty
 
@@ -114,24 +114,24 @@ class DepCCGParser(CCGParser):
             config['unary_rules'] = self._unary_rules
 
         self.parser = EnglishCCGParser.from_json(config, model_dir, **kwargs)
-        self._last_trees: List[Optional[CCGTree]] = []
+        self._last_trees: list[Optional[CCGTree]] = []
 
     def sentences2trees(
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> List[Optional[CCGTree]]:
+            tokenised: bool = False) -> list[Optional[CCGTree]]:
         if tokenised:
             if not tokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `True`, but variable '
                                  '`sentences` does not have type '
-                                 '`List[List[str]]`.')
+                                 '`list[list[str]]`.')
         else:
             if not untokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `False`, but variable '
                                  '`sentences` does not have type '
-                                 '`List[str]`.')
-            sent_list: List[str] = [str(s) for s in sentences]
+                                 '`list[str]`.')
+            sent_list: list[str] = [str(s) for s in sentences]
             sentences = [sentence.split() for sentence in sent_list]
         empty_indices = []
         for i, sentence in enumerate(sentences):

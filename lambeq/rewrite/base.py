@@ -65,12 +65,14 @@ of provided rules can be retrieved using
 See `examples/rewrite.ipynb` for illustrative usage.
 
 """
+from __future__ import annotations
 
 __all__ = ['CoordinationRewriteRule', 'Rewriter',
            'RewriteRule', 'SimpleRewriteRule']
 
 from abc import ABC, abstractmethod
-from typing import Container, Iterable, List, Optional, Union
+from collections.abc import Container, Iterable
+from typing import Optional, Union
 
 from discopy import Word
 from discopy.rigid import Box, Cap, Cup, Diagram, Functor, Id, Spider, Swap, Ty
@@ -313,14 +315,14 @@ class Rewriter:
 
         """
         if rules is None:
-            self.rules: List[RewriteRule] = [*self._default_rules.values()]
+            self.rules: list[RewriteRule] = [*self._default_rules.values()]
         else:
             self.rules = []
             self.add_rules(*rules)
         self.apply_rewrites = Functor(ob=self._ob, ar=self._ar)
 
     @classmethod
-    def available_rules(cls) -> List[str]:
+    def available_rules(cls) -> list[str]:
         """The list of default rule names."""
         return [*cls._available_rules.keys()]
 

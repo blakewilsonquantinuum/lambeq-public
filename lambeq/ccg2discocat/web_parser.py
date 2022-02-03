@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 __all__ = ['WebParser', 'WebParseError']
 
 import json
-from typing import List, Optional
+from typing import Optional
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -57,7 +58,7 @@ class WebParser(CCGParser):
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> List[Optional[CCGTree]]:
+            tokenised: bool = False) -> list[Optional[CCGTree]]:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
 
         Parameters
@@ -90,14 +91,14 @@ class WebParser(CCGParser):
             if not tokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `True`, but variable '
                                  '`sentences` does not have type '
-                                 '`List[List[str]]`.')
+                                 '`list[list[str]]`.')
             sentences = [' '.join(sentence) for sentence in sentences]
         else:
             if not untokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `False`, but variable '
                                  '`sentences` does not have type '
-                                 '`List[str]`.')
-            sent_list: List[str] = [str(s) for s in sentences]
+                                 '`list[str]`.')
+            sent_list: list[str] = [str(s) for s in sentences]
             sentences = [' '.join(sentence.split()) for sentence in sent_list]
         empty_indices = []
         for i, sentence in enumerate(sentences):
@@ -110,7 +111,7 @@ class WebParser(CCGParser):
         for i in reversed(empty_indices):
             del sentences[i]
 
-        trees: List[Optional[CCGTree]] = []
+        trees: list[Optional[CCGTree]] = []
         for sent in sentences:
             params = urlencode({'sentence': sent})
             url = f'{self.service_url}?{params}'

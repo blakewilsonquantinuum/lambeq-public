@@ -18,10 +18,12 @@ Circuit Ansatz
 A circuit ansatz is used to convert a DisCoCat diagram into a quantum circuit.
 
 """
+from __future__ import annotations
 
 __all__ = ['CircuitAnsatz', 'IQPAnsatz']
 
-from typing import Any, Callable, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any, Callable, Optional
 
 from discopy.quantum.circuit import (Circuit, Discard, Functor, Id,
                                      IQPansatz as IQP, qubit)

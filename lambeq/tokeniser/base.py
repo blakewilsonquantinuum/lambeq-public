@@ -17,14 +17,14 @@ from __future__ import annotations
 __all__ = ['Tokeniser']
 
 from abc import ABC, abstractmethod
-from typing import Iterable, List
+from collections.abc import Iterable
 
 
 class Tokeniser(ABC):
     """Base Class for all tokenisers"""
 
     @abstractmethod
-    def split_sentences(self, text: str) -> List[str]:
+    def split_sentences(self, text: str) -> list[str]:
         """Split input text into a list of sentences.
 
         Parameters
@@ -40,7 +40,7 @@ class Tokeniser(ABC):
         """
 
     @abstractmethod
-    def tokenise_sentences(self, sentences: Iterable[str]) -> List[List[str]]:
+    def tokenise_sentences(self, sentences: Iterable[str]) -> list[list[str]]:
         """Tokenise a list of sentences.
 
         Parameters
@@ -56,7 +56,7 @@ class Tokeniser(ABC):
 
         """
 
-    def tokenise_sentence(self, sentence: str) -> List[str]:
+    def tokenise_sentence(self, sentence: str) -> list[str]:
         """Tokenise a sentence.
 
         Parameters

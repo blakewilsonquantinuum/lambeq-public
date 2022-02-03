@@ -18,9 +18,11 @@ Model
 Module containing the base class for a lambeq model.
 
 """
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, List, Optional
+from collections.abc import Iterable
+from typing import Any, Optional
 
 from discopy.tensor import Diagram
 from sympy import default_sort_key
@@ -49,11 +51,11 @@ class Model(ABC):
             Random seed.
 
         """
-        self.vocab: List[Symbol] = []
+        self.vocab: list[Symbol] = []
         self.word_params: Iterable = []
         self.seed = seed
 
-    def prepare_vocab(self, diagrams: List[Diagram]) -> None:
+    def prepare_vocab(self, diagrams: list[Diagram]) -> None:
         """Extract the vocabulary from a list of diagrams.
 
         Parameters
@@ -73,7 +75,7 @@ class Model(ABC):
 
         """
 
-    def lambdify(self, diagrams: List[Diagram]) -> List[Diagram]:
+    def lambdify(self, diagrams: list[Diagram]) -> list[Diagram]:
         """Replace the symbols in a list of diagrams with tensors.
 
         Parameters
@@ -95,7 +97,7 @@ class Model(ABC):
 
     @staticmethod
     @abstractmethod
-    def contract(diagrams: List[Diagram]) -> Any:
+    def contract(diagrams: list[Diagram]) -> Any:
         """Contract the tensor diagrams.
 
         Parameters
@@ -105,5 +107,5 @@ class Model(ABC):
         """
 
     @abstractmethod
-    def forward(self, x: List[Any]) -> Any:
+    def forward(self, x: list[Any]) -> Any:
         """Implement default forward pass of model."""

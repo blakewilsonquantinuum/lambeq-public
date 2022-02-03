@@ -18,8 +18,9 @@ PytorchModel
 Module implementing a basic lambeq model based on a Pytorch backend.
 
 """
+from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
 
 import tensornetwork as tn
 import torch
@@ -65,7 +66,7 @@ class PytorchModel(Model, nn.Module):
                 for w in self.vocab])
 
     @staticmethod
-    def contract(diagrams: List[Diagram]) -> torch.Tensor:
+    def contract(diagrams: list[Diagram]) -> torch.Tensor:
         """Perform the tensor contraction of each diagram.
 
         Parameters
@@ -82,7 +83,7 @@ class PytorchModel(Model, nn.Module):
         return torch.stack(
             [d.eval(contractor=tn.contractors.auto).array for d in diagrams])
 
-    def forward(self, x: List[Diagram]) -> torch.Tensor:
+    def forward(self, x: list[Diagram]) -> torch.Tensor:
         """Perform default forward pass of a lambeq model.
 
         In case of a different datapoint (e.g. list of tuple) or additional

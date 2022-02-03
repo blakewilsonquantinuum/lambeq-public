@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 __all__ = ['CCGParser']
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from discopy import Diagram
 
@@ -36,7 +37,7 @@ class CCGParser(ABC):
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> List[Optional[CCGTree]]:
+            tokenised: bool = False) -> list[Optional[CCGTree]]:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
 
         Parameters
@@ -67,7 +68,7 @@ class CCGParser(ABC):
 
         Parameters
         ----------
-        sentence : str, List[str]
+        sentence : str, list[str]
             The sentence to be parsed, passed either as a string, or as a list
             of tokens.
         suppress_exceptions : bool, default: False
@@ -87,8 +88,8 @@ class CCGParser(ABC):
             if not tokenised_sentence_type_check(sentence):
                 raise ValueError('`tokenised` set to `True`, but variable '
                                  '`sentence` does not have type '
-                                 '`List[str]`.')
-            sent: List[str] = [str(token) for token in sentence]
+                                 '`list[str]`.')
+            sent: list[str] = [str(token) for token in sentence]
             return self.sentences2trees(
                             [sent],
                             suppress_exceptions=suppress_exceptions,
@@ -107,7 +108,7 @@ class CCGParser(ABC):
             sentences: SentenceBatchType,
             planar: bool = False,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> List[Optional[Diagram]]:
+            tokenised: bool = False) -> list[Optional[Diagram]]:
         """Parse multiple sentences into a list of discopy diagrams.
 
         Parameters
@@ -180,8 +181,8 @@ class CCGParser(ABC):
             if not tokenised_sentence_type_check(sentence):
                 raise ValueError('`tokenised` set to `True`, but variable '
                                  '`sentence` does not have type '
-                                 '`List[str]`.')
-            sent: List[str] = [str(token) for token in sentence]
+                                 '`list[str]`.')
+            sent: list[str] = [str(token) for token in sentence]
             return self.sentences2diagrams(
                             [sent],
                             planar=planar,

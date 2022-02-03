@@ -21,9 +21,11 @@ Module that contains the base class for a lambeq trainer.
 Subclass :py:class:`Lambeq` to define a custom trainer.
 
 """
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from collections.abc import Callable, Mapping
+from typing import Any, Optional
 
 from lambeq.training.dataset import Dataset
 from lambeq.training.model import Model
@@ -60,11 +62,11 @@ class Trainer(ABC):
         self.evaluate_functions = evaluate_functions
         self.seed = seed
 
-        self.train_costs: List[float] = []
-        self.train_epoch_costs: List[float] = []
+        self.train_costs: list[float] = []
+        self.train_epoch_costs: list[float] = []
 
-        self.val_costs: List[float] = []
-        self.val_results: Dict[str, List[Any]] = {}
+        self.val_costs: list[float] = []
+        self.val_results: dict[str, list[Any]] = {}
 
         if self.evaluate_functions is not None:
             for name in self.evaluate_functions:

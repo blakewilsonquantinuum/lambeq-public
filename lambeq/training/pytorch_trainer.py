@@ -18,12 +18,13 @@ PytorchTrainer
 A trainer that wraps the training loop of a :py:class:`PytorchModel`.
 
 """
+from __future__ import annotations
 
+from collections.abc import Callable, Mapping
+from datetime import datetime
 import os
 import socket
-from datetime import datetime
-from typing import (Any, Callable, List, Mapping, Optional, Tuple, Type,
-                    TYPE_CHECKING)
+from typing import Any, Optional, TYPE_CHECKING
 
 import torch
 if TYPE_CHECKING:
@@ -53,7 +54,7 @@ class PytorchTrainer(Trainer):
             model: PytorchModel,
             loss_function: Callable,
             epochs: int,
-            optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
+            optimizer: type[torch.optim.Optimizer] = torch.optim.AdamW,
             learning_rate: float = 1e-3,
             device: int = -1,
             evaluate_functions: Optional[Mapping[str, Callable]] = None,
@@ -116,7 +117,7 @@ class PytorchTrainer(Trainer):
             self.writer = SummaryWriter(log_dir=self.log_dir)
 
     def validation_step(self,
-                        batch: Tuple[List[Any], List[torch.Tensor]]) -> float:
+                        batch: tuple[list[Any], list[torch.Tensor]]) -> float:
         """Performs a validation step.
 
         Parameters
@@ -133,7 +134,7 @@ class PytorchTrainer(Trainer):
         x, y = batch
         if not isinstance(y, list):
             raise TypeError(
-                f'Targets must be of type `List[Tensor]` not `{type(y)}`')
+                f'Targets must be of type `list[Tensor]` not `{type(y)}`')
 
         with torch.no_grad():
             y_hat = self.model(x)
@@ -147,7 +148,7 @@ class PytorchTrainer(Trainer):
         return loss.item()
 
     def training_step(self,
-                      batch: Tuple[List[Any], List[torch.Tensor]]) -> float:
+                      batch: tuple[list[Any], list[torch.Tensor]]) -> float:
         """Performs a training step.
 
         Parameters
@@ -164,7 +165,7 @@ class PytorchTrainer(Trainer):
         x, y = batch
         if not isinstance(y, list):
             raise TypeError(
-                f'Targets must be of type `List[Tensor]` not `{type(y)}`')
+                f'Targets must be of type `list[Tensor]` not `{type(y)}`')
 
         y_hat = self.model(x)
         loss = self.loss_function(y_hat, torch.stack(y))

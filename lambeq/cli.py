@@ -18,15 +18,17 @@ Command-line Interface
 Command-line interface for the lambeq toolkit.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 import argparse
+from collections.abc import Iterator, Sequence
 import inspect
 import json
 import os
 from pathlib import Path
 import pickle
-from typing import (Any, Dict, Iterator, List, Optional,
-                    Sequence, Tuple, Type, Union)
+from typing import Any, Optional, Union
 import yaml
 
 import lambeq
@@ -41,21 +43,21 @@ from lambeq.pregroups import text_printer
 
 import discopy
 
-AVAILABLE_PARSERS: Dict[str, Type[CCGParser]] = {'depccg': DepCCGParser}
+AVAILABLE_PARSERS: dict[str, type[CCGParser]] = {'depccg': DepCCGParser}
 
-AVAILABLE_READERS: Dict[str, Reader] = {'spiders': spiders_reader,
+AVAILABLE_READERS: dict[str, Reader] = {'spiders': spiders_reader,
                                         'cups': cups_reader}
 
-AVAILABLE_ANSATZE: Dict[str, Type[BaseAnsatz]] = {'iqp': IQPAnsatz,
+AVAILABLE_ANSATZE: dict[str, type[BaseAnsatz]] = {'iqp': IQPAnsatz,
                                                   'tensor': TensorAnsatz,
                                                   'spider': SpiderAnsatz,
                                                   'mps': MPSAnsatz}
 
-AVAILABLE_IMAGE_TYPES: List[str] = ['png', 'pdf', 'jpeg', 'jpg', 'eps',
+AVAILABLE_IMAGE_TYPES: list[str] = ['png', 'pdf', 'jpeg', 'jpg', 'eps',
                                     'pgf', 'ps', 'raw', 'rgba', 'svg',
                                     'svgz', 'tif', 'tiff']
 
-DEFAULT_ARG_VALUES: Dict[str, str] = {'output_format': 'text-unicode',
+DEFAULT_ARG_VALUES: dict[str, str] = {'output_format': 'text-unicode',
                                       'image_format': 'png'}
 
 
@@ -64,7 +66,7 @@ class ArgumentList:
     Constructed from a list of tuples (argument name, type, default value),
     where default value has to be of the specified type or None."""
 
-    def __init__(self, choices: List[Tuple[str, type, Any]]) -> None:
+    def __init__(self, choices: list[tuple[str, type, Any]]) -> None:
         self.valid_args = {k: v for k, v, _ in choices}
         self.default_values = {k: v for k, _, v in choices}
         for k, v, default in choices:
@@ -80,7 +82,7 @@ class ArgumentList:
         except (KeyError, ValueError):
             return False
 
-    def __call__(self, argument: str) -> Tuple[str, Any]:
+    def __call__(self, argument: str) -> tuple[str, Any]:
         key, value = argument.split('=')
         return key, self.valid_args[key](value)
 
@@ -100,7 +102,7 @@ class ArgumentListValidator(argparse.Action):
     """Class that checks the validity of ArgumentList inputs.
     Made compatible with argparse."""
     def __init__(self,
-                 option_strings: List[str],
+                 option_strings: list[str],
                  dest: Any,
                  choices: ArgumentList,
                  nargs: str = '*',
@@ -360,10 +362,10 @@ class ParserModule(CLIModule):
 
     def __call__(self,
                  cl_args: argparse.Namespace,
-                 module_input: str) -> List[discopy.Diagram]:
+                 module_input: str) -> list[discopy.Diagram]:
         if cl_args.split_sentences or cl_args.tokenise:
             tokeniser = SpacyTokeniser()
-        sentences: Union[List[str], List[List[str]]]
+        sentences: Union[list[str], list[list[str]]]
         if cl_args.split_sentences:
             sentences = tokeniser.split_sentences(module_input)
         else:
@@ -387,7 +389,7 @@ class RewriterModule(CLIModule):
     def __call__(
             self,
             cl_args: argparse.Namespace,
-            module_input: List[discopy.Diagram]) -> List[discopy.Diagram]:
+            module_input: list[discopy.Diagram]) -> list[discopy.Diagram]:
         if cl_args.rewrite_rules is None:
             return module_input
         rewriter = lambeq.rewrite.Rewriter(cl_args.rewrite_rules)
@@ -399,7 +401,7 @@ class AnsatzModule(CLIModule):
        or a tensor diagram."""
     def __call__(self,
                  cl_args: argparse.Namespace,
-                 module_input: List[discopy.Diagram]) -> List[discopy.Diagram]:
+                 module_input: list[discopy.Diagram]) -> list[discopy.Diagram]:
         N = lambeq.core.types.AtomicType.NOUN
         S = lambeq.core.types.AtomicType.SENTENCE
         if cl_args.ansatz is None:
@@ -407,7 +409,7 @@ class AnsatzModule(CLIModule):
         n_dim = cl_args.ansatz_options['dim_n']
         s_dim = cl_args.ansatz_options['dim_s']
 
-        ansatz_type: Type[BaseAnsatz]
+        ansatz_type: type[BaseAnsatz]
         ansatz_type = AVAILABLE_ANSATZE[cl_args.ansatz.casefold()]
 
         supported_args, *_ = inspect.getfullargspec(ansatz_type.__init__)
@@ -433,7 +435,7 @@ class CircuitSaveModule(CLIModule):
     and passes the unchanged diagram to the next module."""
     def __call__(self,
                  cl_args: argparse.Namespace,
-                 module_input: List[
+                 module_input: list[
                              Union[discopy.Diagram, discopy.Circuit]]) -> None:
         if cl_args.output_format == 'json':
             with open(cl_args.output_file, 'w') as f:
@@ -470,7 +472,7 @@ class CircuitSaveModule(CLIModule):
                     file_name, file_extension = os.path.splitext(image_path)
                     if file_extension not in AVAILABLE_IMAGE_TYPES:
                         image_path = f'{file_name}.{cl_args.image_format}'
-                draw_args: Dict[str, Any] = {'path': image_path}
+                draw_args: dict[str, Any] = {'path': image_path}
                 if 'fig_width' in cl_args.output_options and\
                    'fig_height' in cl_args.output_options and\
                    len(module_input) == 1:

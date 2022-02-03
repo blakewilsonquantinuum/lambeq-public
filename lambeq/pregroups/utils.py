@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Tuple, Optional
+from __future__ import annotations
+
+from typing import Optional
 
 from discopy import Cup, Diagram, Id, Swap, Ty, Word
 
@@ -51,9 +53,9 @@ def is_pregroup_diagram(diagram: Diagram) -> bool:
 
 
 def create_pregroup_diagram(
-    words: List[Word],
+    words: list[Word],
     cod: Ty,
-    morphisms: Optional[List[Tuple[type, int, int]]] = None
+    morphisms: Optional[list[tuple[type, int, int]]] = None
 ) -> Diagram:
     """Create a DisCoPy pregroup diagram from a list of cups and swaps.
 
@@ -64,7 +66,7 @@ def create_pregroup_diagram(
         the words of the sentence.
     cod: discopy.Ty
         The output type of the diagram.
-    morphisms: A list of `Tuple[type, int, int]` or None, default = None
+    morphisms: A list of `tuple[type, int, int]` or None, default = None
         A list of tuples of the form (morphism, start_wire_idx, end_wire_idx).
         Morphisms can be from :py:class:`discopy.Cup` and
         :py:class:`discopy.Swap`, while the two numbers define the indices of
@@ -86,8 +88,8 @@ def create_pregroup_diagram(
         morphisms = []
 
     types: Ty = Ty()
-    boxes: List[Word] = []
-    offsets: List[int] = []
+    boxes: list[Word] = []
+    offsets: list[int] = []
     for w in words:
         boxes.append(w)
         offsets.append(len(types))

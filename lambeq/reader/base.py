@@ -47,12 +47,11 @@ See `examples/readers.ipynb` for illustrative usage.
 """
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
 __all__ = ['Reader', 'LinearReader', 'bag_of_words_reader', 'cups_reader',
            'spiders_reader', 'stairs_reader', 'word_sequence_reader']
-
-from typing import List
 
 from discopy import Word
 from discopy.rigid import Box, Cup, Diagram, Id, Spider, Ty
@@ -76,7 +75,7 @@ class Reader(ABC):
     def sentences2diagrams(
                     self,
                     sentences: SentenceBatchType,
-                    tokenised: bool = False) -> List[Diagram]:
+                    tokenised: bool = False) -> list[Diagram]:
         """Parse multiple sentences into a list of DisCoPy diagrams."""
         return [self.sentence2diagram(sentence, tokenised=tokenised)
                 for sentence in sentences]
@@ -140,7 +139,7 @@ class LinearReader(Reader):
         if tokenised:
             if not tokenised_sentence_type_check(sentence):
                 raise ValueError('`tokenised` set to `True`, but variable '
-                                 '`sentence` does not have type `List[str]`.')
+                                 '`sentence` does not have type `list[str]`.')
         else:
             if not isinstance(sentence, str):
                 raise ValueError('`tokenised` set to `False`, but variable '
