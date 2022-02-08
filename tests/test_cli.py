@@ -16,9 +16,33 @@ def sentence_input() -> str:
 
 
 @pytest.fixture
+def type_raising_input() -> str:
+    return 'What Alice and Bob do not know'
+
+
+@pytest.fixture
 def unicode_sentence_output() -> str:
     return ('John    likes    Mary\n────  ─────────  ────\n'
             ' n    n.r·s·n.l   n  \n ╰─────╯  │  ╰────╯  \n')
+
+
+@pytest.fixture
+def unicode_type_raising_output() -> str:
+    return ('    What     Alice     and     Bob       do            not           know  \n'
+            '───────────  ─────  ─────────  ───  ───────────  ───────────────  ─────────\n'
+            'n·n.l.l·s.l    n    n.r·n·n.l   n   n.r·s·s.l·n  s.r·n.r.r·n.r·s  n.r·s·n.l\n'
+            '│   │    │     ╰─────╯  │  ╰────╯    │  │  │  ╰─╮─╯    │    │  │   │  │  │ \n'
+            '│   │    │              │            │  │  │  ╭─╰─╮    │    │  │   │  │  │ \n'
+            '│   │    │              │            │  │  ╰╮─╯   ╰─╮──╯    │  │   │  │  │ \n'
+            '│   │    │              │            │  │  ╭╰─╮   ╭─╰──╮    │  │   │  │  │ \n'
+            '│   │    │              │            │  ╰──╯  ╰─╮─╯    ╰─╮──╯  │   │  │  │ \n'
+            '│   │    │              │            │        ╭─╰─╮    ╭─╰──╮  │   │  │  │ \n'
+            '│   │    │              │            ╰────────╯   ╰─╮──╯    ╰╮─╯   │  │  │ \n'
+            '│   │    │              │                         ╭─╰──╮    ╭╰─╮   │  │  │ \n'
+            '│   │    │              ╰─────────────────────────╯    ╰─╮──╯  ╰───╯  │  │ \n'
+            '│   │    │                                             ╭─╰──╮         │  │ \n'
+            '│   │    ╰─────────────────────────────────────────────╯    ╰─────────╯  │ \n'
+            '│   ╰────────────────────────────────────────────────────────────────────╯ \n')
 
 
 @pytest.fixture
@@ -53,6 +77,14 @@ def test_sentence_arg(sentence_input, unicode_sentence_output):
          patch('sys.stdout', new=StringIO()) as fake_out:
         main()
         assert fake_out.getvalue().strip() == unicode_sentence_output.strip()
+
+
+def test_type_raising(type_raising_input, unicode_type_raising_output):
+    with patch('sys.argv', ['lambeq', type_raising_input]),\
+         patch('lambeq.cli.AVAILABLE_PARSERS', new=parser_patch),\
+         patch('sys.stdout', new=StringIO()) as fake_out:
+        main()
+        assert fake_out.getvalue().strip() == unicode_type_raising_output.strip()
 
 
 def test_sentence_parser_arg(sentence_input, unicode_sentence_output):

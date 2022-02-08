@@ -37,9 +37,10 @@ from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ansatz import BaseAnsatz
 from lambeq.ansatz.circuit import IQPAnsatz, CircuitAnsatz
 from lambeq.ansatz.tensor import TensorAnsatz, SpiderAnsatz, MPSAnsatz
+from lambeq.pregroups import text_printer
+from lambeq.pregroups.utils import is_pregroup_diagram
 from lambeq.reader import Reader, spiders_reader, cups_reader
 from lambeq.tokeniser import SpacyTokeniser
-from lambeq.pregroups import text_printer
 
 import discopy
 
@@ -437,6 +438,16 @@ class CircuitSaveModule(CLIModule):
                  cl_args: argparse.Namespace,
                  module_input: list[
                              Union[discopy.Diagram, discopy.Circuit]]) -> None:
+        if cl_args.output_format in ['text-ascii', 'text-unicode']:
+            for i in range(len(module_input)):
+                if not is_pregroup_diagram(module_input[i]):
+                    module_input[i] = discopy.grammar.normal_form(
+                                        module_input[i])
+                    if not is_pregroup_diagram(module_input[i]):
+                        raise ValueError('Output format is set to '
+                                         f'{cl_args.output_fomat} but '
+                                         f'parsing sentence no. {i+1} did not '
+                                         'produce a valid pregroup diagram.')
         if cl_args.output_format == 'json':
             with open(cl_args.output_file, 'w') as f:
                 json.dump([d.to_tree() for d in module_input], f)
@@ -482,10 +493,14 @@ class CircuitSaveModule(CLIModule):
                 if 'fontsize' in cl_args.output_options:
                     draw_args['fontsize'] =\
                             cl_args.output_options['fontsize']
-                if text_printer.is_pregroup_diagram(diagram):
+                if is_pregroup_diagram(diagram):
                     discopy.grammar.draw(diagram, **draw_args)
                 else:
-                    diagram.draw(**draw_args)
+                    try:
+                        normal_form = discopy.grammar.normal_form(diagram)
+                        discopy.grammar.draw(normal_form, **draw_args)
+                    except ValueError:
+                        diagram.draw(**draw_args)
 
 
 def main() -> None:
