@@ -39,6 +39,7 @@ class Trainer(ABC):
                  loss_function: Callable,
                  epochs: int,
                  evaluate_functions: Optional[Mapping[str, Callable]] = None,
+                 verbose: bool = False,
                  seed: Optional[int] = None) -> None:
         """Initialise a lambeq trainer.
 
@@ -52,6 +53,9 @@ class Trainer(ABC):
             Number of training epochs.
         evaluate_functions : mapping of str to callable, optional
             Mapping of evaluation metric functions from their names.
+        verbose : bool, default: True,
+            Setting verbose to False surpresses the commandline output and
+            prints dots as status bar.
         seed : int, optional
             Random seed.
 
@@ -67,10 +71,17 @@ class Trainer(ABC):
 
         self.val_costs: list[float] = []
         self.val_results: dict[str, list[Any]] = {}
+        self.val_results_current: dict[str, list[Any]] = {}
 
         if self.evaluate_functions is not None:
             for name in self.evaluate_functions:
                 self.val_results[name] = []
+                self.val_results_current[name] = []
+
+        if verbose:
+            self.printer = print
+        else:
+            self.printer = lambda *args, **kwargs: print('.', end='')
 
     @abstractmethod
     def fit(self,

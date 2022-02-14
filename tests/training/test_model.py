@@ -12,23 +12,11 @@ S = AtomicType.SENTENCE
 
 
 @patch.multiple(Model, __abstractmethods__=set())
-def test_instance():
-    instance = Model()
-
-
-@patch.multiple(Model, __abstractmethods__=set())
-def test_init():
-    instance = Model()
-    assert instance.vocab == [] and instance.word_params == []
-
-
-@patch.multiple(Model, __abstractmethods__=set())
-def test_prepare_vocab():
-    instance = Model()
+def test_extract_symbols():
     ansatz = SpiderAnsatz({N: Dim(2), S: Dim(2)})
-    diagrams = [
+    circuits = [
         ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
     ]
-    instance.prepare_vocab(diagrams)
-    assert len(instance.vocab) == 2
-    assert all(isinstance(x, Symbol) for x in instance.vocab)
+    instance = Model(circuits)
+    assert len(instance.symbols) == 2
+    assert all(isinstance(x, Symbol) for x in instance.symbols)

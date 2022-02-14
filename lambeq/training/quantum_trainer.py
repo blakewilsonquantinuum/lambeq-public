@@ -13,26 +13,30 @@
 # limitations under the License.
 
 """
-PytorchTrainer
+QuantumTrainer
 ==============
-A trainer that wraps the training loop of a :py:class:`ClassicalModel`.
+A trainer that wraps the training loop of a :py:class:`QuantumModel` or
+a :py:class:`ECSQuantumModel`.
 
 """
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from datetime import datetime
 import os
+import pickle
 import socket
-from typing import Any, Optional, TYPE_CHECKING
+from datetime import datetime
+from typing import (Any, Callable, Mapping, Optional, Type, TYPE_CHECKING,
+                    Union)
 
-import torch
+import numpy
 if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 from lambeq.training.dataset import Dataset
-from lambeq.training.pytorch_model import PytorchModel
+from lambeq.training.quantum_model import QuantumModel
+from lambeq.training.ecs_quantum_model import ECSQuantumModel
 from lambeq.training.trainer import Trainer
+from lambeq.training.optimiser import Optimiser
 
 
 def _import_tensorboard_writer() -> None:
@@ -44,41 +48,35 @@ def _import_tensorboard_writer() -> None:
                           '`pip install tensorboard`.')
 
 
-class PytorchTrainer(Trainer):
-    """A PyTorch trainer for the classical pipeline."""
+class QuantumTrainer(Trainer):
+    """A Trainer for the quantum pipeline."""
 
-    model: PytorchModel
+    model: Union[QuantumModel, ECSQuantumModel]
 
     def __init__(
             self,
-            model: PytorchModel,
+            model: Union[QuantumModel, ECSQuantumModel],
             loss_function: Callable,
             epochs: int,
-            optimizer: type[torch.optim.Optimizer] = torch.optim.AdamW,
-            learning_rate: float = 1e-3,
-            device: int = -1,
+            optimizer: Type[Optimiser],
+            optim_hyperparams: dict[str, float],
             evaluate_functions: Optional[Mapping[str, Callable]] = None,
             use_tensorboard: bool = False,
             log_dir: Optional[str] = None,
             verbose: bool = False,
             seed: Optional[int] = None) -> None:
-        """Initialise a :py:class:`.Trainer` instance using the PyTorch backend.
+        """Initialise a :py:class:`.Trainer` instance using a quantum backend.
 
         Parameters
         ----------
-        model : ClassicalModel
-            A lambeq Model using the PyTorch backend for tensor computation.
+        model : Model
+            A lambeq Model.
         loss_function : callable
-            A PyTorch loss function from `torch.nn`.
-        optimizer : torch.optim.Optimizer, default: torch.optim.AdamW
-            A PyTorch optimizer from `torch.optim`.
-        learning_rate : float, default: 1e-3
-            The learning rate for training.
+            A loss function.
         epochs : int
-            Number of training epochs.
-        device : int, default: -1
-            CUDA device ID used for tensor operation speed-up. A negative value
-            uses the CPU.
+            Number of training epochs
+        optimizer : Optimiser
+            A optimizer of type `lambeq.training.Optimiser`.
         evaluate_functions : mapping of str to callable, optional
             Mapping of evaluation metric functions from their names.
             Structure [{\"metric\": func}].
@@ -108,13 +106,13 @@ class PytorchTrainer(Trainer):
             log_dir = os.path.join(
                 'runs', current_time + '_' + socket.gethostname())
 
-        self.learning_rate = learning_rate
-        self.device = torch.device('cpu' if device < 0 else f'cuda:{device}')
         self.use_tensorboard = use_tensorboard
         self.log_dir = log_dir
-        self.optimizer = optimizer(self.model.parameters(),  # type: ignore
-                                   lr=self.learning_rate)   # type: ignore
-        self.model.to(self.device)
+        self.verbose = verbose
+        self.optimizer = optimizer(self.model,
+                                   optim_hyperparams,
+                                   self.loss_function,
+                                   seed=self.seed)
 
         os.makedirs(self.log_dir, exist_ok=True)
         if self.use_tensorboard:
@@ -122,12 +120,12 @@ class PytorchTrainer(Trainer):
             self.writer = SummaryWriter(log_dir=self.log_dir)
 
     def validation_step(self,
-                        batch: tuple[list[Any], list[torch.Tensor]]) -> float:
+                        batch: tuple[list[Any], list[numpy.ndarray]]) -> float:
         """Performs a validation step.
 
         Parameters
         ----------
-        batch : tuple of list and list of torch.Tensor
+        batch : tuple of list and list of numpy.ndarray
             Current batch.
 
         Returns
@@ -137,28 +135,22 @@ class PytorchTrainer(Trainer):
 
         """
         x, y = batch
-        if not isinstance(y, list):
-            raise TypeError(
-                f'Targets must be of type `list[Tensor]` not `{type(y)}`')
-
-        with torch.no_grad():
-            y_hat = self.model(x)
-            loss = self.loss_function(y_hat, torch.stack(y))
-            self.val_costs.append(loss.item())
+        y_hat = self.model.forward(x)
+        loss = self.loss_function(y_hat, y)
 
         if self.evaluate_functions is not None:
             for metric, func in self.evaluate_functions.items():
                 res = func(y_hat, y)
-                self.val_results_current[metric].append(res)
-        return loss.item()
+                self.val_results_current[metric].append(res * len(y))
+        return loss
 
     def training_step(self,
-                      batch: tuple[list[Any], list[torch.Tensor]]) -> float:
+                      batch: tuple[list[Any], list[numpy.ndarray]]) -> float:
         """Performs a training step.
 
         Parameters
         ----------
-        batch : tuple of list and list of torch.Tensor
+        batch : tuple of list and list of numpy.array
             Current batch.
 
         Returns
@@ -167,18 +159,11 @@ class PytorchTrainer(Trainer):
             Calculated loss.
 
         """
-        x, y = batch
-        if not isinstance(y, list):
-            raise TypeError(
-                f'Targets must be of type `list[Tensor]` not `{type(y)}`')
-
-        y_hat = self.model(x)
-        loss = self.loss_function(y_hat, torch.stack(y))
-        self.train_costs.append(loss.item())
-        self.optimizer.zero_grad()
-        loss.backward()
+        loss = self.optimizer.backward(batch)
+        self.train_costs.append(loss)
         self.optimizer.step()
-        return loss.item()
+        self.optimizer.zero_grad()
+        return loss
 
     def fit(self,
             train_dataset: Dataset,
@@ -215,23 +200,21 @@ class PytorchTrainer(Trainer):
                           self.train_epoch_costs[-1], epoch+1)
 
             # save model
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': self.model.state_dict(),
-                'optimizer_state_dict': self.optimizer.state_dict(),
-                'loss': self.train_costs[-1],
-                }, self.log_dir + '/model.pt')
+            with open(self.log_dir + '/model.pkl', 'wb') as fb:
+                pickle.dump({'symbols': self.model.symbols,
+                             'weights': self.model.weights}, fb)
 
             if val_dataset is not None:
                 val_loss: float = 0.0
                 for v_batch in val_dataset:
-                    val_loss += self.validation_step(v_batch)
+                    val_loss += self.validation_step(v_batch) * len(v_batch[0])
                 val_loss /= len(val_dataset)
+                self.val_costs.append(loss)
                 self.printer(f'Epoch: {epoch+1}, val/loss: {val_loss:.4f}')
                 writer_helper('val/loss', val_loss, epoch+1)
 
                 if self.evaluate_functions is not None:
-                    for name in self.val_results:
+                    for name in self.val_results_current:
                         self.val_results[name].append(
                             sum(self.val_results_current[name])/len(val_dataset)
                         )

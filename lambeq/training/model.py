@@ -21,13 +21,20 @@ Module containing the base class for a lambeq model.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from typing import Any, Optional
+from typing_extensions import Protocol
 
 from discopy.tensor import Diagram
 from sympy import default_sort_key
 
-from lambeq.ansatz import Symbol
+
+class SizedIterable(Protocol):
+    """Custom type for a data that has a length and is iterable."""
+    def __len__(self):
+        pass
+
+    def __iter__(self):
+        pass
 
 
 class Model(ABC):
@@ -35,75 +42,43 @@ class Model(ABC):
 
     Attributes
     ----------
-    vocab : list of symbols
-        A sorted list of all words occuring in the data.
-    word_params : Iterable
-        A data structure containing the model's parameters.
+    symbols : list of symbols
+        A sorted list of all :py:class:`.Symbol`s occuring in the data.
+    weights : SizedIterable
+        A data structure containing the numeric values of
+        the model's parameters.
 
     """
 
-    def __init__(self, seed: Optional[int] = None) -> None:
-        """Initialise an instance of the :py:class:`Model` base class.
+    def __init__(self, diagrams: list[Diagram],
+                 seed: Optional[int] = None) -> None:
+        """Initialise an instance of :py:class:`Model` base class.
 
         Parameters
         ----------
+        diagrams : list of :py:class:`Diagram`
+            List of lambeq diagrams.
         seed : int, optional
             Random seed.
 
         """
-        self.vocab: list[Symbol] = []
-        self.word_params: Iterable = []
+        self.diagrams = diagrams
         self.seed = seed
+        self.weights: SizedIterable = []
 
-    def prepare_vocab(self, diagrams: list[Diagram]) -> None:
-        """Extract the vocabulary from a list of diagrams.
-
-        Parameters
-        ----------
-        diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
-
-        """
-        self.vocab = sorted(
+        self.symbols = sorted(
             {sym for circ in diagrams for sym in circ.free_symbols},
             key=default_sort_key)
 
     @abstractmethod
-    def tensorise(self) -> None:
-        """Initialise the ansatz parameters for each word in the vocabulary.
-        It fills the attribute :py:attribute:`self.word_params`.
-
-        """
-
-    def lambdify(self, diagrams: list[Diagram]) -> list[Diagram]:
-        """Replace the symbols in a list of diagrams with tensors.
-
-        Parameters
-        ----------
-        diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
-
-        Returns
-        -------
-        list of :py:class:`Diagram`
-            List of lambdified lambeq diagrams.
-
-        """
-        if not (self.vocab and self.word_params):
-            raise ValueError('Vocabulary/embeddings empty. Call methods '
-                             '`.prepare_vocab()` and `.tensorise()` '
-                             'of model instance first.')
-        return [d.lambdify(*self.vocab)(*self.word_params) for d in diagrams]
-
-    @staticmethod
-    @abstractmethod
-    def contract(diagrams: list[Diagram]) -> Any:
-        """Contract the tensor diagrams.
+    def get_diagram_output(self, diagrams: list[Diagram]) -> Any:
+        """Return the diagram prediction.
 
         Parameters
         ----------
         diagrams : list of diagram
             List of lambeq diagrams.
+
         """
 
     @abstractmethod

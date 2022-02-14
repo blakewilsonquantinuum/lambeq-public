@@ -34,7 +34,7 @@ class Dataset:
                  targets: list[Any],
                  batch_size: int = 0,
                  shuffle: bool = True,
-                 rnd_seed: Optional[int] = None) -> None:
+                 seed: Optional[int] = None) -> None:
         """Initialise a Dataset for lambeq training.
 
         Parameters
@@ -47,7 +47,7 @@ class Dataset:
             Batch size for batch generation, by default full dataset.
         shuffle : bool, default: True
             Enable data shuffling during training.
-        rnd_seed : int, optional
+        seed : int, optional
             Random seed.
 
         """
@@ -55,13 +55,13 @@ class Dataset:
         self.targets = targets
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.rnd_seed = rnd_seed
+        self.seed = seed
 
         if self.batch_size == 0:
             self.batch_size = len(self.data)
 
-        if self.rnd_seed is not None:
-            random.seed(self.rnd_seed)
+        if self.seed is not None:
+            random.seed(self.seed)
 
         self.batches_per_epoch = ceil(len(self.data) / self.batch_size)
 

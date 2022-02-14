@@ -34,15 +34,18 @@ from lambeq.training.model import Model
 class PytorchModel(Model, nn.Module):
     """A lambeq model for the classical pipeline using the Pytorch backend."""
 
-    def __init__(self, seed: Optional[int] = None) -> None:
-        """Initialise an instance of the :py:class:`PytorchModel` class.
+    def __init__(self, diagrams: list[Diagram],
+                 seed: Optional[int] = None) -> None:
+        """Initialise a ClassicalModel.
 
         Parameters
         ----------
+        diagrams : list of :py:class:`Diagram`
+            List of lambeq diagrams.
         seed : int, optional
             Random seed.
         """
-        Model.__init__(self, seed)
+        Model.__init__(self, diagrams, seed)
         nn.Module.__init__(self)
 
         if self.seed is not None:
@@ -54,20 +57,15 @@ class PytorchModel(Model, nn.Module):
         torch.set_default_tensor_type(torch.DoubleTensor)
         torch.array = torch.as_tensor   # type: ignore
 
-    def tensorise(self) -> None:
-        """Initialize tensors for each word in the vocabulary."""
-        if not self.vocab:
-            raise ValueError('Vocabulary not initialized. Call method '
-                             f'.prepare_vocab() of "{self._get_name()}" '
-                             'instance first.')
-
-        self.word_params = nn.ParameterList(
+        self.weights = nn.ParameterList(
             [nn.Parameter(torch.rand(w.size, requires_grad=True))
-                for w in self.vocab])
+                for w in self.symbols])
 
-    @staticmethod
-    def contract(diagrams: list[Diagram]) -> torch.Tensor:
-        """Perform the tensor contraction of each diagram.
+        self.lambdas = {
+            circ: circ.lambdify(*self.symbols) for circ in self.diagrams}
+
+    def get_diagram_output(self, diagrams: list[Diagram]) -> torch.Tensor:
+        """Perform the tensor contraction of each diagram using tensornetwork.
 
         Parameters
         ----------
@@ -78,13 +76,16 @@ class PytorchModel(Model, nn.Module):
         -------
         torch.Tensor
             Resulting tensor.
+                for w in self.symbols])
 
         """
         return torch.stack(
-            [d.eval(contractor=tn.contractors.auto).array for d in diagrams])
+            [self.lambdas[d](*self.weights)
+                .eval(contractor=tn.contractors.auto).array
+                for d in diagrams])
 
     def forward(self, x: list[Diagram]) -> torch.Tensor:
-        """Perform default forward pass of a lambeq model.
+        """Perform default forward pass of a lambeq model by contracting tensors.
 
         In case of a different datapoint (e.g. list of tuple) or additional
         computational steps, please override this method.
@@ -100,5 +101,4 @@ class PytorchModel(Model, nn.Module):
             Tensor containing model's prediction.
 
         """
-        tensor_nets = self.lambdify(x)
-        return self.contract(tensor_nets)
+        return self.get_diagram_output(x)
