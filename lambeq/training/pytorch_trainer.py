@@ -60,7 +60,7 @@ class PytorchTrainer(Trainer):
             evaluate_functions: Optional[Mapping[str, Callable]] = None,
             use_tensorboard: bool = False,
             log_dir: Optional[str] = None,
-            verbose: bool = False,
+            verbose: bool = True,
             seed: Optional[int] = None) -> None:
         """Initialise a :py:class:`.Trainer` instance using the PyTorch backend.
 
@@ -148,8 +148,8 @@ class PytorchTrainer(Trainer):
 
         if self.evaluate_functions is not None:
             for metric, func in self.evaluate_functions.items():
-                res = func(y_hat, y)
-                self.val_results_current[metric].append(res)
+                res = func(y_hat, torch.stack(y))
+                self.val_results_current[metric].append(len(x)*res)
         return loss.item()
 
     def training_step(self,
