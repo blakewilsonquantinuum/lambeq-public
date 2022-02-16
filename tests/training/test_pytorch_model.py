@@ -2,10 +2,11 @@ from lambeq.training import PytorchModel
 
 from discopy import Cup, Dim, Word
 from discopy.quantum.circuit import Id
-from lambeq.core.types import AtomicType
-from lambeq.tensor import SpiderAnsatz
-from torch.nn import Parameter
+
 from torch import Size
+from torch.nn import Parameter
+
+from lambeq import AtomicType, SpiderAnsatz
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

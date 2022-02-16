@@ -1,9 +1,8 @@
 from discopy import Cup, Dim, Word
 from discopy.quantum.circuit import Id
-from lambeq.core.types import AtomicType
-from lambeq.tensor import SpiderAnsatz
-from lambeq.training import PytorchTrainer, PytorchModel, Dataset
 import torch
+
+from lambeq import AtomicType, SpiderAnsatz, Dataset, PytorchTrainer, PytorchModel
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

@@ -1,9 +1,8 @@
 import numpy as np
 from discopy import Cup, Word
 from discopy.quantum.circuit import Id
-from lambeq.core.types import AtomicType
-from lambeq.circuit import IQPAnsatz
-from lambeq.training import Dataset, ECSQuantumModel, QuantumTrainer, SPSAOptimiser
+
+from lambeq import AtomicType, IQPAnsatz, Dataset, ECSQuantumModel, QuantumTrainer, SPSAOptimiser
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

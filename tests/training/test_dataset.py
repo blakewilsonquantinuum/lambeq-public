@@ -1,4 +1,4 @@
-from lambeq.training import Dataset
+from lambeq import Dataset
 
 data = [1, 2, 3, 4]
 targets = [5, 6, 7, 8]

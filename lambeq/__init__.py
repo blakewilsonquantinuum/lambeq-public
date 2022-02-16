@@ -81,8 +81,10 @@ from lambeq.tokeniser import Tokeniser, SpacyTokeniser
 
 if is_torch_available():
     from lambeq import training
-    from lambeq.training import (Dataset, Model, PytorchModel, Trainer,
-                                 PytorchTrainer)
+    from lambeq.training import (
+            Dataset, Optimiser, SPSAOptimiser,
+            Model, PytorchModel, QuantumModel, ECSQuantumModel,
+            Trainer, PytorchTrainer, QuantumTrainer)
     __all__ += [
             'training',
 
@@ -99,5 +101,4 @@ if is_torch_available():
             'Trainer',
             'PytorchTrainer',
             'QuantumTrainer',
-            'ECSQuantumTrainer'
     ]

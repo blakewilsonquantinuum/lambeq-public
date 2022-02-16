@@ -2,10 +2,8 @@ from unittest.mock import patch
 
 from discopy import Cup, Dim, Word
 from discopy.quantum.circuit import Id
-from lambeq.ansatz import Symbol
-from lambeq.core.types import AtomicType
-from lambeq.tensor import SpiderAnsatz
-from lambeq.training import Model
+
+from lambeq import AtomicType, Symbol, SpiderAnsatz, Model
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

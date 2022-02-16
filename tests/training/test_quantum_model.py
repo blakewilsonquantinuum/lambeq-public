@@ -3,9 +3,7 @@ from discopy import Cup, Word
 from discopy.quantum.circuit import Id
 from pytket.extensions.qiskit import AerBackend
 
-from lambeq.core.types import AtomicType
-from lambeq.circuit import IQPAnsatz
-from lambeq.training import QuantumModel
+from lambeq import AtomicType, IQPAnsatz, QuantumModel
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
