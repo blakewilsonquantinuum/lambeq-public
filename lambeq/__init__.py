@@ -55,7 +55,7 @@ __all__ = [
         'SpacyTokeniser',
 ]
 
-from lambeq.core.utils import is_torch_available
+from lambeq.core.utils import is_torch_available, is_transformers_available
 
 from lambeq.version import (version as __version__,
                             version_tuple as __version_info__)
@@ -102,3 +102,8 @@ if is_torch_available():
             'PytorchTrainer',
             'QuantumTrainer',
     ]
+
+
+if is_torch_available() and is_transformers_available():
+    from lambeq.ccg2discocat.newccg_parser import NewCCGParser
+    __all__ += ['NewCCGParser']

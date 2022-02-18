@@ -67,20 +67,29 @@ jobs:
       with:
         path: ${{ steps.loc-depccg-cache.outputs.dir }}
         key: depccg
-    - name: Download pre-trained model if needed
+    - name: Download depccg pre-trained model if needed
       if: steps.depccg-cache.outputs.cache-hit != 'true'
       run: python -m depccg en download
+    - name: Locate newccg pre-trained model cache
+      id: loc-newccg-cache
+      run: echo "::set-output name=dir::$(python -c 'from lambeq.ccg2discocat.newccg_parser import get_model_dir; print(get_model_dir("bert"))')"
+    - name: Restore newccg pre-trained model from cache
+      id: newccg-cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.loc-newccg-cache.outputs.dir }}
+        key: newccg-bert-pre-v0
     - name: Test with pytest
       run:
         # run test of depccg parser separately because it keeps breaking
-        coverage run --source=${{ env.SRC_DIR }} -m pytest --doctest-modules --ignore-glob=*/test_depccg_parser.py
+        coverage run --source=${{ env.SRC_DIR }} -m pytest --doctest-modules --ignore=${{ env.SRC_DIR }}/ccg2discocat/newccg --ignore=tests/ccg2discocat/test_depccg_parser.py
     - name: Test DepCCGParser
       continue-on-error: true
       run:
         coverage run --append --source=${{ env.SRC_DIR }} -m pytest -k test_depccg_parser.py
     - name: Coverage report
       run:
-        coverage report -m
+        coverage report -m --omit 'lambeq/ccg2discocat/newccg/*'
   type_check:
     needs: lint
     runs-on: ubuntu-latest
@@ -94,7 +103,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies with type hints
-      run: python -m pip install numpy pytket spacy torch types-PyYAML
+      run: python -m pip install numpy pytket spacy torch transformers types-PyYAML
     - name: Install type checker
       run: python -m pip install mypy
     - name: Type check with mypy

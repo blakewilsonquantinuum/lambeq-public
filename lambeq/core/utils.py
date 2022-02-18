@@ -24,3 +24,7 @@ def tokenised_batch_type_check(batch: SentenceBatchType) -> bool:
 
 def is_torch_available() -> bool:
     return importlib.util.find_spec('torch') is not None
+
+
+def is_transformers_available() -> bool:
+    return importlib.util.find_spec('transformers') is not None

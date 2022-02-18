@@ -22,5 +22,9 @@ ignore_missing_imports = true
 module = ["spacy.*", "torch.*"]
 implicit_reexport = true
 
+[[tool.mypy.overrides]]
+module = ["lambeq.ccg2discocat.newccg_parser", "lambeq.ccg2discocat.newccg.*"]
+strict_optional = false
+
 [tool.setuptools_scm]
 write_to = "lambeq/version.py"
