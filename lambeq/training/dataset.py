@@ -50,7 +50,13 @@ class Dataset:
         seed : int, optional
             Random seed.
 
+        Raises
+        ------
+        ValueError: When 'data' and 'targets' do not match in size.
+
         """
+        if len(data) != len(targets):
+            raise ValueError("Lengths of `data` and `targets` differ.")
         self.data = data
         self.targets = targets
         self.batch_size = batch_size

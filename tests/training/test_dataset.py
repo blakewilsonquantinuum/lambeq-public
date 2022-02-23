@@ -1,5 +1,7 @@
 from lambeq import Dataset
 
+import pytest
+
 data = [1, 2, 3, 4]
 targets = [5, 6, 7, 8]
 
@@ -44,3 +46,8 @@ def test_shuffle():
     targets = list(range(100))
     new_data, new_targets = Dataset.shuffle_data(data, targets)
     assert new_data == new_targets
+
+
+def test_data_label_length_mismatch():
+    with pytest.raises(ValueError):
+        _ = Dataset(data, targets[:-1], batch_size=2, shuffle=False, seed=0)
