@@ -60,7 +60,7 @@ jobs:
         bash install.sh --global
     - name: Locate depccg pre-trained model cache
       id: loc-depccg-cache
-      run: echo "::set-output name=dir::$(python -c 'from depccg.download import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
+      run: echo "::set-output name=dir::$(python -c 'from depccg.instance_models import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
     - name: Restore depccg pre-trained model from cache
       id: depccg-cache
       uses: actions/cache@v2
@@ -69,7 +69,7 @@ jobs:
         key: depccg
     - name: Download depccg pre-trained model if needed
       if: steps.depccg-cache.outputs.cache-hit != 'true'
-      run: python -m depccg en download
+      run: python -c 'import tarfile, urllib;from depccg.instance_models import MODEL_DIRECTORY;tarfile.open(urllib.request.urlretrieve("https://qnlp.cambridgequantum.com/models/tri_headfirst.tar.gz")[0]).extractall(MODEL_DIRECTORY)'
     - name: Locate newccg pre-trained model cache
       id: loc-newccg-cache
       run: echo "::set-output name=dir::$(python -c 'from lambeq.ccg2discocat.newccg_parser import get_model_dir; print(get_model_dir("bert"))')"

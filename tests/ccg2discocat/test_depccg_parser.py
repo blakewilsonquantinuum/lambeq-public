@@ -14,14 +14,6 @@ def depccg_parser():
     return DepCCGParser()
 
 
-def test_model_initialisation(depccg_parser):
-    with pytest.raises(TypeError):
-        DepCCGParser(model=None)
-
-    parser = depccg_parser.parser
-    assert DepCCGParser(model=parser).parser == parser
-
-
 def test_to_biclosed(depccg_parser):
     mock_type = Mock(is_functor=False, is_NorNP=False, base='PP')
     assert depccg_parser._to_biclosed(mock_type) == AtomicType.PREPOSITION

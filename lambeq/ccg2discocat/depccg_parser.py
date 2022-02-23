@@ -16,8 +16,9 @@ from __future__ import annotations
 
 __all__ = ['DepCCGParser', 'DepCCGParseError']
 
-import json
-from typing import Any, Optional, TYPE_CHECKING, Union
+import functools
+import logging
+from typing import Any, List, Optional, TYPE_CHECKING
 
 from discopy.biclosed import Ty
 
@@ -30,90 +31,105 @@ from lambeq.core.utils import SentenceBatchType,\
 
 if TYPE_CHECKING:
     import depccg
-    from depccg.parser import EnglishCCGParser
+    from depccg.annotator import annotate_XX, english_annotator
+    from depccg.cat import Category
 
 
 def _import_depccg() -> None:
-    global depccg, EnglishCCGParser
-    try:
-        import depccg
-    except ImportError:  # pragma: no cover
-        raise ImportError('depccg not found. Please install it using '
-                          '`pip install lambeq[depccg]`.')
+    global depccg, Category, annotate_XX, english_annotator
+    import depccg
+    import depccg.allennlp.utils
+    from depccg.annotator import annotate_XX, english_annotator
+    from depccg.cat import Category
+    import depccg.lang
+    import depccg.parsing
 
-    try:
-        import depccg.download
-        from depccg.parser import EnglishCCGParser
-    except ImportError:  # pragma: no cover
-        raise ImportError('Invalid depccg version detected. Please re-install '
-                          'it using `pip install lambeq[depccg]`.')
+
+# disable irrelevant logging
+logging.getLogger('allennlp.common.params').setLevel(logging.ERROR)
+logging.getLogger('depccg.chainer.supertagger').setLevel(logging.ERROR)
 
 
 class DepCCGParseError(Exception):
     def __init__(self, sentence: str) -> None:
         self.sentence = sentence
 
-    def __str__(self) -> str:
-        return f'depccg failed to parse {repr(self.sentence)}'
+    def __str__(self) -> str:  # pragma: no cover
+        return f'depccg failed to parse: "{self.sentence!r}".'
 
 
 class DepCCGParser(CCGParser):
     """CCG parser using depccg as the backend."""
 
-    _unary_rules = [
-        ('N', 'NP'),
-        ('NP', r'(S[X]/(S[X]\NP))'),
-        ('NP', r'((S[X]\NP)\((S[X]\NP)/NP))'),
-        ('PP', r'((S[X]\NP)\((S[X]\NP)/PP))'),
-        ('NP', r'(((S[X]\NP)/NP)\(((S[X]\NP)/NP)/NP))'),
-        ('NP', r'(((S[X]\NP)/PP)\(((S[X]\NP)/PP)/NP))')
-    ]
+    _raw_unary_rules = {'N': ['NP'],
+                        'NP': [r'(S[X]/(S[X]\NP))',
+                               r'((S[X]\NP)\((S[X]\NP)/NP))',
+                               r'(((S[X]\NP)/NP)\(((S[X]\NP)/NP)/NP))',
+                               r'(((S[X]\NP)/PP)\(((S[X]\NP)/PP)/NP))'],
+                        'PP': [r'((S[X]\NP)\((S[X]\NP)/PP))']}
+    _unary_rules = None
 
-    def __init__(self, *,
-                 model: Union[str, EnglishCCGParser] = '',
+    def __init__(self,
+                 *,
+                 lang: str = 'en',
+                 model: Optional[str] = None,
                  use_model_unary_rules: bool = False,
+                 annotator: Optional[str] = None,
+                 device: int = -1,
+                 root_cats: str = 'S[dcl]|S[wq]|S[q]|S[qem]|NP',
                  **kwargs: Any) -> None:
-        """Initialise a parser based on `depccg.parser.EnglishCCGParser`.
+        """Instantiate a parser based on `depccg`.
 
         Parameters
         ----------
-        model : str or depccg.parser.EnglishCCGParser, default: ''
-            Can be either:
-                - The name of a pre-trained model downloaded by depccg.
-                  By default, it uses the "tri_headfirst" model.
-                - A pre-instantiated EnglishCCGParser.
+        lang : { 'en', 'ja' }
+            The language to use. Use of 'ja' is experimental and has not
+            been tested.
+        model : str, optional
+            The name of the model variant to use, if any.
+            (At time of writing) `depccg` supports 'elmo', 'rebank' and
+            'elmo_rebank' for English only.
         use_model_unary_rules : bool, default: False
             Use the unary rules supplied by the model instead of the
-            ones included with `DepCCGParser`.
-        kwargs : dict, optional
-            Optional arguments passed to `depccg.parser.EnglishCCGParser`.
-
-        Raises
-        ------
-        TypeError
-            If the `model` argument is not of the right type.
-
-        RuntimeError
-            If the provided model name is not valid.
+            ones by `lambeq`.
+        annotator : str, optional
+            The annotator to use, if any. (At time of writing) `depccg`
+            supports 'candc' and 'spacy'.
+        device : int, optional
+            The ID of the GPU to use. By default, uses the CPU.
+        root_cats : str, default: 'S[dcl]|S[wq]|S[q]|S[qem]|NP'
+            A bar-separated list of categories allowed at the root of
+            the parse.
+        **kwargs : dict, optional
+            Optional arguments passed to `depccg`.
 
         """
         _import_depccg()
 
-        if isinstance(model, EnglishCCGParser):
-            self.parser = model
-            return
-        if not isinstance(model, str):
-            raise TypeError('`model` must be an `EnglishCCGParser` or a str.')
+        depccg.lang.set_global_language_to(lang)
+        self.annotator_fun = english_annotator.get(annotator, annotate_XX)
+        self.supertagger, config = depccg.instance_models.load_model(model,
+                                                                     device)
+        (self.apply_binary_rules,
+         self.apply_unary_rules,
+         self.category_dict,
+         _) = depccg.allennlp.utils.read_params(config.config)
 
-        model_dir, config_file = depccg.download.load_model_directory(
-                f'en[{model}]' if model else 'en')
-
-        with open(config_file) as f:
-            config = json.load(f)
         if not use_model_unary_rules:
-            config['unary_rules'] = self._unary_rules
+            if self._unary_rules is None:
+                DepCCGParser._unary_rules = {
+                        Category.parse(key): [*map(Category.parse, values)]
+                        for key, values in self._raw_unary_rules.items()}
 
-        self.parser = EnglishCCGParser.from_json(config, model_dir, **kwargs)
+            self.apply_unary_rules = functools.partial(
+                    depccg.instance_models.GRAMMARS[lang].apply_unary_rules,
+                    unary_rules=self._unary_rules
+            )
+
+        self.root_categories = [*map(Category.parse, root_cats.split('|'))]
+        self.categories: Optional[List[Category]] = None
+        self.kwargs = kwargs
+
         self._last_trees: list[Optional[CCGTree]] = []
 
     def sentences2trees(
@@ -126,6 +142,9 @@ class DepCCGParser(CCGParser):
                 raise ValueError('`tokenised` set to `True`, but variable '
                                  '`sentences` does not have type '
                                  '`list[list[str]]`.')
+            if TYPE_CHECKING:  # temporary fix
+                from typing import cast
+                sentences = cast(list[list[str]], sentences)
         else:
             if not untokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `False`, but variable '
@@ -146,11 +165,10 @@ class DepCCGParser(CCGParser):
 
         trees = self._last_trees = []
         if sentences:
-            results = self.parser.parse_doc(sentences)
-            for result, sentence in zip(results, sentences):
-                depccg_tree, score = result[0]
-                if score or depccg_tree.word != 'FAILED':
-                    trees.append(self._build_ccgtree(depccg_tree))
+            parses = self._depccg_parse(sentences)
+            for (depccg_tree, *_), sentence in zip(parses, sentences):
+                if depccg_tree.score > float('-inf'):
+                    trees.append(self._build_ccgtree(depccg_tree.tree))
                 elif suppress_exceptions:
                     trees.append(None)
                 else:
@@ -161,12 +179,33 @@ class DepCCGParser(CCGParser):
 
         return trees
 
+    def _depccg_parse(
+            self,
+            sentences: list[list[str]]) -> list[list[depccg.tree.ScoredTree]]:
+        doc = self.annotator_fun(sentences)
+        score_result, categories = self.supertagger.predict_doc(
+                [[token.word for token in sentence] for sentence in doc])
+
+        if self.categories is None:
+            self.categories = [*map(Category.parse, categories)]
+
+        doc, score_result = depccg.parsing.apply_category_filters(
+                doc, score_result, self.categories, self.category_dict)
+
+        return depccg.parsing.run(doc,  # type: ignore[no-any-return]
+                                  score_result,
+                                  self.categories,
+                                  self.root_categories,
+                                  self.apply_binary_rules,
+                                  self.apply_unary_rules,
+                                  **self.kwargs)
+
     @staticmethod
-    def _to_biclosed(cat: depccg.cat.Category) -> Ty:
+    def _to_biclosed(cat: Category) -> Ty:
         """Transform a depccg category into a biclosed type."""
 
         if not cat.is_functor:
-            if cat.is_NorNP:
+            if cat.base in ('N', 'NP'):
                 return CCGAtomicType.NOUN
             if cat.base == 'S':
                 return CCGAtomicType.SENTENCE
@@ -189,20 +228,24 @@ class DepCCGParser(CCGParser):
     def _build_ccgtree(tree: depccg.tree.Tree) -> CCGTree:
         """Transform a depccg derivation tree into a `CCGTree`."""
         biclosed_type = DepCCGParser._to_biclosed(tree.cat)
-        children = list(map(DepCCGParser._build_ccgtree, tree.children))
-        if tree.cat.is_type_raised:
-            rule = 'FTR' if tree.cat.is_forward_type_raised else 'BTR'
-        elif tree.is_unary:
-            rule = 'U'
-        elif tree.is_leaf:
+        if tree.is_leaf:
+            children = []
             rule = 'L'
-        elif tree.op_string in ('gbx', 'gfc'):
-            rule = CCGRule.infer_rule(
-                Ty.tensor(*(child.biclosed_type for child in children)),
-                biclosed_type)
         else:
-            rule = tree.op_string.upper()
-        return CCGTree(text=tree.word,
-                       rule=rule,
-                       biclosed_type=biclosed_type,
-                       children=children)
+            children = [*map(DepCCGParser._build_ccgtree, tree.children)]
+            if tree.op_string == 'tr':
+                rule = ('BTR' if biclosed_type.left.left == biclosed_type.right
+                        else 'FTR')
+            elif tree.op_symbol == '<un>':
+                rule = 'U'
+            elif tree.op_string in ('gbx', 'gfc'):
+                rule = CCGRule.infer_rule(
+                    Ty.tensor(*(child.biclosed_type for child in children)),
+                    biclosed_type)
+            else:
+                rule = tree.op_string.upper()
+        return CCGTree(
+                text=tree.word,
+                rule=rule,
+                biclosed_type=biclosed_type,
+                children=children)
