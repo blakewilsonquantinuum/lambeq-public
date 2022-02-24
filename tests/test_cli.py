@@ -5,6 +5,7 @@ import unittest.mock
 from unittest.mock import patch
 
 from lambeq.ccg2discocat.web_parser import WebParser
+from lambeq.ccg2discocat.newccg_parser import NewCCGParser
 from lambeq import cli
 from lambeq.cli import ArgumentList
 from lambeq.cli import main
@@ -76,7 +77,21 @@ def multi_sentence_input() -> str:
     return 'This is a sentence.\nThis is another one.'
 
 
-parser_patch = {'depccg': WebParser}  # DepCCG can crash during online tests
+parser_patch = {'depccg': WebParser, 'newccg': NewCCGParser}  # DepCCG can crash during online tests
+
+
+def test_file_io(sentence_input, unicode_sentence_output):
+    with patch('sys.argv',
+               ['lambeq', '-i', 'sentence.txt', '-o', 'output.txt']),\
+         patch('lambeq.cli.AVAILABLE_PARSERS', new=parser_patch),\
+         patch('lambeq.cli.open',
+               unittest.mock.mock_open(read_data=sentence_input)) as m:
+        main()
+        m.assert_any_call('sentence.txt', 'r')
+        m.assert_called_with('output.txt', 'w')
+        handle = m()
+        handle.read.assert_called_once()
+        handle.write.assert_called_once_with(unicode_sentence_output)
 
 
 def test_sentence_arg(sentence_input, unicode_sentence_output):
@@ -109,20 +124,6 @@ def test_sentence_ascii(sentence_input, ascii_sentence_output):
          patch('sys.stdout', new=StringIO()) as fake_out:
         main()
         assert fake_out.getvalue().rstrip() == ascii_sentence_output
-
-
-def test_file_io(sentence_input, unicode_sentence_output):
-    with patch('sys.argv',
-               ['lambeq', '-i', 'sentence.txt', '-o', 'output.txt']),\
-         patch('lambeq.cli.AVAILABLE_PARSERS', new=parser_patch),\
-         patch('lambeq.cli.open',
-               unittest.mock.mock_open(read_data=sentence_input)) as m:
-        main()
-        m.assert_any_call('sentence.txt', 'r')
-        m.assert_called_with('output.txt', 'w')
-        handle = m()
-        handle.read.assert_called_once()
-        handle.write.assert_called_once_with(unicode_sentence_output)
 
 
 def test_pickle(sentence_input, unicode_sentence_output):
@@ -332,7 +333,7 @@ def test_args_validation_missing_output_file(arg_parser):
 
 
 def test_args_validation_both_parser_and_reader_given(arg_parser):
-    cli_args = arg_parser.parse_args(['--parser', 'depccg',
+    cli_args = arg_parser.parse_args(['--parser', 'newccg',
                                       '--reader', 'cups',
                                       'Input sentence.'])
     with pytest.raises(ValueError):

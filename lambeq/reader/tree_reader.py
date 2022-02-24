@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Callable, Union
 
 __all__ = ['TreeReader', 'TreeReaderMode']
 
@@ -22,7 +23,7 @@ from discopy import Word
 from discopy.rigid import Box, Diagram, Ty
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
-from lambeq.ccg2discocat.web_parser import WebParser
+from lambeq.ccg2discocat.newccg_parser import NewCCGParser
 from lambeq.core.types import AtomicType
 from lambeq.core.utils import SentenceType
 from lambeq.reader.base import Reader
@@ -60,7 +61,8 @@ class TreeReader(Reader):
     """
 
     def __init__(self,
-                 ccg_parser: CCGParser = WebParser(),
+                 ccg_parser: Union[CCGParser, Callable[[], CCGParser]] =
+                 NewCCGParser,
                  mode: TreeReaderMode = TreeReaderMode.NO_TYPE,
                  word_type: Ty = S,
                  suppress_exceptions: bool = False) -> None:
@@ -68,9 +70,10 @@ class TreeReader(Reader):
 
         Parameters
         ----------
-        ccg_parser : CCGParser, default: WebParser()
-            A :py:class:`CCGParser` object. The parse tree produced by the
-            parser is used to generate the tree diagram.
+        ccg_parser : CCGParser or callable, default: NewCCGParser
+            A :py:class:`CCGParser` object or a function that returns it.
+            The parse tree produced by the parser is used to generate the
+            tree diagram.
         mode : TreeReaderMode, default: TreeReaderMode.NO_TYPE
             Determines what boxes are used to combine the tree.
         word_type : Ty, default: core.types.AtomicType.SENTENCE
@@ -84,9 +87,14 @@ class TreeReader(Reader):
         """
         if not isinstance(mode, TreeReaderMode):
             raise ValueError(f'Mode must be one of {self.available_modes()}.')
-
         if not isinstance(ccg_parser, CCGParser):
-            raise ValueError(f'{ccg_parser} should be a CCGParser.')
+            if not callable(ccg_parser):
+                raise ValueError(f'{ccg_parser} should be a CCGParser or a '
+                                 'function that returns a CCGParser.')
+            ccg_parser = ccg_parser()
+            if not isinstance(ccg_parser, CCGParser):
+                raise ValueError(f'{ccg_parser} should be a CCGParser or a '
+                                 'function that returns a CCGParser.')
         self.ccg_parser = ccg_parser
         self.mode = mode
         self.word_type = word_type

@@ -34,6 +34,7 @@ import yaml
 import lambeq
 from lambeq.ccg2discocat import DepCCGParser
 from lambeq.ccg2discocat.ccg_parser import CCGParser
+from lambeq.ccg2discocat.newccg_parser import NewCCGParser
 from lambeq.ansatz import BaseAnsatz
 from lambeq.ansatz.circuit import IQPAnsatz, CircuitAnsatz
 from lambeq.ansatz.tensor import TensorAnsatz, SpiderAnsatz, MPSAnsatz
@@ -44,7 +45,8 @@ from lambeq.tokeniser import SpacyTokeniser
 
 import discopy
 
-AVAILABLE_PARSERS: dict[str, type[CCGParser]] = {'depccg': DepCCGParser}
+AVAILABLE_PARSERS: dict[str, type[CCGParser]] = {'depccg': DepCCGParser,
+                                                 'newccg': NewCCGParser}
 
 AVAILABLE_READERS: dict[str, Reader] = {'spiders': spiders_reader,
                                         'cups': cups_reader}
@@ -213,7 +215,7 @@ def prepare_parser() -> argparse.ArgumentParser:
             default=None,
             choices=AVAILABLE_PARSERS.keys(),
             help='Choice of a parser. Mutually exclussive with using a '
-                 'reader. If `None`, DepCCGParser is used.')
+                 'reader. If `None`, NewCCGParser is used.')
     parser_group.add_argument(
             '-t',
             '--tokenise',
@@ -379,11 +381,10 @@ class ParserModule(CLIModule):
             return reader.sentences2diagrams(sentences,
                                              tokenised=cl_args.tokenise)
         elif cl_args.parser is not None:
-            depccg_parser = AVAILABLE_PARSERS[cl_args.parser]()
+            parser = AVAILABLE_PARSERS[cl_args.parser]()
         else:
-            depccg_parser = AVAILABLE_PARSERS['depccg']()
-        return depccg_parser.sentences2diagrams(sentences,
-                                                tokenised=cl_args.tokenise)
+            parser = AVAILABLE_PARSERS['newccg']()
+        return parser.sentences2diagrams(sentences, tokenised=cl_args.tokenise)
 
 
 class RewriterModule(CLIModule):

@@ -27,6 +27,8 @@ __all__ = [
         'CCGBankParser',
         'DepCCGParseError',
         'DepCCGParser',
+        'NewCCGParser',
+        'NewCCGParseError',
         'WebParseError',
         'WebParser',
 
@@ -55,7 +57,7 @@ __all__ = [
         'SpacyTokeniser',
 ]
 
-from lambeq.core.utils import is_torch_available, is_transformers_available
+from lambeq.core.utils import is_jax_available
 
 from lambeq.version import (version as __version__,
                             version_tuple as __version_info__)
@@ -67,8 +69,8 @@ from lambeq.ansatz import (BaseAnsatz, CircuitAnsatz, IQPAnsatz, MPSAnsatz,
                            SpiderAnsatz, Symbol, TensorAnsatz)
 from lambeq.ccg2discocat import (CCGRule, CCGRuleUseError, CCGTree, CCGParser,
                                  CCGBankParseError, CCGBankParser,
-                                 DepCCGParseError, DepCCGParser, WebParseError,
-                                 WebParser)
+                                 DepCCGParseError, DepCCGParser, NewCCGParseError,
+                                 NewCCGParser, WebParseError, WebParser)
 from lambeq.core.types import AtomicType
 from lambeq.pregroups import (diagram2str,
                               create_pregroup_diagram, is_pregroup_diagram)
@@ -79,7 +81,7 @@ from lambeq.rewrite import (RewriteRule, CoordinationRewriteRule,
                             SimpleRewriteRule, Rewriter)
 from lambeq.tokeniser import Tokeniser, SpacyTokeniser
 
-if is_torch_available():
+if is_jax_available():
     from lambeq import training
     from lambeq.training import (
             Dataset, Optimiser, SPSAOptimiser,
@@ -102,8 +104,3 @@ if is_torch_available():
             'PytorchTrainer',
             'QuantumTrainer',
     ]
-
-
-if is_torch_available() and is_transformers_available():
-    from lambeq.ccg2discocat.newccg_parser import NewCCGParser
-    __all__ += ['NewCCGParser']
