@@ -16,12 +16,13 @@ from __future__ import annotations
 
 from typing import Optional
 
-from discopy import Cup, Diagram, Id, Swap, Ty, Word
+from discopy import Cup, Diagram, Swap, Ty, Word
 
 
 def is_pregroup_diagram(diagram: Diagram) -> bool:
-    """Check if a DisCoPy diagram is a pregroup diagram. This
-    code is taken from `discopy.grammar.pregroup.draw()`.
+    """Check if a DisCoPy diagram is a pregroup diagram.
+
+    Adapted from `discopy.grammar.pregroup.draw()`.
 
     Parameters
     ----------
@@ -31,25 +32,20 @@ def is_pregroup_diagram(diagram: Diagram) -> bool:
     Returns
     -------
     bool
-        True if the diagram is a pregroup diagram, and False
-        otherwise.
-    """
-    words, is_pregroup = Id(Ty()), True
-    for _, box, right in diagram.layers:
-        if isinstance(box, Word):
-            if right:  # word boxes should be tensored left to right.
-                is_pregroup = False
-                break
-            words = words @ box
-        else:
-            break
-    cups = diagram[len(words):].foliation().boxes\
-        if len(words) < len(diagram) else []
-    is_pregroup = is_pregroup and words and all(
-        isinstance(box, (Cup, Swap))
-        for s in cups for box in s.boxes)
+        Whether the diagram is a pregroup diagram.
 
-    return is_pregroup
+    """
+
+    in_words = True
+    for _, box, right in diagram.layers:
+        if in_words and isinstance(box, Word):
+            if right:  # word boxes should be tensored left to right.
+                return False
+        else:
+            if not isinstance(box, (Cup, Swap)):
+                return False
+            in_words = False
+    return True
 
 
 def create_pregroup_diagram(

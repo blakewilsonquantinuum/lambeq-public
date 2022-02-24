@@ -22,45 +22,53 @@ def type_raising_input() -> str:
 
 @pytest.fixture
 def unicode_sentence_output() -> str:
-    return ('John    likes    Mary\n────  ─────────  ────\n'
-            ' n    n.r·s·n.l   n  \n ╰─────╯  │  ╰────╯  \n')
+    return ('John    likes    Mary\n'
+            '────  ─────────  ────\n'
+            ' n    n.r·s·n.l   n\n'
+            ' ╰─────╯  │  ╰────╯')
 
 
 @pytest.fixture
 def unicode_type_raising_output() -> str:
-    return ('    What     Alice     and     Bob       do            not           know  \n'
+    return ('    What     Alice     and     Bob       do            not           know\n'
             '───────────  ─────  ─────────  ───  ───────────  ───────────────  ─────────\n'
             'n·n.l.l·s.l    n    n.r·n·n.l   n   n.r·s·s.l·n  s.r·n.r.r·n.r·s  n.r·s·n.l\n'
-            '│   │    │     ╰─────╯  │  ╰────╯    │  │  │  ╰─╮─╯    │    │  │   │  │  │ \n'
-            '│   │    │              │            │  │  │  ╭─╰─╮    │    │  │   │  │  │ \n'
-            '│   │    │              │            │  │  ╰╮─╯   ╰─╮──╯    │  │   │  │  │ \n'
-            '│   │    │              │            │  │  ╭╰─╮   ╭─╰──╮    │  │   │  │  │ \n'
-            '│   │    │              │            │  ╰──╯  ╰─╮─╯    ╰─╮──╯  │   │  │  │ \n'
-            '│   │    │              │            │        ╭─╰─╮    ╭─╰──╮  │   │  │  │ \n'
-            '│   │    │              │            ╰────────╯   ╰─╮──╯    ╰╮─╯   │  │  │ \n'
-            '│   │    │              │                         ╭─╰──╮    ╭╰─╮   │  │  │ \n'
-            '│   │    │              ╰─────────────────────────╯    ╰─╮──╯  ╰───╯  │  │ \n'
-            '│   │    │                                             ╭─╰──╮         │  │ \n'
-            '│   │    ╰─────────────────────────────────────────────╯    ╰─────────╯  │ \n'
-            '│   ╰────────────────────────────────────────────────────────────────────╯ \n')
+            '│   │    │     ╰─────╯  │  ╰────╯    │  │  │  ╰─╮─╯    │    │  │   │  │  │\n'
+            '│   │    │              │            │  │  │  ╭─╰─╮    │    │  │   │  │  │\n'
+            '│   │    │              │            │  │  ╰╮─╯   ╰─╮──╯    │  │   │  │  │\n'
+            '│   │    │              │            │  │  ╭╰─╮   ╭─╰──╮    │  │   │  │  │\n'
+            '│   │    │              │            │  ╰──╯  ╰─╮─╯    ╰─╮──╯  │   │  │  │\n'
+            '│   │    │              │            │        ╭─╰─╮    ╭─╰──╮  │   │  │  │\n'
+            '│   │    │              │            ╰────────╯   ╰─╮──╯    ╰╮─╯   │  │  │\n'
+            '│   │    │              │                         ╭─╰──╮    ╭╰─╮   │  │  │\n'
+            '│   │    │              ╰─────────────────────────╯    ╰─╮──╯  ╰───╯  │  │\n'
+            '│   │    │                                             ╭─╰──╮         │  │\n'
+            '│   │    ╰─────────────────────────────────────────────╯    ╰─────────╯  │\n'
+            '│   ╰────────────────────────────────────────────────────────────────────╯')
 
 
 @pytest.fixture
 def ascii_sentence_output() -> str:
-    return ('John    likes    Mary\n____  _________  ____\n'
-            ' n    n.r s n.l   n  \n \\_____/  |  \\____/  \n')
+    return ('John    likes    Mary\n'
+            '____  _________  ____\n'
+            ' n    n.r s n.l   n\n'
+           r' \_____/  |  \____/')
 
 
 @pytest.fixture
 def unicode_sentence_cups() -> str:
-    return ('START   John  likes   Mary\n─────  ─────  ─────  ─────\n'
-            '  s    s.r·s  s.r·s  s.r·s\n  ╰─────╯  ╰───╯  ╰───╯  │\n')
+    return ('START   John  likes   Mary\n'
+            '─────  ─────  ─────  ─────\n'
+            '  s    s.r·s  s.r·s  s.r·s\n'
+            '  ╰─────╯  ╰───╯  ╰───╯  │')
 
 
 @pytest.fixture
 def ascii_sentence_cups() -> str:
-    return ('START   John  likes   Mary\n_____  _____  _____  _____\n'
-            '  s    s.r s  s.r s  s.r s\n  \\_____/  \\___/  \\___/  |')
+    return ('START   John  likes   Mary\n'
+            '_____  _____  _____  _____\n'
+            '  s    s.r s  s.r s  s.r s\n'
+           r'  \_____/  \___/  \___/  |')
 
 
 @pytest.fixture
@@ -76,7 +84,7 @@ def test_sentence_arg(sentence_input, unicode_sentence_output):
          patch('lambeq.cli.AVAILABLE_PARSERS', new=parser_patch),\
          patch('sys.stdout', new=StringIO()) as fake_out:
         main()
-        assert fake_out.getvalue().strip() == unicode_sentence_output.strip()
+        assert fake_out.getvalue().rstrip() == unicode_sentence_output
 
 
 def test_type_raising(type_raising_input, unicode_type_raising_output):
@@ -84,7 +92,7 @@ def test_type_raising(type_raising_input, unicode_type_raising_output):
          patch('lambeq.cli.AVAILABLE_PARSERS', new=parser_patch),\
          patch('sys.stdout', new=StringIO()) as fake_out:
         main()
-        assert fake_out.getvalue().strip() == unicode_type_raising_output.strip()
+        assert fake_out.getvalue().rstrip() == unicode_type_raising_output
 
 
 def test_sentence_parser_arg(sentence_input, unicode_sentence_output):
@@ -92,7 +100,7 @@ def test_sentence_parser_arg(sentence_input, unicode_sentence_output):
          patch('lambeq.cli.AVAILABLE_PARSERS', new=parser_patch),\
          patch('sys.stdout', new=StringIO()) as fake_out:
         main()
-        assert fake_out.getvalue().strip() == unicode_sentence_output.strip()
+        assert fake_out.getvalue().rstrip() == unicode_sentence_output
 
 
 def test_sentence_ascii(sentence_input, ascii_sentence_output):
@@ -100,7 +108,7 @@ def test_sentence_ascii(sentence_input, ascii_sentence_output):
          patch('lambeq.cli.AVAILABLE_PARSERS', new=parser_patch),\
          patch('sys.stdout', new=StringIO()) as fake_out:
         main()
-        assert fake_out.getvalue().strip() == ascii_sentence_output.strip()
+        assert fake_out.getvalue().rstrip() == ascii_sentence_output
 
 
 def test_file_io(sentence_input, unicode_sentence_output):
@@ -185,7 +193,7 @@ def test_split_stdin_and_multisentece_image_error(multi_sentence_input):
                new=unittest.mock.MagicMock()) as d:
         with pytest.raises(ValueError):
             main()
-        assert fake_out.getvalue().strip() == 'Text:'
+        assert fake_out.getvalue().rstrip() == 'Text:'
         d.assert_not_called()
 
 
@@ -194,7 +202,7 @@ def test_reader(sentence_input, unicode_sentence_cups):
          patch('lambeq.cli.AVAILABLE_PARSERS', new=parser_patch),\
          patch('sys.stdout', new=StringIO()) as fake_out:
         main()
-        assert fake_out.getvalue().strip() == unicode_sentence_cups.strip()
+        assert fake_out.getvalue().rstrip() == unicode_sentence_cups
 
 
 def test_IQP_ansatz_and_rewrites(multi_sentence_input):
@@ -286,7 +294,7 @@ def test_arg_storing(sentence_input, unicode_sentence_output):
         handle = m()
         handle.read.assert_called_once()
         handle.write.assert_called()
-        assert fake_out.getvalue().strip() == unicode_sentence_output.strip()
+        assert fake_out.getvalue().rstrip() == unicode_sentence_output
 
 
 def test_arg_loading(sentence_input, ascii_sentence_cups):
@@ -301,7 +309,7 @@ def test_arg_loading(sentence_input, ascii_sentence_cups):
         m.assert_any_call('conf.yaml', 'r')
         handle = m()
         handle.read.assert_called()
-        assert fake_out.getvalue().strip() == ascii_sentence_cups.strip()
+        assert fake_out.getvalue().rstrip() == ascii_sentence_cups
 
 
 @pytest.fixture

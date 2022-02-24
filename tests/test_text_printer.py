@@ -67,14 +67,14 @@ def diagram2():
 
 def test_diagram_with_just_caps(diagram1):
 
-    expected_output = "John       gave      Mary    a    flower           and            went        away     \n" \
+    expected_output = "John       gave      Mary    a    flower           and            went        away\n" \
                       "────  ─────────────  ────  ─────  ──────  ─────────────────────  ─────  ───────────────\n" \
                       " n    n.r·s·n.l·n.l   n    n·n.l    n     s.r·n.r.r·n.r·s·s.l·n  n.r·s  s.r·n.r.r·n.r·s\n" \
                       " │     │  │  │   ╰────╯    │  ╰─────╯      │    │    │  │  │  │   │  ╰───╯    │    │  │\n" \
                       " │     │  │  ╰─────────────╯               │    │    │  │  │  │   ╰───────────╯    │  │\n" \
                       " │     │  ╰────────────────────────────────╯    │    │  │  │  ╰────────────────────╯  │\n" \
                       " │     ╰────────────────────────────────────────╯    │  │  ╰──────────────────────────╯\n" \
-                      " ╰───────────────────────────────────────────────────╯  │                              \n"
+                      " ╰───────────────────────────────────────────────────╯  │"
 
     assert diagram2str(diagram1) == expected_output
 
@@ -82,18 +82,18 @@ def test_diagram_with_just_caps(diagram1):
 def test_diagram_with_cups_and_swaps(diagram2):
     expected_output = "Mary      does           not           like    John\n" \
                       "────  ───────────  ───────────────  ─────────  ────\n" \
-                      " n    n.r·s·s.l·n  s.r·n.r.r·n.r·s  n.r·s·n.l   n  \n" \
-                      " │     │  │  │  ╰─╮─╯    │    │  │   │  │  ╰────╯  \n" \
-                      " │     │  │  │  ╭─╰─╮    │    │  │   │  │          \n" \
-                      " │     │  │  ╰╮─╯   ╰─╮──╯    │  │   │  │          \n" \
-                      " │     │  │  ╭╰─╮   ╭─╰──╮    │  │   │  │          \n" \
-                      " │     │  ╰──╯  ╰─╮─╯    ╰─╮──╯  │   │  │          \n" \
-                      " │     │        ╭─╰─╮    ╭─╰──╮  │   │  │          \n" \
-                      " │     ╰────────╯   ╰─╮──╯    ╰╮─╯   │  │          \n" \
-                      " │                  ╭─╰──╮    ╭╰─╮   │  │          \n" \
-                      " ╰──────────────────╯    ╰─╮──╯  ╰───╯  │          \n" \
-                      "                         ╭─╰──╮         │          \n" \
-                      "                         │    ╰─────────╯          \n"
+                      " n    n.r·s·s.l·n  s.r·n.r.r·n.r·s  n.r·s·n.l   n\n" \
+                      " │     │  │  │  ╰─╮─╯    │    │  │   │  │  ╰────╯\n" \
+                      " │     │  │  │  ╭─╰─╮    │    │  │   │  │\n" \
+                      " │     │  │  ╰╮─╯   ╰─╮──╯    │  │   │  │\n" \
+                      " │     │  │  ╭╰─╮   ╭─╰──╮    │  │   │  │\n" \
+                      " │     │  ╰──╯  ╰─╮─╯    ╰─╮──╯  │   │  │\n" \
+                      " │     │        ╭─╰─╮    ╭─╰──╮  │   │  │\n" \
+                      " │     ╰────────╯   ╰─╮──╯    ╰╮─╯   │  │\n" \
+                      " │                  ╭─╰──╮    ╭╰─╮   │  │\n" \
+                      " ╰──────────────────╯    ╰─╮──╯  ╰───╯  │\n" \
+                      "                         ╭─╰──╮         │\n" \
+                      "                         │    ╰─────────╯"
 
     assert diagram2str(diagram2) == expected_output
 
@@ -101,8 +101,8 @@ def test_diagram_with_cups_and_swaps(diagram2):
 def test_diagram_from_cups_reader():
     expected_output = "START   John   gave   Mary    a    flower\n" \
                       "─────  ─────  ─────  ─────  ─────  ──────\n" \
-                      "  s    s.r·s  s.r·s  s.r·s  s.r·s  s.r·s \n" \
-                      "  ╰─────╯  ╰───╯  ╰───╯  ╰───╯  ╰───╯  │ \n"
+                      "  s    s.r·s  s.r·s  s.r·s  s.r·s  s.r·s\n" \
+                      "  ╰─────╯  ╰───╯  ╰───╯  ╰───╯  ╰───╯  │"
 
     diagram = cups_reader.sentence2diagram("John gave Mary a flower")
     assert diagram2str(diagram) == expected_output
@@ -114,8 +114,8 @@ def test_diagram_with_just_identities_1():
 
     expected_output = "John\n" \
                       "────\n" \
-                      " n  \n" \
-                      " │  \n"
+                      " n\n" \
+                      " │"
 
     assert diagram2str(diagram) == expected_output
 
@@ -127,7 +127,7 @@ def test_diagram_with_just_identities_2():
     expected_output = " runs\n" \
                       "─────\n" \
                       "n.r·s\n" \
-                      " │  │\n"
+                      " │  │"
 
     assert diagram2str(diagram) == expected_output
 
