@@ -20,7 +20,7 @@ import math
 from typing import Optional, Tuple, Union, overload
 
 from lambeq.ccg2discocat.newccg.grammar import Grammar
-from lambeq.ccg2discocat.newccg.lexicon import Atom, Category
+from lambeq.ccg2discocat.newccg.lexicon import Atom, Category, CATEGORIES
 from lambeq.ccg2discocat.newccg.rules import Rules
 from lambeq.ccg2discocat.newccg.tree import Lexical, ParseTree
 
@@ -229,7 +229,8 @@ class ParseResult:
 class ChartParser:
     def __init__(self,
                  grammar: Grammar,
-                 cats: list[str],
+                 cats: Iterable[str],
+                 root_cats: Optional[Iterable[str]],
                  eisner_normal_form: bool,
                  max_parse_trees: int,
                  beam_size: int,
@@ -276,6 +277,25 @@ class ChartParser:
             self.result_cats[label, res_cats] = cat_id
             cat_id += 1
 
+        try:
+            self.root_cats = (None if root_cats is None
+                              else [CATEGORIES[s, 0] for s in root_cats])
+        except KeyError as e:
+            s = e.args[0]
+            raise ValueError(f'Grammar does not contain the root cat: {s!r}')
+
+    def filter_root(self, trees: list[ParseTree]) -> list[ParseTree]:
+        if self.root_cats is None:
+            return trees
+        else:
+            results = []
+            for tree in trees:
+                for cat in self.root_cats:
+                    if cat.matches(tree.cat):
+                        results.append(tree)
+                        break
+            return results
+
     def __call__(self, sentence: Sentence) -> ParseResult:
         """Parse a sentence."""
         chart = Chart(self.beam_size)
@@ -300,6 +320,10 @@ class ChartParser:
                     for tree in results:
                         if tree.left:
                             self.calc_score_unary(tree, span_scores)
+
+            # filter root cats
+            if len(sentence) == 1:
+                results = self.filter_root(results)
             chart.add(i, i, results)
 
         for span_length in range(1, len(sentence)):
@@ -337,6 +361,10 @@ class ChartParser:
                             if results and len(sentence) > span_length + 1:
                                 results += self.rules.type_change(results)
                                 results += self.rules.type_raise(results)
+
+                            # filter root cats
+                            if span_length == len(sentence) - 1:
+                                results = self.filter_root(results)
 
                             for tree in results:
                                 if tree.right:

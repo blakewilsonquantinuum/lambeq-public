@@ -20,7 +20,7 @@ import json
 import os
 from pathlib import Path
 import tarfile
-from typing import Any, Optional, Union
+from typing import Any, Iterable, Optional, Union
 from urllib.request import urlretrieve
 
 from discopy.biclosed import Ty
@@ -99,6 +99,7 @@ class NewCCGParser(CCGParser):
 
     def __init__(self,
                  model_name_or_path: str = 'bert',
+                 root_cats: Optional[Iterable[str]] = None,
                  device: int = -1,
                  cache_dir: Optional[StrPathT] = None,
                  force_download: bool = False,
@@ -113,6 +114,9 @@ class NewCCGParser(CCGParser):
                 - The name of a pre-trained model.
                   By default, it uses the "bert" model.
                   See also: `NewCCGParser.available_models()`
+        root_cats : iterable of str, optional
+            A list of the categories allowed at the root of the parse
+            tree.
         device : int, default: -1
             The GPU device ID on which to run the model, if positive.
             If negative (the default), run on the CPU.
@@ -208,6 +212,7 @@ class NewCCGParser(CCGParser):
         grammar = Grammar.load(model_dir / 'grammar.json')
         self.parser = ChartParser(grammar,
                                   self.tagger.model.config.cats,
+                                  root_cats,
                                   **config['parser'])
 
     def sentences2trees(
