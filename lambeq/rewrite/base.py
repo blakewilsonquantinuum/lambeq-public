@@ -45,7 +45,7 @@ of provided rules can be retrieved using
         The determiner rule removes determiners (such as "the") by
         replacing them with caps.
 
-    object_relative_pronoun
+    object_rel_pronoun
         The object relative pronoun rule simplifies object relative pronouns
         based on [SCC2014a]_ using cups, spiders and a loop.
 
@@ -58,7 +58,7 @@ of provided rules can be retrieved using
         prepositional phrase by passing through the noun wire
         transparently using a cup.
 
-    subject_relative_pronoun
+    subject_rel_pronoun
         The subject relative pronoun rule simplifies subject relative pronouns
         based on [SCC2014a]_ using cups and spiders.
 
@@ -225,14 +225,14 @@ prepositional_phrase_rule = SimpleRewriteRule(
 
 _noun_loop = ((Cap(N.l, N.l.l) >> Swap(N.l, N.l.l)) @ Id(N) >>
               Id(N.l.l) @ Cup(N.l, N))
-object_relative_pronoun_rule = SimpleRewriteRule(
+object_rel_pronoun_rule = SimpleRewriteRule(
     words=['that', 'which', 'who', 'whom', 'whose'],
     cod=N.r @ N @ N.l.l @ S.l,
     template=(Cap(N.r, N) >>
               Id(N.r) @ Spider(1, 2, N) @ Spider(0, 1, S.l) >>
               Id(N.r @ N) @ _noun_loop @ Id(S.l)))
 
-subject_relative_pronoun_rule = SimpleRewriteRule(
+subject_rel_pronoun_rule = SimpleRewriteRule(
     words=['that', 'which', 'who', 'whom', 'whose'],
     cod=N.r @ N @ S.l @ N,
     template=(Cap(N.r, N) >>
@@ -295,8 +295,8 @@ class Rewriter:
     _available_rules = {
         **_default_rules,
         'coordination': CoordinationRewriteRule(),
-        'object_relative_pronoun': object_relative_pronoun_rule,
-        'subject_relative_pronoun': subject_relative_pronoun_rule
+        'object_rel_pronoun': object_rel_pronoun_rule,
+        'subject_rel_pronoun': subject_rel_pronoun_rule
     }
 
     def __init__(

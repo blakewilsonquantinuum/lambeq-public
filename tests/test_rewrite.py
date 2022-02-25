@@ -113,14 +113,14 @@ def test_prepositional_phrase():
     assert Rewriter()(diagram) == expected_diagram
 
 
-def test_relative_pronoun():
+def test_rel_pronoun():
     cows = Word('cows', N)
     that_subj = Word('that', N.r @ N @ S.l @ N)
     that_obj = Word('that', N.r @ N @ N.l.l @ S.l)
     eat = Word('eat', N >> S << N)
     grass = Word('grass', N)
 
-    rewriter = Rewriter(['subject_relative_pronoun', 'object_relative_pronoun'])
+    rewriter = Rewriter(['subject_rel_pronoun', 'object_rel_pronoun'])
 
     diagram_subj = Id().tensor(cows, that_subj, eat, grass)
     diagram_subj >>= Cup(N, N.r) @ Id(N) @ cups(S.l @ N, N.r @ S) @ Cup(N.l, N)
