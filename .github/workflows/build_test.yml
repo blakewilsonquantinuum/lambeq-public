@@ -61,6 +61,8 @@ jobs:
       run: python -c 'import lambeq'
     - name: Install extra dependencies and tester
       run: bash install.sh --global
+    - name: Install DisCoPy from GitHub
+      run: pip install --upgrade git+https://github.com/oxford-quantum-group/discopy
     - name: Locate depccg pre-trained model cache
       id: loc-depccg-cache
       run: echo "::set-output name=dir::$(python -c 'from depccg.instance_models import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
