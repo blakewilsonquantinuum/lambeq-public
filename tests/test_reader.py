@@ -6,6 +6,7 @@ from discopy.rigid import Box, Diagram, Id
 from lambeq import (AtomicType, TreeReader, TreeReaderMode,
                     cups_reader, spiders_reader, stairs_reader)
 from lambeq.ccg2discocat.web_parser import WebParser
+from lambeq.ccg2discocat.newccg_parser import NewCCGParser
 
 
 @pytest.fixture
@@ -18,6 +19,11 @@ def words(sentence):
     words = sentence.split()
     assert len(words) == 4
     return words
+
+
+@pytest.fixture
+def parser():
+    return NewCCGParser()
 
 
 def test_spiders_reader(sentence, words):
@@ -60,7 +66,7 @@ def make_parse(*names):
     return Id(S @ S) @ boxes[0] >> Id(S) @ boxes[1] >> boxes[2]
 
 
-def test_tree_reader(sentence, words):
+def test_tree_reader(sentence, words, parser):
     S = AtomicType.SENTENCE
     with pytest.raises(ValueError):
         TreeReader(ccg_parser='parser')
@@ -70,15 +76,15 @@ def test_tree_reader(sentence, words):
 
     the_words = Id().tensor(*[Word(w, S) for w in words])
 
-    reader0 = TreeReader(mode=TreeReaderMode.NO_TYPE)
+    reader0 = TreeReader(ccg_parser=parser, mode=TreeReaderMode.NO_TYPE)
     mode0_expect = the_words >> make_parse('UNIBOX', 'UNIBOX', 'UNIBOX')
     assert reader0.sentence2diagram(sentence) == mode0_expect
 
-    reader1 = TreeReader(mode=TreeReaderMode.RULE_ONLY)
+    reader1 = TreeReader(ccg_parser=parser, mode=TreeReaderMode.RULE_ONLY)
     mode1_expect = the_words >> make_parse('FA', 'FA', 'BA')
     assert reader1.sentence2diagram(sentence) == mode1_expect
 
-    reader2 = TreeReader(mode=TreeReaderMode.RULE_TYPE)
+    reader2 = TreeReader(ccg_parser=parser, mode=TreeReaderMode.RULE_TYPE)
     mode2_expect = the_words >> make_parse('FA(n << n)', 'FA((n >> s) << n)', 'BA(n >> s)')
     assert reader2.sentence2diagram(sentence) == mode2_expect
 

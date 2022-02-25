@@ -77,7 +77,8 @@ def multi_sentence_input() -> str:
     return 'This is a sentence.\nThis is another one.'
 
 
-parser_patch = {'depccg': WebParser, 'newccg': NewCCGParser}  # DepCCG can crash during online tests
+shared_newccg_parser = NewCCGParser()
+parser_patch = {'depccg': WebParser, 'newccg': lambda: shared_newccg_parser}  # DepCCG can crash during online tests
 
 
 def test_file_io(sentence_input, unicode_sentence_output):
