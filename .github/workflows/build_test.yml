@@ -55,14 +55,14 @@ jobs:
         restore-keys: |
           build_and_test-${{ runner.os }}-pip-${{ matrix.python-version }}-
           build_and_test-${{ runner.os }}-pip-
+    - name: Install DisCoPy from GitHub
+      run: pip install git+https://github.com/oxford-quantum-group/discopy
     - name: Install base package
       run: pip install .
     - name: Check package import works
       run: python -c 'import lambeq'
     - name: Install extra dependencies and tester
       run: bash install.sh --global
-    - name: Install DisCoPy from GitHub
-      run: pip install --upgrade git+https://github.com/oxford-quantum-group/discopy
     - name: Locate depccg pre-trained model cache
       id: loc-depccg-cache
       run: echo "::set-output name=dir::$(python -c 'from depccg.instance_models import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
