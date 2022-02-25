@@ -85,7 +85,7 @@ if is_jax_available():
     from lambeq import training
     from lambeq.training import (
             Dataset, Optimiser, SPSAOptimiser,
-            Model, PytorchModel, QuantumModel, ECSQuantumModel,
+            Model, NumpyModel, PytorchModel, TketModel,
             Trainer, PytorchTrainer, QuantumTrainer)
     __all__ += [
             'training',
@@ -96,9 +96,9 @@ if is_jax_available():
             'SPSAOptimiser',
 
             'Model',
+            'NumpyModel',
             'PytorchModel',
-            'QuantumModel',
-            'ECSQuantumModel',
+            'TketModel',
 
             'Trainer',
             'PytorchTrainer',

@@ -1,5 +1,6 @@
-from discopy import Cup, Dim, Word
+from discopy import Cup, Dim, Tensor, Word
 from discopy.quantum.circuit import Id
+import numpy as np
 import torch
 
 from lambeq import AtomicType, SpiderAnsatz, Dataset, PytorchTrainer, PytorchModel
@@ -67,3 +68,4 @@ def test_trainer():
 
     assert len(trainer.train_costs) == EPOCHS
     assert len(trainer.val_results["acc"]) == EPOCHS
+    Tensor.np = np

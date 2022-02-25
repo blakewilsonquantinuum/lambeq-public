@@ -3,7 +3,7 @@ from discopy import Cup, Word
 from discopy.quantum.circuit import Id
 from pytket.extensions.qiskit import AerBackend
 
-from lambeq import AtomicType, IQPAnsatz, QuantumModel
+from lambeq import AtomicType, IQPAnsatz, TketModel
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -22,11 +22,11 @@ diagrams = [
 ]
 
 def test_init():
-    model = QuantumModel(diagrams, backend_config, seed=0)
+    model = TketModel(diagrams, backend_config, seed=0)
     assert len(model.weights) == 4
     assert isinstance(model.weights, np.ndarray)
 
 def test_forward():
-    model = QuantumModel(diagrams, backend_config, seed=0)
+    model = TketModel(diagrams, backend_config, seed=0)
     pred = model.forward(diagrams)
     assert pred.shape == (len(diagrams), 2)

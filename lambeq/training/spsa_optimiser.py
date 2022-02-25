@@ -25,9 +25,9 @@ from typing import Any, Callable, Optional, Union
 from numpy.typing import ArrayLike
 
 import numpy as np
-from lambeq.training.ecs_quantum_model import ECSQuantumModel
-from lambeq.training.quantum_model import QuantumModel
+from lambeq.training.numpy_model import NumpyModel
 from lambeq.training.optimiser import Optimiser
+from lambeq.training.tket_model import TketModel
 
 
 class SPSAOptimiser(Optimiser):
@@ -35,7 +35,7 @@ class SPSAOptimiser(Optimiser):
     See https://ieeexplore.ieee.org/document/705889 for details.
     """
 
-    def __init__(self, model: Union[ECSQuantumModel, QuantumModel],
+    def __init__(self, model: Union[NumpyModel, TketModel],
                  hyperparams: dict[str, float],
                  loss_fn: Callable[[Any, Any], Any],
                  bounds: Optional[ArrayLike] = None,
@@ -54,7 +54,7 @@ class SPSAOptimiser(Optimiser):
 
         Parameters
         ----------
-        model : QuantumSimModel or QuantumModel
+        model : NumpyModel or TketModel
             A lambeq model.
         hyperparams : dict of str to float.
             A dictionary containing the models hyperparameters.

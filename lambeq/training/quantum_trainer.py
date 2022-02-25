@@ -15,8 +15,8 @@
 """
 QuantumTrainer
 ==============
-A trainer that wraps the training loop of a :py:class:`QuantumModel` or
-a :py:class:`ECSQuantumModel`.
+A trainer that wraps the training loop of a :py:class:`NumpyModel` or
+a :py:class:`TketModel`.
 
 """
 from __future__ import annotations
@@ -33,8 +33,8 @@ if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
 from lambeq.training.dataset import Dataset
-from lambeq.training.quantum_model import QuantumModel
-from lambeq.training.ecs_quantum_model import ECSQuantumModel
+from lambeq.training.numpy_model import NumpyModel
+from lambeq.training.tket_model import TketModel
 from lambeq.training.trainer import Trainer
 from lambeq.training.optimiser import Optimiser
 
@@ -51,11 +51,11 @@ def _import_tensorboard_writer() -> None:
 class QuantumTrainer(Trainer):
     """A Trainer for the quantum pipeline."""
 
-    model: Union[QuantumModel, ECSQuantumModel]
+    model: Union[NumpyModel, TketModel]
 
     def __init__(
             self,
-            model: Union[QuantumModel, ECSQuantumModel],
+            model: Union[NumpyModel, TketModel],
             loss_function: Callable,
             epochs: int,
             optimizer: Type[Optimiser],

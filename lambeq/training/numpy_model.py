@@ -13,12 +13,12 @@
 # limitations under the License.
 
 """
-ECSQuantumModel
-===============
-Module implementing a lambeq model for an Exact Classical Simulation (ECS) of
+NumpyModel
+==========
+Module implementing a lambeq model for an exact classical simulation of
 a quantum pipeline.
 
-In contrast to the shot-based :py:class:`QuantumModel`, the state vectors are
+In contrast to the shot-based :py:class:`TketModel`, the state vectors are
 calculated classically and stored such that the complex vectors defining the
 quantum states are accessible. The results of the calculations are exact i.e.
 noiseless and not shot-based.
@@ -36,13 +36,13 @@ from jax import jit
 from lambeq.training.model import Model
 
 
-class ECSQuantumModel(Model):
-    """A lambeq model for an Exact Classical Simulation (ECS) of a
+class NumpyModel(Model):
+    """A lambeq model for an exact classical simulation of a
     quantum pipeline."""
 
-    def __init__(self, diagrams: list[Diagram], seed: Optional[int] = None
-        ) -> None:
-        """Initialise an ECSQuantumModel. If you want to use jax support,
+    def __init__(self, diagrams: list[Diagram],
+                 seed: Optional[int] = None) -> None:
+        """Initialise an NumpyModel. If you want to use jax support,
         use
 
         ```

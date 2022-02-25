@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """
-QuantumModel
-============
-Module implementing a basic lambeq model based on a Quantum backend.
+TketModel
+=========
+Module implementing a lambeq model based on a quantum backend, via `tket`.
 
 """
 from __future__ import annotations
@@ -29,13 +29,13 @@ from discopy.tensor import Diagram, Tensor
 from lambeq.training.model import Model
 
 
-class QuantumModel(Model):
+class TketModel(Model):
     """A lambeq model for either shot-based simulations of a quantum
     pipeline or experiments run on quantum hardware using `tket`."""
 
     def __init__(self, diagrams: list[Diagram], backend_config,
                  seed: Optional[int] = None) -> None:
-        """Initialise QuantumModel based on the `t|ket>` backend.
+        """Initialise TketModel based on the `t|ket>` backend.
 
         Parameters
         ----------

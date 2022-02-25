@@ -2,7 +2,7 @@ import numpy as np
 from discopy import Cup, Word
 from discopy.quantum.circuit import Id
 
-from lambeq import AtomicType, IQPAnsatz, Dataset, ECSQuantumModel, QuantumTrainer, SPSAOptimiser
+from lambeq import AtomicType, IQPAnsatz, Dataset, NumpyModel, QuantumTrainer, SPSAOptimiser
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -30,7 +30,7 @@ def test_trainer():
     train_circuits = [ansatz(d) for d in train_diagrams]
     dev_circuits = [ansatz(d) for d in dev_diagrams]
 
-    model = ECSQuantumModel(train_circuits + dev_circuits, seed=42)
+    model = NumpyModel(train_circuits + dev_circuits, seed=42)
 
     trainer = QuantumTrainer(
         model=model,
