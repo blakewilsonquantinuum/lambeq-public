@@ -56,11 +56,11 @@ class Sentence:
     input_supertags: list[list[Supertag]]
     span_scores: dict[SpanT, dict[int, float]]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if len(self.words) != len(self.input_supertags):
             raise ValueError()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.words)
 
 
