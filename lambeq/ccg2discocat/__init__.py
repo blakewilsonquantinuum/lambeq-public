@@ -1,4 +1,5 @@
-__all__ = ['CCGRule',
+__all__ = ['CCGAtomicType',
+           'CCGRule',
            'CCGRuleUseError',
            'CCGTree',
 
@@ -14,6 +15,7 @@ __all__ = ['CCGRule',
 
 from lambeq.ccg2discocat.ccg_rule import CCGRule, CCGRuleUseError
 from lambeq.ccg2discocat.ccg_tree import CCGTree
+from lambeq.ccg2discocat.ccg_types import CCGAtomicType
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccgbank_parser import CCGBankParseError, CCGBankParser

@@ -18,6 +18,7 @@ __all__ = [
         'Symbol',
         'TensorAnsatz',
 
+        'CCGAtomicType',
         'CCGRule',
         'CCGRuleUseError',
         'CCGTree',
@@ -67,10 +68,13 @@ from lambeq import (ansatz, ccg2discocat, core, pregroups, reader, rewrite,
 
 from lambeq.ansatz import (BaseAnsatz, CircuitAnsatz, IQPAnsatz, MPSAnsatz,
                            SpiderAnsatz, Symbol, TensorAnsatz)
-from lambeq.ccg2discocat import (CCGRule, CCGRuleUseError, CCGTree, CCGParser,
-                                 CCGBankParseError, CCGBankParser,
-                                 DepCCGParseError, DepCCGParser, NewCCGParseError,
-                                 NewCCGParser, WebParseError, WebParser)
+from lambeq.ccg2discocat import (
+        CCGAtomicType, CCGRule, CCGRuleUseError, CCGTree,
+        CCGParser,
+        CCGBankParseError, CCGBankParser,
+        DepCCGParseError, DepCCGParser,
+        NewCCGParseError, NewCCGParser,
+        WebParseError, WebParser)
 from lambeq.core.types import AtomicType
 from lambeq.pregroups import (diagram2str,
                               create_pregroup_diagram, is_pregroup_diagram)
