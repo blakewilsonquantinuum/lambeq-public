@@ -9,6 +9,7 @@ __all__ = [
         'reader',
         'rewrite',
         'tokeniser',
+        'training',
 
         'BaseAnsatz',
         'CircuitAnsatz',
@@ -56,15 +57,27 @@ __all__ = [
 
         'Tokeniser',
         'SpacyTokeniser',
-]
 
-from lambeq.core.utils import is_jax_available
+        'Dataset',
+
+        'Optimiser',
+        'SPSAOptimiser',
+
+        'Model',
+        'NumpyModel',
+        'PytorchModel',
+        'TketModel',
+
+        'Trainer',
+        'PytorchTrainer',
+        'QuantumTrainer',
+]
 
 from lambeq.version import (version as __version__,
                             version_tuple as __version_info__)
 
 from lambeq import (ansatz, ccg2discocat, core, pregroups, reader, rewrite,
-                    tokeniser)
+                    tokeniser, training)
 
 from lambeq.ansatz import (BaseAnsatz, CircuitAnsatz, IQPAnsatz, MPSAnsatz,
                            SpiderAnsatz, Symbol, TensorAnsatz)
@@ -84,27 +97,6 @@ from lambeq.reader import (Reader, LinearReader, TreeReader, TreeReaderMode,
 from lambeq.rewrite import (RewriteRule, CoordinationRewriteRule,
                             SimpleRewriteRule, Rewriter)
 from lambeq.tokeniser import Tokeniser, SpacyTokeniser
-
-if is_jax_available():
-    from lambeq import training
-    from lambeq.training import (
-            Dataset, Optimiser, SPSAOptimiser,
-            Model, NumpyModel, PytorchModel, TketModel,
-            Trainer, PytorchTrainer, QuantumTrainer)
-    __all__ += [
-            'training',
-
-            'Dataset',
-
-            'Optimiser',
-            'SPSAOptimiser',
-
-            'Model',
-            'NumpyModel',
-            'PytorchModel',
-            'TketModel',
-
-            'Trainer',
-            'PytorchTrainer',
-            'QuantumTrainer',
-    ]
+from lambeq.training import (Dataset, Optimiser, SPSAOptimiser,
+                             Model, NumpyModel, PytorchModel, TketModel,
+                             Trainer, PytorchTrainer, QuantumTrainer)

@@ -31,7 +31,6 @@ from typing import Any, Callable, Optional
 import numpy
 from discopy import Tensor
 from discopy.tensor import Diagram
-from jax import jit
 
 from lambeq.training.model import Model
 
@@ -68,6 +67,7 @@ class NumpyModel(Model):
 
         self.lambdas = {circ: self._make_lambda(circ) for circ in self.diagrams}
         if Tensor.np.__name__ == 'jax.numpy':
+            from jax import jit
             self.lambdas = {circ: jit(f) for circ, f in self.lambdas.items()}
 
     def _normalise(self, predictions: numpy.ndarray) -> numpy.ndarray:
