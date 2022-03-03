@@ -21,5 +21,6 @@ def tokenised_batch_type_check(batch: SentenceBatchType) -> bool:
     return isinstance(batch, list) and all(
             tokenised_sentence_type_check(s) for s in batch)
 
+
 def is_jax_available() -> bool:
     return importlib.util.find_spec('jax') is not None

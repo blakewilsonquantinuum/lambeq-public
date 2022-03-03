@@ -20,6 +20,7 @@ Module implementing a basic lambeq model based on a Pytorch backend.
 """
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Optional
 
 import tensornetwork as tn
@@ -28,6 +29,7 @@ from discopy import Tensor
 from discopy.tensor import Diagram
 from torch import nn
 
+from lambeq.ansatz.base import Symbol
 from lambeq.training.model import Model
 
 
@@ -79,9 +81,19 @@ class PytorchModel(Model, nn.Module):
                 for w in self.symbols])
 
         """
+        parameters = {k: v for k, v in zip(self.symbols, self.weights)}
+        diagrams = deepcopy(diagrams)
+        for diagram in diagrams:
+            for b in diagram._boxes:
+                if isinstance(b._data, Symbol):
+                    try:
+                        b._data = parameters[b._data]
+                        b._free_symbols = {}
+                    except:
+                        raise KeyError(f'Unknown symbol {b._data!r}.')
+
         return torch.stack(
-            [self.lambdas[d](*self.weights)
-                .eval(contractor=tn.contractors.auto).array
+            [tn.contractors.auto(*d.to_tn()).tensor
                 for d in diagrams])
 
     def forward(self, x: list[Diagram]) -> torch.Tensor:
