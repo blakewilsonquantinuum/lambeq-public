@@ -62,7 +62,7 @@ jobs:
     - name: Check package import works
       run: python -c 'import lambeq'
     - name: Install extra dependencies and tester
-      run: bash install.sh --global
+      run: pip install .[extras] .[test] depccg==2.0.3.2
     - name: Locate depccg pre-trained model cache
       id: loc-depccg-cache
       run: echo "::set-output name=dir::$(python -c 'from depccg.instance_models import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
