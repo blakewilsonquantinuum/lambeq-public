@@ -132,7 +132,7 @@ class IQPAnsatz(CircuitAnsatz):
         else:
             n_params = n_layers * (n_qubits-1)
             syms = [Symbol(f'{label}_{i}') for i in range(n_params)]
-            params: np.ndarray[Any, np.dtype[Symbol]] = np.array(syms).reshape(
+            params: np.ndarray[Any, np.dtype[Any]] = np.array(syms).reshape(
                     (n_layers, n_qubits-1))
             circuit = IQP(n_qubits, params)
 
