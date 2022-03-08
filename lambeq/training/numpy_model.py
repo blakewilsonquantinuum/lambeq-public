@@ -26,11 +26,14 @@ noiseless and not shot-based.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+import os
+import pickle
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Union
 
 import numpy
 from discopy import Tensor
 from discopy.tensor import Diagram
+from sympy import default_sort_key
 
 from lambeq.training.model import Model
 
@@ -39,8 +42,9 @@ class NumpyModel(Model):
     """A lambeq model for an exact classical simulation of a
     quantum pipeline."""
 
-    def __init__(self, diagrams: list[Diagram],
-                 seed: Optional[int] = None) -> None:
+    SMOOTHING = 1e-9
+
+    def __init__(self, **kwargs) -> None:
         """Initialise an NumpyModel. If you want to use jax support,
         use
 
@@ -50,43 +54,112 @@ class NumpyModel(Model):
         Tensor.np = jax.numpy
         ```
 
+        """
+        super().__init__()
+        self.np = Tensor.np
+        self.lambdas: Mapping[Diagram, Callable] = {}
+
+    @classmethod
+    def initialise_symbols(cls, diagrams: list[Diagram], **kwargs):
+        """Extract the symbols from a list of :py:class:`Diagram`s and creates
+        a dictionary that maps the diagrams to the according lambda functions.
+
         Parameters
         ----------
         diagrams : list of :py:class:`Diagram`
-            List of lambeq circuits.
-        seed : int, optional
-            Random seed.
+            List of lambeq diagrams.
 
         """
-        super().__init__(diagrams, seed)
-        self.np = Tensor.np
-        self.rng = numpy.random.default_rng(seed)
+        model = cls(**kwargs)
+        model.symbols = sorted(
+            {sym for circ in diagrams for sym in circ.free_symbols},
+            key=default_sort_key)
+        model.lambdas = {d: model._make_lambda(d) for d in diagrams}
+        return model
 
-        assert all(w.size == 1 for w in self.symbols)
-        self.weights = self.np.array(self.rng.random(len(self.symbols)))
+    def _make_lambda(self, diagram: Diagram) -> Callable[[Any], Any]:
+        """Make lambda function that evaluates the provided diagram.
 
-        self.lambdas = {circ: self._make_lambda(circ) for circ in self.diagrams}
+        Raises
+        ------
+        ValueError
+            If `model.symbols` are not initialised.
+
+        """
+        if not self.symbols:
+            raise ValueError('Symbols not initialised. Instantiate through '
+                             '`NumpyModel.initialise_symbols()`.')
+        diag_f = lambda *x: (
+            self._normalise(diagram.lambdify(*self.symbols)(*x).eval().array))
         if Tensor.np.__name__ == 'jax.numpy':
             from jax import jit
-            self.lambdas = {circ: jit(f) for circ, f in self.lambdas.items()}
+            return jit(diag_f)
+        return diag_f
 
     def _normalise(self, predictions: numpy.ndarray) -> numpy.ndarray:
         """Apply smoothing to predictions."""
-        predictions = self.np.abs(predictions) + 1e-9
+        predictions = self.np.abs(predictions) + self.SMOOTHING
         return predictions / predictions.sum()
 
-    def _make_lambda(self, circuit: Diagram) -> Callable[[Any], Any]:
-        """Make lambda that evaluates the provided circuit."""
-        return lambda *x: (
-            self._normalise(circuit.lambdify(*self.symbols)(*x).eval().array))
+    def initialise_weights(self) -> None:
+        """Initialise the weights of the model.
 
-    def get_diagram_output(self, diagrams: list[Diagram]) -> numpy.ndarray:
-        """Return the exact prediction for each diagram using DisCoPy.
+        Raises
+        ------
+        ValueError
+            If `model.symbols` are not initialised.
+
+        """
+        if not self.symbols:
+            raise ValueError('Symbols not initialised. Instantiate through '
+                             '`NumpyModel.initialise_symbols()`.')
+        assert all(w.size == 1 for w in self.symbols)
+        self.weights = self.np.array(
+            numpy.random.uniform(size=len(self.symbols)))
+
+    @classmethod
+    def load_from_checkpoint(cls,
+                             checkpoint_path: Union[str, os.PathLike],
+                             **kwargs) -> NumpyModel:
+        """Load the model weights and symbols from a training checkpoint.
 
         Parameters
         ----------
-        circuits : list of :py:class:`Diagram`
-            List of lambeq circuits.
+        checkpoint_path : str or PathLike
+            Path that points to the checkpoint file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If checkpoint file does not exist.
+
+        """
+        model = cls(**kwargs)
+        if os.path.exists(checkpoint_path):
+            with open(checkpoint_path, 'rb') as ckp:
+                checkpoint = pickle.load(ckp)
+            try:
+                model.symbols = checkpoint['model_symbols']
+                model.weights = checkpoint['model_weights']
+                return model
+            except KeyError as e:
+                raise e
+        else:
+            raise FileNotFoundError('Checkpoint not found! Check path '
+                                    f'{checkpoint_path}')
+
+    def get_diagram_output(self, diagrams: list[Diagram]) -> numpy.ndarray:
+        """Return the exact prediction for each diagram.
+
+        Parameters
+        ----------
+        diagrams : list of :py:class:`Diagram`
+            List of lambeq diagrams.
+
+        Raises
+        ------
+        ValueError
+            If `model.weights` or `model.symbols` are not initialised.
 
         Returns
         -------
@@ -94,7 +167,17 @@ class NumpyModel(Model):
             Resulting array
 
         """
-        return numpy.array([self.lambdas[d](*self.weights) for d in diagrams])
+        if len(self.weights) == 0 or not self.symbols:
+            raise ValueError('Weights and/or symbols not initialised. '
+                             'Instantiate through '
+                             '`NumpyModel.initialise_symbols()` first, '
+                             'then call `initialise_weights()`, or load '
+                             'from pre-trained checkpoint.')
+
+        lambdified_diagrams = [self.lambdas.get(d, self._make_lambda(d))
+                               for d in diagrams]
+        return numpy.array([diag_f(*self.weights)
+                            for diag_f in lambdified_diagrams])
 
     def forward(self, x: list[Diagram]) -> numpy.ndarray:
         """Perform default forward pass of a lambeq model.
@@ -105,7 +188,7 @@ class NumpyModel(Model):
         Parameters
         ----------
         x : list of :py:class:`Diagram`
-            List of input circuits.
+            List of input diagrams.
 
         Returns
         -------

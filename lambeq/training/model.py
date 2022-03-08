@@ -21,8 +21,8 @@ Module containing the base class for a lambeq model.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
-from typing_extensions import Protocol
+from os import PathLike
+from typing import Any, Protocol, Union
 
 from discopy.tensor import Diagram
 from sympy import default_sort_key
@@ -31,10 +31,10 @@ from sympy import default_sort_key
 class SizedIterable(Protocol):
     """Custom type for a data that has a length and is iterable."""
     def __len__(self):
-        pass
+        pass    # pragma: no cover
 
     def __iter__(self):
-        pass
+        pass    # pragma: no cover
 
 
 class Model(ABC):
@@ -50,25 +50,38 @@ class Model(ABC):
 
     """
 
-    def __init__(self, diagrams: list[Diagram],
-                 seed: Optional[int] = None) -> None:
-        """Initialise an instance of :py:class:`Model` base class.
+    def __init__(self) -> None:
+        """Initialise an instance of :py:class:`Model` base class."""
+        self.symbols: list = []
+        self.weights: SizedIterable = []
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        return self.forward(*args, **kwds)
+
+    @abstractmethod
+    def initialise_weights(self) -> None:
+        """Initialise the weights of the model."""
+
+    @classmethod
+    @abstractmethod
+    def load_from_checkpoint(cls,
+                             checkpoint_path: Union[str, PathLike],
+                             **kwargs) -> Model:
+        """Load the model weights and symbols from a training checkpoint.
 
         Parameters
         ----------
-        diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
-        seed : int, optional
-            Random seed.
+        checkpoint_path : str or PathLike
+            Path that points to the checkpoint file.
+
+        Keyword Args
+        ------------
+        backend_config : dict
+            Dictionary containing the backend configuration for the
+            :py:class:`TketModel`. Must include the fields `'backend'`,
+            `'compilation'` and `'shots'`.
 
         """
-        self.diagrams = diagrams
-        self.seed = seed
-        self.weights: SizedIterable = []
-
-        self.symbols = sorted(
-            {sym for circ in diagrams for sym in circ.free_symbols},
-            key=default_sort_key)
 
     @abstractmethod
     def get_diagram_output(self, diagrams: list[Diagram]) -> Any:
@@ -83,4 +96,27 @@ class Model(ABC):
 
     @abstractmethod
     def forward(self, x: list[Any]) -> Any:
-        """Implement default forward pass of model."""
+        """The forward pass of the model."""
+
+    @classmethod
+    def initialise_symbols(cls, diagrams: list[Diagram], **kwargs) -> Model:
+        """Extract the symbols from a list of :py:class:`Diagram`s.
+
+        Parameters
+        ----------
+        diagrams : list of :py:class:`Diagram`
+            List of lambeq diagrams.
+
+        Keyword Args
+        ------------
+        backend_config : dict
+            Dictionary containing the backend configuration for the
+            :py:class:`TketModel`. Must include the fields `'backend'`,
+            `'compilation'` and `'shots'`.
+
+        """
+        model = cls(**kwargs)
+        model.symbols = sorted(
+            {sym for circ in diagrams for sym in circ.free_symbols},
+            key=default_sort_key)
+        return model

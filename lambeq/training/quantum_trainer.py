@@ -20,32 +20,16 @@ a :py:class:`TketModel`.
 
 """
 from __future__ import annotations
+from typing import Any, Callable, Mapping, Optional, Type, Union
 
 import os
-import pickle
-import socket
-from datetime import datetime
-from typing import (Any, Callable, Mapping, Optional, Type, TYPE_CHECKING,
-                    Union)
 
-import numpy
-if TYPE_CHECKING:
-    from torch.utils.tensorboard import SummaryWriter
+import numpy as np
 
-from lambeq.training.dataset import Dataset
 from lambeq.training.numpy_model import NumpyModel
 from lambeq.training.tket_model import TketModel
 from lambeq.training.trainer import Trainer
 from lambeq.training.optimiser import Optimiser
-
-
-def _import_tensorboard_writer() -> None:
-    global SummaryWriter
-    try:
-        from torch.utils.tensorboard import SummaryWriter
-    except ImportError:  # pragma: no cover
-        raise ImportError('tensorboard not found. Please install it using '
-                          '`pip install tensorboard`.')
 
 
 class QuantumTrainer(Trainer):
@@ -61,9 +45,11 @@ class QuantumTrainer(Trainer):
             optimizer: Type[Optimiser],
             optim_hyperparams: dict[str, float],
             evaluate_functions: Optional[Mapping[str, Callable]] = None,
+            evaluate_on_train: bool = True,
             use_tensorboard: bool = False,
-            log_dir: Optional[str] = None,
-            verbose: bool = False,
+            log_dir: Optional[Union[str, os.PathLike]] = None,
+            from_checkpoint: bool = False,
+            verbose: str = 'text',
             seed: Optional[int] = None) -> None:
         """Initialise a :py:class:`.Trainer` instance using a quantum backend.
 
@@ -83,146 +69,109 @@ class QuantumTrainer(Trainer):
             Each function takes the prediction \"y_hat\" and the label \"y\" as
             input.
             The validation step calls \"func(y_hat, y)\".
+        evaluate_on_train : bool, default: True
+            Evaluate the metrics on the train dataset.
         use_tensorboard : bool, default: False
             Use Tensorboard for visualisation of the training logs.
-        log_dir : str, optional
+        log_dir : str or PathLike, optional
             Location of model checkpoints (and tensorboard log). Default is
             `runs/**CURRENT_DATETIME_HOSTNAME**`.
-        verbose : bool, default: True,
-            Setting verbose to False surpresses the commandline output and
-            prints dots as status bar.
+        from_checkpoint : bool, default: False
+            Starts training from the checkpoint, saved in the log_dir.
+        verbose : str, default: \'text\',
+            Controls the form of progress tracking for the trainer. Set to
+            \'text\` for text outputs, \'progress\' for a progress bar, or
+            \'suppress\' to have no output.
         seed : int, optional
             Random seed.
 
         """
+        if seed is not None:
+            np.random.seed(seed)
+
         super().__init__(model,
                          loss_function,
                          epochs,
                          evaluate_functions,
+                         evaluate_on_train,
+                         use_tensorboard,
+                         log_dir,
+                         from_checkpoint,
                          verbose,
                          seed)
-        if log_dir is None:
-            current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-            log_dir = os.path.join(
-                'runs', current_time + '_' + socket.gethostname())
 
-        self.use_tensorboard = use_tensorboard
-        self.log_dir = log_dir
-        self.verbose = verbose
         self.optimizer = optimizer(self.model,
                                    optim_hyperparams,
-                                   self.loss_function,
-                                   seed=self.seed)
+                                   self.loss_function)
 
-        os.makedirs(self.log_dir, exist_ok=True)
-        if self.use_tensorboard:
-            _import_tensorboard_writer()
-            self.writer = SummaryWriter(log_dir=self.log_dir)
-
-    def validation_step(self,
-                        batch: tuple[list[Any], list[numpy.ndarray]]) -> float:
-        """Performs a validation step.
-
-        Parameters
-        ----------
-        batch : tuple of list and list of numpy.ndarray
-            Current batch.
+    def _add_extra_chkpoint_info(self) -> Mapping[str, Any]:
+        """Add any additional information to the training checkpoint. These
+        might include model-specific information like the random state of the
+        backend or the state of the optimiser.
 
         Returns
         -------
-        float
-            Calculated loss.
+        mapping of str to any
+            Mapping containing the extra information to save.
 
         """
-        x, y = batch
-        y_hat = self.model.forward(x)
-        loss = self.loss_function(y_hat, y)
+        return {'numpy_random_state': np.random.get_state(),
+                'optimizer_state_dict': self.optimizer.state_dict()}
 
-        if self.evaluate_functions is not None:
-            for metric, func in self.evaluate_functions.items():
-                res = func(y_hat, y)
-                self.val_results_current[metric].append(res * len(y))
-        return loss
+    def _load_extra_chkpoint_info(self,
+                                  checkpoint: Mapping[str, Any]) -> None:
+        """Load the additional checkpoint information that was previously
+        added by calling the method `_add_checkpoint_info()`.
 
-    def training_step(self,
-                      batch: tuple[list[Any], list[numpy.ndarray]]) -> float:
+        Parameters
+        ----------
+        checkpoint : mapping of str to any
+            Mapping containing the checkpoint information.
+
+        """
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if self.seed is not None:
+            np.random.set_state(checkpoint['numpy_random_state'])
+
+    def training_step(
+        self,
+        batch: tuple[list[Any], np.ndarray]) -> tuple[np.ndarray, float]:
         """Performs a training step.
 
         Parameters
         ----------
-        batch : tuple of list and list of numpy.array
+        batch : tuple of list and np.array
             Current batch.
 
         Returns
         -------
-        float
-            Calculated loss.
+        Tuple of np.Array and float
+            The model predictions and the calculated loss.
 
         """
-        loss = self.optimizer.backward(batch)
+        y_hat, loss = self.optimizer.backward(batch)
         self.train_costs.append(loss)
         self.optimizer.step()
         self.optimizer.zero_grad()
-        return loss
+        return y_hat, loss
 
-    def fit(self,
-            train_dataset: Dataset,
-            val_dataset: Optional[Dataset] = None) -> None:
-        """Fit the model on the training data and, optionally,
-        evaluates it on the validation data.
+    def validation_step(
+        self,
+        batch: tuple[list[Any], np.ndarray]) -> tuple[np.ndarray, float]:
+        """Performs a validation step.
 
         Parameters
         ----------
-        train_dataset : :py:class:`Diagram`
-            Dataset used for training.
-        val_dataset : :py:class:`Diagram`, optional
-            Validation dataset.
+        batch : tuple of list and np.ndarray
+            Current batch.
+
+        Returns
+        -------
+        Tuple of np.Array and float
+            The model predictions and the calculated loss.
 
         """
-        def writer_helper(*args: Any) -> None:
-            if self.use_tensorboard:
-                self.writer.add_scalar(*args)
-            else:
-                pass
-
-        step = 0
-        for epoch in range(self.epochs):
-            epoch_loss: float = 0.0
-            for batch_idx, batch in enumerate(train_dataset):
-                step += 1
-                loss = self.training_step(batch)
-                self.printer(f'Epoch: {epoch+1}, Batch: {batch_idx+1}, '
-                             f'train/loss: {loss:.4f}')
-                epoch_loss += len(batch[0])*loss
-                writer_helper('train/step_loss', loss, step)
-            self.train_epoch_costs.append(epoch_loss/len(train_dataset))
-            writer_helper('train/epoch_loss',
-                          self.train_epoch_costs[-1], epoch+1)
-
-            # save model
-            with open(self.log_dir + '/model.pkl', 'wb') as fb:
-                pickle.dump({'symbols': self.model.symbols,
-                             'weights': self.model.weights}, fb)
-
-            if val_dataset is not None:
-                val_loss: float = 0.0
-                for v_batch in val_dataset:
-                    val_loss += self.validation_step(v_batch) * len(v_batch[0])
-                val_loss /= len(val_dataset)
-                self.val_costs.append(loss)
-                self.printer(f'Epoch: {epoch+1}, val/loss: {val_loss:.4f}')
-                writer_helper('val/loss', val_loss, epoch+1)
-
-                if self.evaluate_functions is not None:
-                    for name in self.val_results_current:
-                        self.val_results[name].append(
-                            sum(self.val_results_current[name])/len(val_dataset)
-                        )
-                        self.val_results_current[name] = []  # reset
-                        writer_helper(
-                            f'val/{name}', self.val_results[name][-1],
-                            epoch+1)
-                        self.printer(
-                            f'Epoch: {epoch+1}, val/{name}: '
-                            f'{self.val_results[name][-1]:.4f}')
-        print("\nTraining successful!")
+        x, y = batch
+        y_hat = self.model(x)
+        loss = self.loss_function(y_hat, y)
+        return y_hat, loss

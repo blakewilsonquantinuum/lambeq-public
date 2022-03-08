@@ -1,13 +1,17 @@
-from lambeq import Dataset
-
+import random
 import pytest
+
+import numpy as np
+
+from lambeq import Dataset
 
 data = [1, 2, 3, 4]
 targets = [5, 6, 7, 8]
 
+random.seed(0)
 
 def test_get_item():
-    dataset = Dataset(data, targets, batch_size=2, shuffle=False, seed=0)
+    dataset = Dataset(data, targets, batch_size=2, shuffle=False)
     index = 0
     x, y = dataset[index]
 
@@ -16,29 +20,29 @@ def test_get_item():
 
 
 def test_len():
-    dataset = Dataset(data, targets, batch_size=2, shuffle=False, seed=0)
+    dataset = Dataset(data, targets, batch_size=2, shuffle=False)
     assert len(dataset) == len(data)
     assert len(dataset) == len(targets)
 
 
 def test_batch_gen():
-    dataset = Dataset(data, targets, batch_size=2, shuffle=True, seed=0)
-
+    random.seed(0)
+    dataset = Dataset(data, targets, batch_size=2, shuffle=True)
     new_data = []
     new_targets = []
     for batch in dataset:
         new_data.append(batch[0])
         new_targets.append(batch[1])
 
-    assert new_data == [[3, 1], [2, 4]]
-    assert new_targets == [[7, 5], [6, 8]]
+    assert np.all(new_data == np.array([[3, 1], [2, 4]]))
+    assert np.all(new_targets == np.array([[7, 5], [6, 8]]))
 
 
 def test_full_batch():
-    dataset = Dataset(data, targets, batch_size=2, shuffle=False, seed=0)
+    dataset = Dataset(data, targets, batch_size=2, shuffle=False)
     x, y = dataset[:]
-    assert x == data
-    assert y == targets
+    assert np.all(x == np.array(data))
+    assert np.all(y == np.array(targets))
 
 
 def test_shuffle():
@@ -50,4 +54,4 @@ def test_shuffle():
 
 def test_data_label_length_mismatch():
     with pytest.raises(ValueError):
-        _ = Dataset(data, targets[:-1], batch_size=2, shuffle=False, seed=0)
+        _ = Dataset(data, targets[:-1], batch_size=2, shuffle=False)

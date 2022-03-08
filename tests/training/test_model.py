@@ -15,6 +15,6 @@ def test_extract_symbols():
     circuits = [
         ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
     ]
-    instance = Model(circuits)
+    instance = Model.initialise_symbols(circuits)
     assert len(instance.symbols) == 2
     assert all(isinstance(x, Symbol) for x in instance.symbols)

@@ -23,18 +23,18 @@ from __future__ import annotations
 from collections.abc import Iterator
 from math import ceil
 import random
-from typing import Any, Optional, Union
+from typing import Any, Union
+
+from discopy import Tensor
 
 
 class Dataset:
     """Dataset class for the training of a lambeq model."""
-
     def __init__(self,
                  data: list[Any],
                  targets: list[Any],
                  batch_size: int = 0,
-                 shuffle: bool = True,
-                 seed: Optional[int] = None) -> None:
+                 shuffle: bool = True) -> None:
         """Initialise a Dataset for lambeq training.
 
         Parameters
@@ -47,8 +47,6 @@ class Dataset:
             Batch size for batch generation, by default full dataset.
         shuffle : bool, default: True
             Enable data shuffling during training.
-        seed : int, optional
-            Random seed.
 
         Raises
         ------
@@ -61,13 +59,10 @@ class Dataset:
         self.targets = targets
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.seed = seed
+        self.np = Tensor.np
 
         if self.batch_size == 0:
             self.batch_size = len(self.data)
-
-        if self.seed is not None:
-            random.seed(self.seed)
 
         self.batches_per_epoch = ceil(len(self.data) / self.batch_size)
 
@@ -75,17 +70,17 @@ class Dataset:
         """Get a single item or a subset from the dataset."""
         x = self.data[index]
         y = self.targets[index]
-        return x, y
+        return x, self.np.array(y)
 
     def __len__(self) -> int:
         return len(self.data)
 
-    def __iter__(self) -> Iterator[tuple[list[Any], list[Any]]]:
+    def __iter__(self) -> Iterator[tuple[list[Any], Any]]:
         """Iterate over data batches.
 
         Yields
         ------
-        Tuple of list and list
+        Tuple of list and any
             An iterator that yields data batches (X_batch, y_batch).
 
         """
@@ -96,8 +91,10 @@ class Dataset:
             new_data, new_targets = self.shuffle_data(new_data, new_targets)
 
         for start_idx in range(0, len(self.data), self.batch_size):
-            yield (new_data[start_idx : start_idx+self.batch_size],
-                   new_targets[start_idx : start_idx+self.batch_size])
+            yield (new_data[start_idx: start_idx+self.batch_size],
+                   self.np.array(
+                       new_targets[start_idx: start_idx+self.batch_size],
+                       dtype=self.np.float32))
 
     @staticmethod
     def shuffle_data(data: list[Any],

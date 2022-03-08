@@ -33,8 +33,7 @@ class Optimiser(ABC):
 
     def __init__(self, model: Model, hyperparams: dict[Any, Any],
                  loss_fn: Callable[[Any, Any], Any],
-                 bounds: Optional[ArrayLike] = None,
-                 seed: Optional[int] = None):
+                 bounds: Optional[ArrayLike] = None) -> None:
         """Initialise the optimiser base class.
 
         Parameters
@@ -47,41 +46,43 @@ class Optimiser(ABC):
             A loss function of form `loss(prediction, labels)`
         bounds : ArrayLike, optional
             The range of each of the model\'s parameters.
-        seed : int, optional
-            Random seed.
 
         """
         self.hyperparams = hyperparams
         self.model = model
         self.loss_fn = loss_fn
         self.bounds = bounds
-        self.seed = seed
         self.gradient = np.zeros(len(model.weights))
 
-        if self.seed is not None:
-            np.random.seed(self.seed)
-
     @abstractmethod
-    def backward(self, batch: tuple[list[Any], list[np.ndarray]]) -> float:
+    def backward(self,
+                 batch: tuple[list, np.ndarray]) -> tuple[np.ndarray, float]:
         """Calculate the gradients of the loss function with respect to the
-        model\'s parameters.
+        model parameters.
 
         Parameters
         ----------
-        batch : tuple of list and list of numpy.ndarray
+        batch : tuple of list and numpy.ndarray
             Current batch.
 
         Returns
         -------
-        float
-            The loss of the current optimiser iteration.
+        Tuple of np.Array and float
+            The model predictions and the calculated loss.
 
         """
 
     @abstractmethod
     def step(self) -> None:
         """Perform optimisation step."""
-        pass
+
+    @abstractmethod
+    def state_dict(self) -> dict:
+        """Return optimiser states as dictionary."""
+
+    @abstractmethod
+    def load_state_dict(self, state: dict) -> None:
+        """Load state of the optimiser from the state dictionary."""
 
     def zero_grad(self):
         """Reset the gradients to zero."""

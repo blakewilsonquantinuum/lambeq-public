@@ -20,51 +20,79 @@ Module implementing a basic lambeq model based on a Pytorch backend.
 """
 from __future__ import annotations
 
+import os
+import pickle
 from copy import deepcopy
-from typing import Optional
+from typing import Union
 
 import tensornetwork as tn
 import torch
 from discopy import Tensor
 from discopy.tensor import Diagram
-from torch import nn
 
 from lambeq.ansatz.base import Symbol
 from lambeq.training.model import Model
 
 
-class PytorchModel(Model, nn.Module):
+class PytorchModel(Model, torch.nn.Module):
     """A lambeq model for the classical pipeline using the Pytorch backend."""
 
-    def __init__(self, diagrams: list[Diagram],
-                 seed: Optional[int] = None) -> None:
-        """Initialise a ClassicalModel.
-
-        Parameters
-        ----------
-        diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
-        seed : int, optional
-            Random seed.
-        """
-        Model.__init__(self, diagrams, seed)
-        nn.Module.__init__(self)
-
-        if self.seed is not None:
-            torch.manual_seed(self.seed)
-            torch.cuda.manual_seed_all(self.seed)
+    def __init__(self, **kwargs) -> None:
+        """Initialise a PytorchModel."""
+        Model.__init__(self)
+        torch.nn.Module.__init__(self)
 
         Tensor.np = torch
         tn.set_default_backend('pytorch')
-        torch.set_default_tensor_type(torch.DoubleTensor)
         torch.array = torch.as_tensor   # type: ignore
 
-        self.weights = nn.ParameterList(
-            [nn.Parameter(torch.rand(w.size, requires_grad=True))
+    def initialise_weights(self) -> None:
+        """Initialise the weights of the model.
+
+        Raises
+        ------
+        ValueError
+            If `model.symbols` are not initialised.
+
+        """
+        if not self.symbols:
+            raise ValueError('Symbols not initialised. Instantiate through '
+                             '`PytorchModel.initialise_symbols()`.')
+        self.weights = torch.nn.ParameterList(
+            [torch.nn.Parameter(torch.rand(w.size, requires_grad=True))
                 for w in self.symbols])
 
-        self.lambdas = {
-            circ: circ.lambdify(*self.symbols) for circ in self.diagrams}
+    @classmethod
+    def load_from_checkpoint(cls,
+                             checkpoint_path: Union[str, os.PathLike],
+                             **kwargs) -> PytorchModel:
+        """Load the model's weights and symbols from a training checkpoint.
+
+        Parameters
+        ----------
+        checkpoint_path : str or PathLike
+            Path that points to the checkpoint file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If checkpoint file does not exist.
+
+        """
+        model = cls(**kwargs)
+        if os.path.exists(checkpoint_path):
+            with open(checkpoint_path, 'rb') as ckp:
+                checkpoint = pickle.load(ckp)
+            try:
+                model.symbols = checkpoint['model_symbols']
+                model.weights = checkpoint['model_weights']
+                model.load_state_dict(checkpoint['model_state_dict'])
+                return model
+            except KeyError as e:
+                raise e
+        else:
+            raise FileNotFoundError('Checkpoint not found! Check path '
+                                    f'{checkpoint_path}')
 
     def get_diagram_output(self, diagrams: list[Diagram]) -> torch.Tensor:
         """Perform the tensor contraction of each diagram using tensornetwork.
@@ -73,6 +101,11 @@ class PytorchModel(Model, nn.Module):
         ----------
         diagrams : list of :py:class:`Diagram`
             List of lambeq diagrams.
+
+        Raises
+        ------
+        ValueError
+            If `model.weights` or `model.symbols` are not initialised.
 
         Returns
         -------
@@ -97,7 +130,8 @@ class PytorchModel(Model, nn.Module):
                 for d in diagrams])
 
     def forward(self, x: list[Diagram]) -> torch.Tensor:
-        """Perform default forward pass of a lambeq model by contracting tensors.
+        """Perform default forward pass of a lambeq model by contracting
+        tensors.
 
         In case of a different datapoint (e.g. list of tuple) or additional
         computational steps, please override this method.

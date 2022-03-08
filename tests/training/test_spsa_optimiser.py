@@ -1,9 +1,13 @@
+import pytest
+
 import numpy as np
 
-from discopy import Cup, Word
+from discopy import Cup, Word, Tensor
 from discopy.quantum.circuit import Id
 
 from lambeq import AtomicType, IQPAnsatz, SPSAOptimiser
+
+Tensor.np = np
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -19,8 +23,14 @@ from lambeq.training.model import Model
 
 
 class ModelDummy(Model):
-    def __init__(self, diagrams, seed = None) -> None:
-        super().__init__(diagrams, seed)
+    def __init__(self) -> None:
+        super().__init__()
+        self.initialise_weights()
+    def load_from_checkpoint():
+        pass
+    def _make_lambda(self, diagram):
+        return diagram.lambdify(*self.symbols)
+    def initialise_weights(self):
         self.weights = np.array([1.,2.,3.])
     def get_diagram_output(self):
         pass
@@ -30,7 +40,8 @@ class ModelDummy(Model):
 loss = lambda yhat, y: np.abs(yhat-y).sum()**2
 
 def test_init():
-    model = ModelDummy(diagrams)
+    model = ModelDummy.initialise_symbols(diagrams)
+    model.initialise_weights()
     optim = SPSAOptimiser(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss,
@@ -44,28 +55,29 @@ def test_init():
     assert optim.ak
     assert optim.ck
     assert optim.project
-    assert optim.rng
 
 def test_backward():
-    model = ModelDummy(diagrams)
+    np.random.seed(3)
+    model = ModelDummy.initialise_symbols(diagrams)
+    model.initialise_weights()
     optim = SPSAOptimiser(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss,
-                          bounds=[[0, 10]]*len(model.weights),
-                          seed=0)
-    optim.backward(([diagrams[0]], [0]))
+                          bounds=[[0, 10]]*len(model.weights))
+    optim.backward(([diagrams[0]], np.array([0])))
     assert np.array_equal(optim.gradient.round(5), np.array([12, 12, 0]))
     assert np.array_equal(model.weights, np.array([1.,2.,3.]))
 
 def test_step():
-    model = ModelDummy(diagrams)
+    np.random.seed(3)
+    model = ModelDummy.initialise_symbols(diagrams)
+    model.initialise_weights()
     optim = SPSAOptimiser(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss,
-                          bounds=[[0, 10]]*len(model.weights),
-                          seed=0)
+                          bounds=[[0, 10]]*len(model.weights))
     step_counter = optim.current_sweep
-    optim.backward(([diagrams[0]], [0]))
+    optim.backward(([diagrams[0]], np.array([0])))
     optim.step()
     assert np.array_equal(model.weights.round(4), np.array([0.8801,1.8801,3.]))
     assert optim.current_sweep == step_counter+1
@@ -73,13 +85,51 @@ def test_step():
     assert round(optim.ck,5) == 0.09324
 
 def test_project():
-    model = ModelDummy(diagrams)
+    np.random.seed(4)
+    model = ModelDummy.initialise_symbols(diagrams)
     model.weights = np.array([0, 10, 0])
     optim = SPSAOptimiser(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss,
-                          bounds=[[0, 10]]*len(model.weights),
-                          seed=0)
+                          bounds=[[0, 10]]*len(model.weights))
     optim.backward((diagrams, np.array([0, 0])))
     assert np.array_equal(
-        optim.gradient.round(1), np.array([241.2, 241.2, 241.2]))
+        optim.gradient.round(1), np.array([80.4,  80.4, -80.4]))
+
+def test_missing_field():
+    model = ModelDummy
+    with pytest.raises(KeyError):
+        _ = SPSAOptimiser(model=model,
+                                hyperparams={},
+                                loss_fn=loss)
+
+def test_bound_error():
+    model = ModelDummy()
+    model.initialise_weights()
+    with pytest.raises(ValueError):
+        _ = SPSAOptimiser(model=model,
+                                hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
+                                loss_fn=loss,
+                                bounds=[[0, 10]]*(len(model.weights)-1))
+
+def test_load_state_dict():
+    state_dict = {'A': 0.1,
+                  'a': 0.2,
+                  'c': 0.3,
+                  'ak': 0.01,
+                  'ck': 0.02,
+                  'current_sweep': 10}
+    model = ModelDummy()
+    model.initialise_symbols(diagrams)
+    model.initialise_weights()
+    optim = SPSAOptimiser(model,
+                          hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
+                          loss_fn= loss)
+    optim.load_state_dict(state_dict)
+
+    assert optim.A == state_dict['A']
+    assert optim.a == state_dict['a']
+    assert optim.c == state_dict['c']
+    assert optim.ak == state_dict['ak']
+    assert optim.ck == state_dict['ck']
+    assert optim.current_sweep == state_dict['current_sweep']
