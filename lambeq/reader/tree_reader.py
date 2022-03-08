@@ -23,7 +23,7 @@ from discopy import Word
 from discopy.rigid import Box, Diagram, Ty
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
-from lambeq.ccg2discocat.newccg_parser import NewCCGParser
+from lambeq.ccg2discocat.bobcat_parser import BobcatParser
 from lambeq.core.types import AtomicType
 from lambeq.core.utils import SentenceType
 from lambeq.reader.base import Reader
@@ -62,7 +62,7 @@ class TreeReader(Reader):
 
     def __init__(self,
                  ccg_parser: Union[CCGParser, Callable[[], CCGParser]] =
-                 NewCCGParser,
+                 BobcatParser,
                  mode: TreeReaderMode = TreeReaderMode.NO_TYPE,
                  word_type: Ty = S,
                  suppress_exceptions: bool = False) -> None:
@@ -70,7 +70,7 @@ class TreeReader(Reader):
 
         Parameters
         ----------
-        ccg_parser : CCGParser or callable, default: NewCCGParser
+        ccg_parser : CCGParser or callable, default: BobcatParser
             A :py:class:`CCGParser` object or a function that returns it.
             The parse tree produced by the parser is used to generate the
             tree diagram.

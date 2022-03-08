@@ -3,10 +3,8 @@ import pytest
 from discopy import Word
 from discopy.rigid import Box, Diagram, Id
 
-from lambeq import (AtomicType, TreeReader, TreeReaderMode,
-                    cups_reader, spiders_reader, stairs_reader)
-from lambeq.ccg2discocat.web_parser import WebParser
-from lambeq.ccg2discocat.newccg_parser import NewCCGParser
+from lambeq import (AtomicType, BobcatParser, TreeReader, TreeReaderMode,
+                    WebParser, cups_reader, spiders_reader, stairs_reader)
 from lambeq.core.globals import VerbosityLevel
 
 
@@ -24,7 +22,7 @@ def words(sentence):
 
 @pytest.fixture
 def parser():
-    return NewCCGParser(verbose=VerbosityLevel.SUPPRESS.value)
+    return BobcatParser(verbose=VerbosityLevel.SUPPRESS.value)
 
 
 def test_spiders_reader(sentence, words):

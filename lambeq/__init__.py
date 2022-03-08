@@ -25,12 +25,12 @@ __all__ = [
         'CCGTree',
 
         'CCGParser',
+        'BobcatParseError',
+        'BobcatParser',
         'CCGBankParseError',
         'CCGBankParser',
         'DepCCGParseError',
         'DepCCGParser',
-        'NewCCGParser',
-        'NewCCGParseError',
         'WebParseError',
         'WebParser',
 
@@ -86,9 +86,9 @@ from lambeq.ansatz import (BaseAnsatz, CircuitAnsatz, IQPAnsatz, MPSAnsatz,
 from lambeq.ccg2discocat import (
         CCGAtomicType, CCGRule, CCGRuleUseError, CCGTree,
         CCGParser,
+        BobcatParseError, BobcatParser,
         CCGBankParseError, CCGBankParser,
         DepCCGParseError, DepCCGParser,
-        NewCCGParseError, NewCCGParser,
         WebParseError, WebParser)
 from lambeq.core.types import AtomicType
 from lambeq.core.globals import VerbosityLevel

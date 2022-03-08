@@ -54,9 +54,9 @@ Example - parsing a sentence into a diagram (see
 [docs/examples/ccg2discocat.ipynb](//github.com/CQCL/lambeq/blob/main/docs/examples/ccg2discocat.ipynb)):
 
 ```python
-from lambeq import NewCCGParser
+from lambeq import BobcatParser
 
-parser = NewCCGParser()
+parser = BobcatParser()
 diagram = parser.sentence2diagram('This is a test sentence')
 diagram.draw()
 ```

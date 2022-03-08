@@ -18,10 +18,10 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Dict, List, Optional, TypeVar
 
-from lambeq.ccg2discocat.newccg.fast_int_enum import FastIntEnum
-from lambeq.ccg2discocat.newccg.grammar import Grammar
-from lambeq.ccg2discocat.newccg.lexicon import Atom, Category, Feature
-from lambeq.ccg2discocat.newccg.tree import (
+from lambeq.ccg2discocat.bobcat.fast_int_enum import FastIntEnum
+from lambeq.ccg2discocat.bobcat.grammar import Grammar
+from lambeq.ccg2discocat.bobcat.lexicon import Atom, Category, Feature
+from lambeq.ccg2discocat.bobcat.tree import (
         AdjectivalConj, BinaryCombinator, Coordination, LeftPunct, ParseTree,
         RightPunct, Rule, TypeChanging, TypeRaising, Unify)
 

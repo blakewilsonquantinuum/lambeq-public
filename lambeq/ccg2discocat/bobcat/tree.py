@@ -18,7 +18,7 @@ from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Optional, Union
 
-from lambeq.ccg2discocat.newccg.lexicon import (Atom, Category, Feature,
+from lambeq.ccg2discocat.bobcat.lexicon import (Atom, Category, Feature,
                                                 Relation)
 
 

@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-__all__ = ['NewCCGParser', 'NewCCGParseError']
+__all__ = ['BobcatParser', 'BobcatParseError']
 
 import json
 import os
@@ -31,13 +31,13 @@ import torch
 import tqdm
 from transformers import AutoTokenizer
 
+from lambeq.ccg2discocat.bobcat import (BertForChartClassification, Category,
+                                        ChartParser, Grammar, ParseTree,
+                                        Sentence, Supertag, Tagger)
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_rule import CCGRule
 from lambeq.ccg2discocat.ccg_tree import CCGTree
 from lambeq.ccg2discocat.ccg_types import CCGAtomicType
-from lambeq.ccg2discocat.newccg import (BertForChartClassification, Category,
-                                        ChartParser, Grammar, ParseTree,
-                                        Sentence, Supertag, Tagger)
 from lambeq.core.utils import (SentenceBatchType,
                                tokenised_batch_type_check,
                                untokenised_batch_type_check)
@@ -56,7 +56,7 @@ def get_model_dir(model: str, cache_dir: StrPathT = None) -> Path:
             cache_dir = Path.home() / '.cache'
     else:
         cache_dir = Path(cache_dir)
-    models_dir = cache_dir / 'lambeq' / 'newccg'
+    models_dir = cache_dir / 'lambeq' / 'bobcat'
     try:
         models_dir.mkdir(parents=True, exist_ok=True)
     except FileExistsError:
@@ -109,16 +109,16 @@ def download_model(
         tar.extractall(model_dir)
 
 
-class NewCCGParseError(Exception):
+class BobcatParseError(Exception):
     def __init__(self, sentence: str) -> None:
         self.sentence = sentence
 
     def __str__(self) -> str:
-        return f'NewCCG failed to parse {self.sentence!r}.'
+        return f'Bobcat failed to parse {self.sentence!r}.'
 
 
-class NewCCGParser(CCGParser):
-    """CCG parser using NewCCG as the backend."""
+class BobcatParser(CCGParser):
+    """CCG parser using Bobcat as the backend."""
 
     def __init__(self,
                  model_name_or_path: str = 'bert',
@@ -128,16 +128,16 @@ class NewCCGParser(CCGParser):
                  force_download: bool = False,
                  verbose: str = VerbosityLevel.PROGRESS.value,
                  **kwargs: Any) -> None:
-        """Instantiate a NewCCGParser.
+        """Instantiate a BobcatParser.
 
         Parameters
         ----------
         model_name_or_path : str, default: 'bert'
             Can be either:
-                - The path to a directory containing a NewCCG model.
+                - The path to a directory containing a Bobcat model.
                 - The name of a pre-trained model.
                   By default, it uses the "bert" model.
-                  See also: `NewCCGParser.available_models()`
+                  See also: `BobcatParser.available_models()`
         root_cats : iterable of str, optional
             A list of the categories allowed at the root of the parse
             tree.
@@ -210,7 +210,7 @@ class NewCCGParser(CCGParser):
         self.verbose = verbose
         if not VerbosityLevel.has_value(verbose):
             raise ValueError(f'`{verbose}` is not a valid verbose value for '
-                             'NewCCGParser.')
+                             'BobcatParser.')
         model_dir = Path(model_name_or_path)
         if not model_dir.is_dir():
             model_dir = get_model_dir(model_name_or_path, cache_dir)
@@ -230,7 +230,7 @@ class NewCCGParser(CCGParser):
                     pass
 
         if kwargs:
-            raise TypeError('NewCCGParser got unexpected keyword argument(s): '
+            raise TypeError('BobcatParser got unexpected keyword argument(s): '
                             f'{", ".join(map(repr, kwargs))}')
 
         device_ = torch.device('cpu' if device < 0 else f'cuda:{device}')
@@ -283,7 +283,7 @@ class NewCCGParser(CCGParser):
             verbose = self.verbose
         if not VerbosityLevel.has_value(verbose):
             raise ValueError(f'`{verbose}` is not a valid verbose value for '
-                             'NewCCGParser.')
+                             'BobcatParser.')
         if tokenised:
             if not tokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `True`, but variable '
@@ -334,7 +334,7 @@ class NewCCGParser(CCGParser):
                     if suppress_exceptions:
                         trees.append(None)
                     else:
-                        raise NewCCGParseError(' '.join(words))
+                        raise BobcatParseError(' '.join(words))
 
         for i in empty_indices:
             trees.insert(i, None)
@@ -343,7 +343,7 @@ class NewCCGParser(CCGParser):
 
     @staticmethod
     def _to_biclosed(cat: Category) -> Ty:
-        """Transform a NewCCG category into a biclosed type."""
+        """Transform a Bobcat category into a biclosed type."""
 
         if cat.atomic:
             if cat.atom.is_punct:
@@ -360,19 +360,19 @@ class NewCCGParser(CCGParser):
                     return CCGAtomicType.CONJUNCTION
             raise ValueError(f'Invalid atomic type: {cat.atom!r}')
         else:
-            result = NewCCGParser._to_biclosed(cat.result)
-            argument = NewCCGParser._to_biclosed(cat.argument)
+            result = BobcatParser._to_biclosed(cat.result)
+            argument = BobcatParser._to_biclosed(cat.argument)
             return result << argument if cat.fwd else argument >> result
 
     @staticmethod
     def _build_ccgtree(tree: ParseTree) -> CCGTree:
-        """Transform a NewCCG parse tree into a `CCGTree`."""
+        """Transform a Bobcat parse tree into a `CCGTree`."""
 
-        children = [NewCCGParser._build_ccgtree(child)
+        children = [BobcatParser._build_ccgtree(child)
                     for child in filter(None, (tree.left, tree.right))]
         return CCGTree(text=tree.word,
                        rule=CCGRule(tree.rule.name),
-                       biclosed_type=NewCCGParser._to_biclosed(tree.cat),
+                       biclosed_type=BobcatParser._to_biclosed(tree.cat),
                        children=children)
 
     @staticmethod

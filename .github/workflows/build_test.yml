@@ -75,26 +75,26 @@ jobs:
     - name: Download depccg pre-trained model if needed
       if: steps.depccg-cache.outputs.cache-hit != 'true'
       run: python -c 'import tarfile, urllib;from depccg.instance_models import MODEL_DIRECTORY;tarfile.open(urllib.request.urlretrieve("https://qnlp.cambridgequantum.com/models/tri_headfirst.tar.gz")[0]).extractall(MODEL_DIRECTORY)'
-    - name: Locate newccg pre-trained model cache
-      id: loc-newccg-cache
-      run: echo "::set-output name=dir::$(python -c 'from lambeq.ccg2discocat.newccg_parser import get_model_dir; print(get_model_dir("bert"))')"
-    - name: Restore newccg pre-trained model from cache
-      id: newccg-cache
+    - name: Locate bobcat pre-trained model cache
+      id: loc-bobcat-cache
+      run: echo "::set-output name=dir::$(python -c 'from lambeq.ccg2discocat.bobcat_parser import get_model_dir; print(get_model_dir("bert"))')"
+    - name: Restore bobcat pre-trained model from cache
+      id: bobcat-cache
       uses: actions/cache@v2
       with:
-        path: ${{ steps.loc-newccg-cache.outputs.dir }}
-        key: newccg-bert-pre-v0
+        path: ${{ steps.loc-bobcat-cache.outputs.dir }}
+        key: bobcat-bert-v1
     - name: Test with pytest
       run:
         # run test of depccg parser separately because it keeps breaking
-        coverage run --source=${{ env.SRC_DIR }} -m pytest --doctest-modules --ignore=${{ env.SRC_DIR }}/ccg2discocat/newccg --ignore=tests/ccg2discocat/test_depccg_parser.py
+        coverage run --source=${{ env.SRC_DIR }} -m pytest --doctest-modules --ignore=${{ env.SRC_DIR }}/ccg2discocat/bobcat --ignore=tests/ccg2discocat/test_depccg_parser.py
     - name: Test DepCCGParser
       continue-on-error: true
       run:
         coverage run --append --source=${{ env.SRC_DIR }} -m pytest -k test_depccg_parser.py
     - name: Coverage report
       run:
-        coverage report -m --omit 'lambeq/ccg2discocat/newccg/*'
+        coverage report -m --omit 'lambeq/ccg2discocat/bobcat/*'
   type_check:
     needs: lint
     runs-on: ubuntu-latest

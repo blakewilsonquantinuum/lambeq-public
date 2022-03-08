@@ -5,7 +5,7 @@ import unittest.mock
 from unittest.mock import patch
 
 from lambeq.ccg2discocat.web_parser import WebParser
-from lambeq.ccg2discocat.newccg_parser import NewCCGParser
+from lambeq.ccg2discocat.bobcat_parser import BobcatParser
 from lambeq import cli
 from lambeq.cli import ArgumentList
 from lambeq.cli import main
@@ -78,8 +78,8 @@ def multi_sentence_input() -> str:
     return 'This is a sentence.\nThis is another one.'
 
 
-shared_newccg_parser = NewCCGParser(verbose=VerbosityLevel.SUPPRESS.value)
-parser_patch = {'depccg': WebParser, 'newccg': lambda: shared_newccg_parser}  # DepCCG can crash during online tests
+shared_bobcat_parser = BobcatParser(verbose=VerbosityLevel.SUPPRESS.value)
+parser_patch = {'depccg': WebParser, 'bobcat': lambda: shared_bobcat_parser}  # DepCCG can crash during online tests
 
 
 def test_file_io(sentence_input, unicode_sentence_output):
@@ -335,7 +335,7 @@ def test_args_validation_missing_output_file(arg_parser):
 
 
 def test_args_validation_both_parser_and_reader_given(arg_parser):
-    cli_args = arg_parser.parse_args(['--parser', 'newccg',
+    cli_args = arg_parser.parse_args(['--parser', 'bobcat',
                                       '--reader', 'cups',
                                       'Input sentence.'])
     with pytest.raises(ValueError):
