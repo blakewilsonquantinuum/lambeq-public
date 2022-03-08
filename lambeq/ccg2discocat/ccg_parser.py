@@ -15,12 +15,15 @@ from __future__ import annotations
 
 __all__ = ['CCGParser']
 
+import sys
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
+import tqdm
 from discopy import Diagram
 
 from lambeq.ccg2discocat.ccg_tree import CCGTree
+from lambeq.core.globals import VerbosityLevel
 from lambeq.core.utils import SentenceBatchType, SentenceType,\
         tokenised_sentence_type_check
 
@@ -28,8 +31,12 @@ from lambeq.core.utils import SentenceBatchType, SentenceType,\
 class CCGParser(ABC):
     """Base class for CCG parsers."""
 
+    verbose = VerbosityLevel.SUPPRESS.value
+
     @abstractmethod
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self,
+                 verbose: str = VerbosityLevel.SUPPRESS.value,
+                 **kwargs: Any) -> None:
         """Initialise the CCG parser."""
 
     @abstractmethod
@@ -37,7 +44,9 @@ class CCGParser(ABC):
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> list[Optional[CCGTree]]:
+            tokenised: bool = False,
+            verbose: Optional[str] = None
+            ) -> list[Optional[CCGTree]]:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
 
         Parameters
@@ -51,6 +60,13 @@ class CCGParser(ABC):
             its return entry is :py:obj:`None`.
         tokenised : bool, default: False
             Whether each sentence has been passed as a list of tokens.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output. Not all parsers
+            implement all three levels of progress reporting, see the
+            respective documentation for each parser. If set, it takes priority
+            over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
@@ -93,7 +109,8 @@ class CCGParser(ABC):
             return self.sentences2trees(
                             [sent],
                             suppress_exceptions=suppress_exceptions,
-                            tokenised=tokenised)[0]
+                            tokenised=tokenised,
+                            verbose=VerbosityLevel.SUPPRESS.value)[0]
         else:
             if not isinstance(sentence, str):
                 raise ValueError('`tokenised` set to `False`, but variable '
@@ -101,14 +118,17 @@ class CCGParser(ABC):
             return self.sentences2trees(
                             [sentence],
                             suppress_exceptions=suppress_exceptions,
-                            tokenised=tokenised)[0]
+                            tokenised=tokenised,
+                            verbose=VerbosityLevel.SUPPRESS.value)[0]
 
     def sentences2diagrams(
             self,
             sentences: SentenceBatchType,
             planar: bool = False,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> list[Optional[Diagram]]:
+            tokenised: bool = False,
+            verbose: Optional[str] = None
+            ) -> list[Optional[Diagram]]:
         """Parse multiple sentences into a list of discopy diagrams.
 
         Parameters
@@ -124,6 +144,13 @@ class CCGParser(ABC):
             its return entry is :py:obj:`None`.
         tokenised : bool, default: False
             Whether each sentence has been passed as a list of tokens.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output. Not all parsers
+            implement all three levels of progress reporting, see the
+            respective documentation for each parser. If set, it takes priority
+            over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
@@ -134,9 +161,17 @@ class CCGParser(ABC):
         """
         trees = self.sentences2trees(sentences,
                                      suppress_exceptions=suppress_exceptions,
-                                     tokenised=tokenised)
+                                     tokenised=tokenised,
+                                     verbose=verbose)
         diagrams = []
-        for tree in trees:
+        if verbose is None:
+            verbose = self.verbose
+        if verbose is VerbosityLevel.TEXT.value:
+            print('Turning parse trees to diagrams.', file=sys.stderr)
+        for tree in tqdm.tqdm(
+                trees,
+                desc='Parse trees to diagrams',
+                disable=verbose != VerbosityLevel.PROGRESS.value):
             if tree is not None:
                 try:
                     diagrams.append(tree.to_diagram(planar=planar))
@@ -187,7 +222,8 @@ class CCGParser(ABC):
                             [sent],
                             planar=planar,
                             suppress_exceptions=suppress_exceptions,
-                            tokenised=tokenised)[0]
+                            tokenised=tokenised,
+                            verbose=VerbosityLevel.SUPPRESS.value)[0]
         else:
             if not isinstance(sentence, str):
                 raise ValueError('`tokenised` set to `False`, but variable '
@@ -196,4 +232,5 @@ class CCGParser(ABC):
                             [sentence],
                             planar=planar,
                             suppress_exceptions=suppress_exceptions,
-                            tokenised=tokenised)[0]
+                            tokenised=tokenised,
+                            verbose=VerbosityLevel.SUPPRESS.value)[0]

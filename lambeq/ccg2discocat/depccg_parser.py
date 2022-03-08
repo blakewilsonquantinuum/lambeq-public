@@ -18,16 +18,19 @@ __all__ = ['DepCCGParser', 'DepCCGParseError']
 
 import functools
 import logging
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
+from discopy import Diagram
 from discopy.biclosed import Ty
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_rule import CCGRule
 from lambeq.ccg2discocat.ccg_tree import CCGTree
 from lambeq.ccg2discocat.ccg_types import CCGAtomicType
-from lambeq.core.utils import SentenceBatchType,\
-        tokenised_batch_type_check, untokenised_batch_type_check
+from lambeq.core.utils import SentenceBatchType, SentenceType,\
+        tokenised_batch_type_check, untokenised_batch_type_check,\
+        tokenised_sentence_type_check
+from lambeq.core.globals import VerbosityLevel
 
 if TYPE_CHECKING:
     import depccg
@@ -48,6 +51,7 @@ def _import_depccg() -> None:
 # disable irrelevant logging
 logging.getLogger('allennlp.common.params').setLevel(logging.ERROR)
 logging.getLogger('depccg.chainer.supertagger').setLevel(logging.ERROR)
+logging.getLogger('depccg.lang').setLevel(logging.ERROR)
 
 
 class DepCCGParseError(Exception):
@@ -77,6 +81,7 @@ class DepCCGParser(CCGParser):
                  annotator: Optional[str] = None,
                  device: int = -1,
                  root_cats: str = 'S[dcl]|S[wq]|S[q]|S[qem]|NP',
+                 verbose: str = VerbosityLevel.PROGRESS.value,
                  **kwargs: Any) -> None:
         """Instantiate a parser based on `depccg`.
 
@@ -100,10 +105,18 @@ class DepCCGParser(CCGParser):
         root_cats : str, default: 'S[dcl]|S[wq]|S[q]|S[qem]|NP'
             A bar-separated list of categories allowed at the root of
             the parse.
+        verbose : VerbosityLevel, default: 'progress',
+            Controls the command-line output of the parser. Only
+            'progress' option is available for this parser.
         **kwargs : dict, optional
             Optional arguments passed to `depccg`.
 
         """
+        self.verbose = verbose
+        if self.verbose != VerbosityLevel.PROGRESS.value:
+            raise ValueError('DepCCGParser only supports '
+                             '\'progress\' level of verbosity. '
+                             f'`{self.verbose}` was given.')
         _import_depccg()
 
         depccg.lang.set_global_language_to(lang)
@@ -127,7 +140,7 @@ class DepCCGParser(CCGParser):
             )
 
         self.root_categories = [*map(Category.parse, root_cats.split('|'))]
-        self.categories: Optional[List[Category]] = None
+        self.categories: Optional[list[Category]] = None
         self.kwargs = kwargs
 
         self._last_trees: list[Optional[CCGTree]] = []
@@ -136,7 +149,45 @@ class DepCCGParser(CCGParser):
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> list[Optional[CCGTree]]:
+            tokenised: bool = False,
+            verbose: Optional[str] = None
+            ) -> list[Optional[CCGTree]]:
+        """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
+
+        Parameters
+        ----------
+        sentences : list of str, or list of list of str
+            The sentences to be parsed, passed either as strings or as lists
+            of tokens.
+        suppress_exceptions : bool, default: False
+            Whether to suppress exceptions. If :py:obj:`True`, then if a
+            sentence fails to parse, instead of raising an exception,
+            its return entry is :py:obj:`None`.
+        tokenised : bool, default: False
+            Whether each sentence has been passed as a list of tokens.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. If set, takes priority
+            over the :py:attr:`verbose` attribute of the parser. This class
+            only supports 'progress' verbosity level - a progress bar.
+
+        Returns
+        -------
+        list of CCGTree or None
+            The parsed trees. (may contain :py:obj:`None` if exceptions
+            are suppressed)
+
+        Raises
+        ------
+        ValueError : If `tokenised` does not match with the input type
+        or if verbosity is set to an unsupported value
+
+        """
+        if verbose is None:
+            verbose = self.verbose
+        if verbose != VerbosityLevel.PROGRESS.value:
+            raise ValueError('DepCCGParser only supports '
+                             '\'progress\' level of verbosity. '
+                             f'`{self.verbose}` was given.')
         if tokenised:
             if not tokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `True`, but variable '
@@ -178,6 +229,110 @@ class DepCCGParser(CCGParser):
             trees.insert(i, None)
 
         return trees
+
+    def sentence2tree(self,
+                      sentence: SentenceType,
+                      suppress_exceptions: bool = False,
+                      tokenised: bool = False) -> Optional[CCGTree]:
+        """Parse a sentence into a :py:class:`.CCGTree`.
+
+        Parameters
+        ----------
+        sentence : str, list[str]
+            The sentence to be parsed, passed either as a string, or as a list
+            of tokens.
+        suppress_exceptions : bool, default: False
+            Whether to suppress exceptions. If :py:obj:`True`, then if
+            the sentence fails to parse, instead of raising an
+            exception, returns :py:obj:`None`.
+        tokenised : bool, default: False
+            Whether the sentence has been passed as a list of tokens.
+
+        Returns
+        -------
+        CCGTree or None
+            The parsed tree, or :py:obj:`None` on failure.
+
+        Raises
+        ------
+        ValueError : If `tokenised` does not match with the input type.
+
+        """
+
+        if tokenised:
+            if not tokenised_sentence_type_check(sentence):
+                raise ValueError('`tokenised` set to `True`, but variable '
+                                 '`sentence` does not have type '
+                                 '`list[str]`.')
+            sent: list[str] = [str(token) for token in sentence]
+            return self.sentences2trees(
+                            [sent],
+                            suppress_exceptions=suppress_exceptions,
+                            tokenised=tokenised,
+                            verbose=VerbosityLevel.PROGRESS.value)[0]
+        else:
+            if not isinstance(sentence, str):
+                raise ValueError('`tokenised` set to `False`, but variable '
+                                 '`sentence` does not have type `str`.')
+            return self.sentences2trees(
+                            [sentence],
+                            suppress_exceptions=suppress_exceptions,
+                            tokenised=tokenised,
+                            verbose=VerbosityLevel.PROGRESS.value)[0]
+
+    def sentence2diagram(
+            self,
+            sentence: SentenceType,
+            planar: bool = False,
+            suppress_exceptions: bool = False,
+            tokenised: bool = False) -> Optional[Diagram]:
+        """Parse a sentence into a DisCoPy diagram.
+
+        Parameters
+        ----------
+        sentence : str, list[str]
+            The sentence to be parsed, passed either as a string, or as a list
+            of tokens.
+        suppress_exceptions : bool, default: False
+            Whether to suppress exceptions. If :py:obj:`True`, then if
+            the sentence fails to parse, instead of raising an
+            exception, returns :py:obj:`None`.
+        tokenised : bool, default: False
+            Whether the sentence has been passed as a list of tokens.
+
+        Returns
+        -------
+        discopy.Diagram or None
+            The parsed diagram, or :py:obj:`None` on failure.
+
+        Raises
+        ------
+        ValueError : If `tokenised` does not match with the input type.
+
+        """
+
+        if tokenised:
+            if not tokenised_sentence_type_check(sentence):
+                raise ValueError('`tokenised` set to `True`, but variable '
+                                 '`sentence` does not have type '
+                                 '`list[str]`.')
+            sent: list[str] = [str(token) for token in sentence]
+            return self.sentences2diagrams(
+                            [sent],
+                            planar=planar,
+                            suppress_exceptions=suppress_exceptions,
+                            tokenised=tokenised,
+                            verbose=VerbosityLevel.PROGRESS.value)[0]
+        else:
+            if not isinstance(sentence, str):
+                raise ValueError('`tokenised` set to `False`, but variable '
+                                 '`sentence` does not have type `str`.')
+            return self.sentences2diagrams(
+                            [sentence],
+                            planar=planar,
+                            suppress_exceptions=suppress_exceptions,
+                            tokenised=tokenised,
+                            verbose=VerbosityLevel.PROGRESS.value)[0]
 
     def _depccg_parse(
             self,

@@ -14,15 +14,18 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import math
+from dataclasses import asdict, dataclass
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import torch
+import tqdm
 from torch import nn
 from transformers import (BertConfig, BertModel, BertPreTrainedModel,
                           PreTrainedModel, PreTrainedTokenizerFast)
 from transformers.modeling_outputs import ModelOutput
+
+from lambeq.core.globals import VerbosityLevel
 
 _SpanT = Tuple[int, int]
 TagListT = List[Tuple[int, float]]  # list of (index, log probability) tuples
@@ -377,7 +380,9 @@ class Tagger:
 
     def __call__(self,
                  inputs: Sequence[Sequence[str]],
-                 batch_size: Optional[int] = None) -> TaggerOutput:
+                 batch_size: Optional[int] = None,
+                 verbose: str = VerbosityLevel.PROGRESS.value
+                 ) -> TaggerOutput:
         """Parse a list of sentences."""
         if batch_size is None:
             batch_size = self.batch_size
@@ -386,7 +391,9 @@ class Tagger:
                               cats=self.model.config.cats,
                               sentences=[])
 
-        for i in range(0, len(inputs), batch_size):
+        for i in tqdm.trange(0, len(inputs), batch_size,
+                             desc='Tagging sentences',
+                             disable=verbose != VerbosityLevel.PROGRESS.value):
             output.sentences.extend(self.parse(inputs[i:i+batch_size]))
 
         return output

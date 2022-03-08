@@ -7,6 +7,7 @@ from lambeq import (AtomicType, TreeReader, TreeReaderMode,
                     cups_reader, spiders_reader, stairs_reader)
 from lambeq.ccg2discocat.web_parser import WebParser
 from lambeq.ccg2discocat.newccg_parser import NewCCGParser
+from lambeq.core.globals import VerbosityLevel
 
 
 @pytest.fixture
@@ -23,7 +24,7 @@ def words(sentence):
 
 @pytest.fixture
 def parser():
-    return NewCCGParser()
+    return NewCCGParser(verbose=VerbosityLevel.SUPPRESS.value)
 
 
 def test_spiders_reader(sentence, words):

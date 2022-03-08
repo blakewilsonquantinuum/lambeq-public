@@ -9,6 +9,7 @@ from lambeq.ccg2discocat.newccg_parser import NewCCGParser
 from lambeq import cli
 from lambeq.cli import ArgumentList
 from lambeq.cli import main
+from lambeq.core.globals import VerbosityLevel
 
 
 @pytest.fixture
@@ -77,7 +78,7 @@ def multi_sentence_input() -> str:
     return 'This is a sentence.\nThis is another one.'
 
 
-shared_newccg_parser = NewCCGParser()
+shared_newccg_parser = NewCCGParser(verbose=VerbosityLevel.SUPPRESS.value)
 parser_patch = {'depccg': WebParser, 'newccg': lambda: shared_newccg_parser}  # DepCCG can crash during online tests
 
 

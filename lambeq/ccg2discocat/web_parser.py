@@ -16,15 +16,19 @@ from __future__ import annotations
 __all__ = ['WebParser', 'WebParseError']
 
 import json
+import sys
 from typing import Optional
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
+import tqdm
+
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_tree import CCGTree
 from lambeq.core.utils import SentenceBatchType, tokenised_batch_type_check,\
         untokenised_batch_type_check
+from lambeq.core.globals import VerbosityLevel
 
 SERVICE_URL = 'https://cqc.pythonanywhere.com/tree/json'
 
@@ -42,7 +46,10 @@ class WebParseError(OSError):
 class WebParser(CCGParser):
     """Wrapper that allows passing parser queries to an online interface."""
 
-    def __init__(self, service_url: str = SERVICE_URL) -> None:
+    def __init__(
+            self,
+            service_url: str = SERVICE_URL,
+            verbose: str = VerbosityLevel.SUPPRESS.value) -> None:
         """Initialise a web parser.
 
         Parameters
@@ -50,15 +57,25 @@ class WebParser(CCGParser):
         service_url : str, default: 'https://cqc.pythonanywhere.com/tree/json'
             The URL to the parser. By default, use CQC's CCG tree
             parser.
+        verbose : str, default: 'suppress',
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output.
 
         """
         self.service_url = service_url
+        if not VerbosityLevel.has_value(verbose):
+            raise ValueError(f'`{verbose}` is not a valid verbose value for '
+                             'WebParser.')
+        self.verbose = verbose
 
     def sentences2trees(
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> list[Optional[CCGTree]]:
+            tokenised: bool = False,
+            verbose: Optional[str] = None
+            ) -> list[Optional[CCGTree]]:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
 
         Parameters
@@ -69,6 +86,11 @@ class WebParser(CCGParser):
             Whether to suppress exceptions. If :py:obj:`True`, then if a
             sentence fails to parse, instead of raising an exception,
             its return entry is :py:obj:`None`.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output. If set, it takes
+            priority over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
@@ -87,6 +109,11 @@ class WebParser(CCGParser):
             If the parser fails to obtain a parse tree from the server.
 
         """
+        if verbose is None:
+            verbose = self.verbose
+        if not VerbosityLevel.has_value(verbose):
+            raise ValueError(f'`{verbose}` is not a valid verbose value for '
+                             'WebParser.')
         if tokenised:
             if not tokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `True`, but variable '
@@ -112,7 +139,12 @@ class WebParser(CCGParser):
             del sentences[i]
 
         trees: list[Optional[CCGTree]] = []
-        for sent in sentences:
+        if verbose == VerbosityLevel.TEXT.value:
+            print('Parsing sentences.', file=sys.stderr)
+        for sent in tqdm.tqdm(
+                sentences,
+                desc='Parsing sentences',
+                disable=verbose != VerbosityLevel.PROGRESS.value):
             params = urlencode({'sentence': sent})
             url = f'{self.service_url}?{params}'
 

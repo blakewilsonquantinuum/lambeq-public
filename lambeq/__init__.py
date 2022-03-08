@@ -36,6 +36,8 @@ __all__ = [
 
         'AtomicType',
 
+        'VerbosityLevel',
+
         'diagram2str',
         'create_pregroup_diagram',
         'is_pregroup_diagram',
@@ -89,6 +91,7 @@ from lambeq.ccg2discocat import (
         NewCCGParseError, NewCCGParser,
         WebParseError, WebParser)
 from lambeq.core.types import AtomicType
+from lambeq.core.globals import VerbosityLevel
 from lambeq.pregroups import (diagram2str,
                               create_pregroup_diagram, is_pregroup_diagram)
 from lambeq.reader import (Reader, LinearReader, TreeReader, TreeReaderMode,

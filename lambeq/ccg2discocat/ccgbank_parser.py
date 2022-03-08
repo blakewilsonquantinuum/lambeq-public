@@ -29,12 +29,14 @@ from __future__ import annotations
 
 __all__ = ['CCGBankParseError', 'CCGBankParser']
 
-from collections.abc import Iterator
 import os
-from pathlib import Path
 import re
+import sys
+from collections.abc import Iterator
+from pathlib import Path
 from typing import Optional, Union
 
+import tqdm
 from discopy.biclosed import Ty
 from discopy.rigid import Diagram
 
@@ -42,6 +44,7 @@ from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_rule import CCGRule
 from lambeq.ccg2discocat.ccg_tree import CCGTree
 from lambeq.ccg2discocat.ccg_types import CONJ_TAG, CCGAtomicType, str2biclosed
+from lambeq.core.globals import VerbosityLevel
 from lambeq.core.utils import SentenceBatchType
 
 
@@ -92,7 +95,9 @@ class CCGBankParser(CCGParser):
 
     escaped_words = {'-LCB-': '{', '-RCB-': '}', '-LRB-': '(', '-RRB-': ')'}
 
-    def __init__(self, root: Union[str, os.PathLike[str]]):
+    def __init__(self,
+                 root: Union[str, os.PathLike[str]],
+                 verbose: str = VerbosityLevel.SUPPRESS.value):
         """Initialise a CCGBank parser.
 
         Parameters
@@ -100,14 +105,24 @@ class CCGBankParser(CCGParser):
         root : str or os.PathLike
             Path to the root of the corpus. The sections must be located
             in `<root>/data/AUTO`.
+        verbose : str, default: 'suppress',
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output.
 
         """
+        if not VerbosityLevel.has_value(verbose):
+            raise ValueError(f'`{verbose}` is not a valid verbose value for '
+                             'CCGBankParser.')
         self.root = Path(root)
+        self.verbose = verbose
 
     def section2trees(
             self,
             section_id: int,
-            suppress_exceptions: bool = False) -> dict[str, Optional[CCGTree]]:
+            suppress_exceptions: bool = False,
+            verbose: Optional[str] = None
+            ) -> dict[str, Optional[CCGTree]]:
         """Parse a CCGBank section into trees.
 
         Parameters
@@ -117,6 +132,11 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a tree.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output. If set, takes priority over
+            the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
@@ -133,12 +153,14 @@ class CCGBankParser(CCGParser):
         """
         return {key: tree for key, tree in self.section2trees_gen(
             section_id,
-            suppress_exceptions=suppress_exceptions)}
+            suppress_exceptions=suppress_exceptions,
+            verbose=verbose)}
 
     def section2trees_gen(
             self,
             section_id: int,
-            suppress_exceptions: bool = False) -> Iterator[
+            suppress_exceptions: bool = False,
+            verbose: Optional[str] = None) -> Iterator[
                                         tuple[str, Optional[CCGTree]]]:
         """Parse a CCGBank section into trees, given as a generator.
         The generator only reads data when it is accessed, providing the user
@@ -151,6 +173,11 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a tree.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output. If set, takes priority over
+            the :py:attr:`verbose` attribute of the parser.
 
         Yields
         ------
@@ -165,11 +192,21 @@ class CCGBankParser(CCGParser):
             If parsing fails and exceptions are not suppressed.
 
         """
+        if verbose is None:
+            verbose = self.verbose
+        if not VerbosityLevel.has_value(verbose):
+            raise ValueError(f'`{verbose}` is not a valid verbose value for '
+                             'CCGBankParser.')
         path = self.root / 'data' / 'AUTO' / f'{section_id:02}'
         for file in sorted(path.iterdir()):
             with open(file) as f:
+                if verbose == VerbosityLevel.TEXT.value:
+                    print(f'Parsing "{file}"', file=sys.stderr)
                 line_no = 0
-                for line in f:
+                for line in tqdm.tqdm(
+                        f,
+                        desc=f'Parsing "{file}"',
+                        disable=verbose != VerbosityLevel.PROGRESS.value):
                     line_no += 1
                     match = self.id_regex.fullmatch(line)
                     if match:
@@ -191,7 +228,9 @@ class CCGBankParser(CCGParser):
             self,
             section_id: int,
             planar: bool = False,
-            suppress_exceptions: bool = False) -> dict[str, Optional[Diagram]]:
+            suppress_exceptions: bool = False,
+            verbose: Optional[str] = None
+            ) -> dict[str, Optional[Diagram]]:
         """Parse a CCGBank section into diagrams.
 
         Parameters
@@ -204,6 +243,11 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a diagram.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to 'text' for
+            text outputs, 'progress' for a progress bar, or 'suppress' to
+            have no output. If set, takes priority over the :py:attr:`verbose`
+            attribute of the parser.
 
         Returns
         -------
@@ -221,13 +265,15 @@ class CCGBankParser(CCGParser):
         return {key: diagram for key, diagram in self.section2diagrams_gen(
             section_id,
             planar=planar,
-            suppress_exceptions=suppress_exceptions)}
+            suppress_exceptions=suppress_exceptions,
+            verbose=verbose)}
 
     def section2diagrams_gen(
             self,
             section_id: int,
             planar: bool = False,
-            suppress_exceptions: bool = False) -> Iterator[
+            suppress_exceptions: bool = False,
+            verbose: Optional[str] = None) -> Iterator[
                                         tuple[str, Optional[Diagram]]]:
         """Parse a CCGBank section into diagrams, given as a generator.
         The generator only reads data when it is accessed, providing the user
@@ -243,6 +289,11 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a diagram.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to 'text' for text
+            outputs, 'progress' for a progress bar, or 'suppress' to have
+            no output. If set, takes priority over the :py:attr:`verbose`
+            attribute of the parser.
 
         Yields
         ------
@@ -257,7 +308,14 @@ class CCGBankParser(CCGParser):
             If parsing fails and exceptions are not suppressed.
 
         """
-        trees = self.section2trees_gen(section_id, suppress_exceptions)
+        if verbose is None:
+            verbose = self.verbose
+        if not VerbosityLevel.has_value(verbose):
+            raise ValueError(f'`{verbose}` is not a valid verbose value for '
+                             'CCGBankParser.')
+        trees = self.section2trees_gen(section_id,
+                                       suppress_exceptions,
+                                       verbose=verbose)
         for k, tree in trees:
             if tree is not None:
                 try:
@@ -275,7 +333,9 @@ class CCGBankParser(CCGParser):
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> list[Optional[CCGTree]]:
+            tokenised: bool = False,
+            verbose: Optional[str] = None
+            ) -> list[Optional[CCGTree]]:
         """Parse a CCGBank sentence derivation into a CCGTree.
 
         The sentence must be in the format outlined in the CCGBank
@@ -291,6 +351,11 @@ class CCGBankParser(CCGParser):
         tokenised : bool, default: False
             Whether the sentence has been passed as a list of tokens.
             For CCGBankParser, it should be kept `False`.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output. If set, takes priority over
+            the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
@@ -306,6 +371,11 @@ class CCGBankParser(CCGParser):
             If `tokenised` flag is True (not valid for CCGBankParser).
 
         """
+        if verbose is None:
+            verbose = self.verbose
+        if not VerbosityLevel.has_value(verbose):
+            raise ValueError(f'`{verbose}` is not a valid verbose value for '
+                             'CCGBankParser.')
         trees = []
         for sentence in sentences:
             if tokenised:

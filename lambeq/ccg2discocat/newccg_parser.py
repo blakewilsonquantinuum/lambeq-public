@@ -19,13 +19,16 @@ __all__ = ['NewCCGParser', 'NewCCGParseError']
 import json
 import os
 from pathlib import Path
+import sys
 import tarfile
 from typing import Any, Iterable, Optional, Union
 from urllib.request import urlretrieve
+import warnings
 
 from discopy.biclosed import Ty
 
 import torch
+import tqdm
 from transformers import AutoTokenizer
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
@@ -38,6 +41,7 @@ from lambeq.ccg2discocat.newccg import (BertForChartClassification, Category,
 from lambeq.core.utils import (SentenceBatchType,
                                tokenised_batch_type_check,
                                untokenised_batch_type_check)
+from lambeq.core.globals import VerbosityLevel
 
 StrPathT = Union[str, 'os.PathLike[str]']
 
@@ -63,7 +67,9 @@ def get_model_dir(model: str, cache_dir: StrPathT = None) -> Path:
 
 def download_model(
         model_name: str,
-        model_dir: Optional[StrPathT] = None) -> None:  # pragma: no cover
+        model_dir: Optional[StrPathT] = None,
+        verbose: str = VerbosityLevel.PROGRESS.value
+        ) -> None:  # pragma: no cover
     try:
         url = MODELS[model_name]
     except KeyError:
@@ -72,16 +78,33 @@ def download_model(
     if model_dir is None:
         model_dir = get_model_dir(model_name)
 
-    def print_progress(chunk: int, chunk_size: int, size: int) -> None:
-        percentage = chunk * chunk_size / size
-        gb_size = size / 10**9
-        print(f'\rDownloading model... {percentage:.1%} of {gb_size:.3} GB',
-              end='')
+    class ProgressBar:
+        bar = None
 
-    print('Downloading model...', end='')
-    download, headers = urlretrieve(url, reporthook=print_progress)
+        def update(self, chunk: int, chunk_size: int, size: int) -> None:
+            if self.bar is None:
+                self.bar = tqdm.tqdm(
+                        bar_format='Downloading model: {percentage:3.1f}%|'
+                                   '{bar}|{n:.3f}/{total:.3f}GB '
+                                   '[{elapsed}<{remaining}]',
+                        total=size/1e9)
+            warnings.filterwarnings('ignore', category=tqdm.TqdmWarning)
+            self.bar.update(chunk_size/1e9)
 
-    print('\nExtracting model...')
+        def close(self):
+            self.bar.close()
+
+    if verbose == VerbosityLevel.TEXT.value:
+        print('Downloading model...', file=sys.stderr)
+    if verbose == VerbosityLevel.PROGRESS.value:
+        progress_bar = ProgressBar()
+        download, headers = urlretrieve(url, reporthook=progress_bar.update)
+        progress_bar.close()
+    else:
+        download, headers = urlretrieve(url)
+
+    if verbose != VerbosityLevel.SUPPRESS.value:
+        print('Extracting model...')
     with tarfile.open(download) as tar:
         tar.extractall(model_dir)
 
@@ -103,6 +126,7 @@ class NewCCGParser(CCGParser):
                  device: int = -1,
                  cache_dir: Optional[StrPathT] = None,
                  force_download: bool = False,
+                 verbose: str = VerbosityLevel.PROGRESS.value,
                  **kwargs: Any) -> None:
         """Instantiate a NewCCGParser.
 
@@ -127,6 +151,10 @@ class NewCCGParser(CCGParser):
         force_download : bool, default: False
             Force the model to be downloaded, even if it is already
             available locally.
+        verbose : str, default: 'progress',
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the underlying
             parsers (see Other Parameters). By default, they are set to
@@ -179,7 +207,10 @@ class NewCCGParser(CCGParser):
             the tagger.
 
         """
-
+        self.verbose = verbose
+        if not VerbosityLevel.has_value(verbose):
+            raise ValueError(f'`{verbose}` is not a valid verbose value for '
+                             'NewCCGParser.')
         model_dir = Path(model_name_or_path)
         if not model_dir.is_dir():
             model_dir = get_model_dir(model_name_or_path, cache_dir)
@@ -187,7 +218,7 @@ class NewCCGParser(CCGParser):
                 if model_name_or_path not in MODELS:
                     raise ValueError('Invalid model name or path: '
                                      f'{model_name_or_path!r}')
-                download_model(model_name_or_path, model_dir)
+                download_model(model_name_or_path, model_dir, verbose)
 
         with open(model_dir / 'pipeline_config.json') as f:
             config = json.load(f)
@@ -219,7 +250,40 @@ class NewCCGParser(CCGParser):
             self,
             sentences: SentenceBatchType,
             suppress_exceptions: bool = False,
-            tokenised: bool = False) -> list[Optional[CCGTree]]:
+            tokenised: bool = False,
+            verbose: Optional[str] = None
+            ) -> list[Optional[CCGTree]]:
+        """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
+
+        Parameters
+        ----------
+        sentences : list of str, or list of list of str
+            The sentences to be parsed, passed either as strings or as lists
+            of tokens.
+        suppress_exceptions : bool, default: False
+            Whether to suppress exceptions. If :py:obj:`True`, then if a
+            sentence fails to parse, instead of raising an exception,
+            its return entry is :py:obj:`None`.
+        tokenised : bool, default: False
+            Whether each sentence has been passed as a list of tokens.
+        verbose : str, optional, default: :py:obj:`None`,
+            Controls the form of progress tracking. Set to
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output. If set, it takes
+            priority over the :py:attr:`verbose` attribute of the parser.
+
+        Returns
+        -------
+        list of CCGTree or None
+            The parsed trees. (may contain :py:obj:`None` if exceptions
+            are suppressed)
+
+        """
+        if verbose is None:
+            verbose = self.verbose
+        if not VerbosityLevel.has_value(verbose):
+            raise ValueError(f'`{verbose}` is not a valid verbose value for '
+                             'NewCCGParser.')
         if tokenised:
             if not tokenised_batch_type_check(sentences):
                 raise ValueError('`tokenised` set to `True`, but variable '
@@ -245,10 +309,16 @@ class NewCCGParser(CCGParser):
 
         trees: list[CCGTree] = []
         if sentences:
-            tag_results = self.tagger(sentences)
+            if verbose == VerbosityLevel.TEXT.value:
+                print('Tagging sentences.', file=sys.stderr)
+            tag_results = self.tagger(sentences, verbose=verbose)
             tags = tag_results.tags
-
-            for sent in tag_results.sentences:
+            if verbose == VerbosityLevel.TEXT.value:
+                print('Parsing tagged sentences.', file=sys.stderr)
+            for sent in tqdm.tqdm(
+                    tag_results.sentences,
+                    desc='Parsing tagged sentences',
+                    disable=verbose != VerbosityLevel.PROGRESS.value):
                 words = sent.words
                 sent_tags = [[Supertag(tags[id], prob)
                               for id, prob in supertags]

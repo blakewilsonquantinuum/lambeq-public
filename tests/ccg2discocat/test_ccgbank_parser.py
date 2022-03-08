@@ -1,12 +1,14 @@
+from io import StringIO
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from lambeq.ccg2discocat.ccg_types import CCGAtomicType
 from lambeq.ccg2discocat.ccgbank_parser import CCGBankParseError, CCGBankParser
+from lambeq.core.globals import VerbosityLevel
 
 
 class BadParser(CCGBankParser):
-    def sentences2trees(self, sentences, suppress_exceptions=False, tokenised=False):
+    def sentences2trees(self, sentences, suppress_exceptions=False, tokenised=False, verbose=VerbosityLevel.SUPPRESS.value):
         mock_tree = Mock()
         mock_tree.attach_mock(Mock(side_effect=Exception("I can't parse anything.")), 'to_diagram')
         return [mock_tree for _ in sentences]
@@ -71,6 +73,50 @@ def test_parser_atomic_type():
         CCGBankParser._parse_atomic_type('ABC')
 
     assert CCGBankParser._parse_atomic_type('conj') == CCGAtomicType.CONJUNCTION
+
+
+def test_verbosity_exceptions_init(minimal_ccgbank):
+    with pytest.raises(ValueError):
+        ccgbank_parser = CCGBankParser(minimal_ccgbank, verbose='invalid_option')
+
+
+def test_verbosity_exceptions_section2trees(minimal_ccgbank):
+    with pytest.raises(ValueError):
+        ccgbank_parser = CCGBankParser(minimal_ccgbank)
+        _=ccgbank_parser.section2trees(0, verbose='invalid_option')
+
+
+def test_verbosity_exceptions_section2diagrams(minimal_ccgbank):
+    with pytest.raises(ValueError):
+        ccgbank_parser = CCGBankParser(minimal_ccgbank)
+        _=ccgbank_parser.section2diagrams(0, verbose='invalid_option')
+
+
+def test_verbosity_exceptions_sentences2trees(minimal_ccgbank):
+    with pytest.raises(ValueError):
+        ccgbank_parser = CCGBankParser(minimal_ccgbank)
+        _=ccgbank_parser.sentences2trees([""], verbose='invalid_option')
+
+
+def test_tokenised_exceptions_sentences2trees(minimal_ccgbank):
+    with pytest.raises(ValueError):
+        ccgbank_parser = CCGBankParser(minimal_ccgbank)
+        _=ccgbank_parser.sentences2trees([""], tokenised=True)
+
+
+def test_text_progress(minimal_ccgbank):
+    ccgbank_parser = CCGBankParser(minimal_ccgbank)
+    with patch('sys.stderr', new=StringIO()) as fake_out:
+        _=ccgbank_parser.section2diagrams(0, verbose=VerbosityLevel.TEXT.value)
+        assert fake_out.getvalue().rstrip()[:9] == 'Parsing "'
+        assert fake_out.getvalue().rstrip()[-28:] == '/data/AUTO/00/wsj_0001.auto"'
+
+
+def test_tqdm_progress(minimal_ccgbank):
+    ccgbank_parser = CCGBankParser(minimal_ccgbank)
+    with patch('sys.stderr', new=StringIO()) as fake_out:
+        _=ccgbank_parser.section2diagrams(0, verbose=VerbosityLevel.PROGRESS.value)
+        assert fake_out.getvalue().rstrip() != ''
 
 
 @pytest.fixture
