@@ -1,17 +1,21 @@
 import os
 import pickle
 import pytest
+from copy import deepcopy
 
 from lambeq.training import PytorchModel
 
-from discopy import Cup, Dim, Word
+from discopy import Box, Cap, Cup, Dim, Swap, Word
+from discopy.tensor import Id as tensor_Id
 from discopy.quantum.circuit import Id
+from discopy.rigid import Spider
 
 import numpy as np
 from torch import Size
 from torch.nn import Parameter
 
-from lambeq import AtomicType, SpiderAnsatz
+from lambeq import AtomicType, SpiderAnsatz, Symbol
+from lambeq.training import PytorchModel
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -38,6 +42,28 @@ def test_forward():
     instance.initialise_weights()
     pred = instance.forward(diagrams)
     assert pred.size() == Size([len(diagrams), s_dim])
+
+
+def test_pickling():
+    phi = Symbol('phi', size=123)
+    diagram = (
+        Box("box1", Dim(2), Dim(2), data=phi)
+        >> Spider(1, 2, Dim(2))
+        >> Swap(Dim(2), Dim(2))
+        >> tensor_Id(Dim(2))
+        @ (tensor_Id(Dim(2)) @ Cap(Dim(2), Dim(2)) >> Cup(Dim(2), Dim(2)) @ tensor_Id(Dim(2)))
+    )
+    deepcopied_diagram = deepcopy(diagram)
+    pickled_diagram = pickle.loads(pickle.dumps(diagram))
+    assert pickled_diagram == diagram
+    pickled_diagram._data = 'new data'
+    for box in pickled_diagram.boxes:
+        box._name = 'Bob'
+        box._data = ['random', 'data']
+    assert diagram == deepcopied_diagram
+    assert diagram != pickled_diagram
+    assert deepcopied_diagram != pickled_diagram
+
 
 def test_initialise_weights_error():
     with pytest.raises(ValueError):
