@@ -50,7 +50,8 @@ class Dataset:
 
         Raises
         ------
-        ValueError: When 'data' and 'targets' do not match in size.
+        ValueError
+            When 'data' and 'targets' do not match in size.
 
         """
         if len(data) != len(targets):

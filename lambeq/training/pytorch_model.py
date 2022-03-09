@@ -111,7 +111,6 @@ class PytorchModel(Model, torch.nn.Module):
         -------
         torch.Tensor
             Resulting tensor.
-                for w in self.symbols])
 
         """
         parameters = {k: v for k, v in zip(self.symbols, self.weights)}

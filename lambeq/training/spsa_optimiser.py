@@ -58,7 +58,7 @@ class SPSAOptimiser(Optimiser):
         hyperparams : dict of str to float.
             A dictionary containing the models hyperparameters.
         loss_fn : Callable
-            A loss function of form `loss(prediction, labels)`
+            A loss function of form `loss(prediction, labels)`.
         bounds : ArrayLike, optional
             The range of each of the model parameters.
 

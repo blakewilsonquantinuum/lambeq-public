@@ -229,7 +229,7 @@ class Trainer(ABC):
     def _load_extra_chkpoint_info(self,
                                   checkpoint: Mapping[str, Any]) -> None:
         """Load the additional checkpoint information that was previously
-        added by calling the method `_add_checkpoint_info()`.
+        added by calling the method `_add_extra_chkpoint_info()`.
 
         Parameters
         ----------
@@ -241,7 +241,7 @@ class Trainer(ABC):
     @abstractmethod
     def training_step(self,
                       batch: tuple[list[Any], Any]) -> tuple[Any, float]:
-        """Performs a training step.
+        """Perform a training step.
 
         Parameters
         ----------
@@ -258,7 +258,7 @@ class Trainer(ABC):
     @abstractmethod
     def validation_step(
             self, batch: tuple[list[Any], Any]) -> tuple[Any, float]:
-        """Performs a validation step.
+        """Perform a validation step.
 
         Parameters
         ----------
@@ -277,13 +277,13 @@ class Trainer(ABC):
             val_dataset: Optional[Dataset] = None,
             evaluation_step: int = 1) -> None:
         """Fit the model on the training data and, optionally,
-        evaluates it on the validation data.
+        evaluate it on the validation data.
 
         Parameters
         ----------
-        train_dataset : :py:class:`Diagram`
+        train_dataset : :py:class:`Dataset`
             Dataset used for training.
-        val_dataset : :py:class:`Diagram`, optional
+        val_dataset : :py:class:`Dataset`, optional
             Validation dataset.
         evaluation_step : int, default: 1
             Sets the intervals at which the metrics are evaluated on the

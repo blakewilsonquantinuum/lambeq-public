@@ -121,7 +121,7 @@ class QuantumTrainer(Trainer):
     def _load_extra_chkpoint_info(self,
                                   checkpoint: Mapping[str, Any]) -> None:
         """Load the additional checkpoint information that was previously
-        added by calling the method `_add_checkpoint_info()`.
+        added by calling the method `_add_extra_chkpoint_info()`.
 
         Parameters
         ----------
@@ -136,7 +136,7 @@ class QuantumTrainer(Trainer):
     def training_step(
         self,
         batch: tuple[list[Any], np.ndarray]) -> tuple[np.ndarray, float]:
-        """Performs a training step.
+        """Perform a training step.
 
         Parameters
         ----------
@@ -158,7 +158,7 @@ class QuantumTrainer(Trainer):
     def validation_step(
         self,
         batch: tuple[list[Any], np.ndarray]) -> tuple[np.ndarray, float]:
-        """Performs a validation step.
+        """Perform a validation step.
 
         Parameters
         ----------

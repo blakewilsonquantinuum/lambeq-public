@@ -119,7 +119,7 @@ class PytorchTrainer(Trainer):
 
         Returns
         -------
-        mapping of str to any
+        Mapping of str to any
             Mapping containing the extra information to save.
 
         """
@@ -130,11 +130,11 @@ class PytorchTrainer(Trainer):
     def _load_extra_chkpoint_info(self,
                                   checkpoint: Mapping[str, Any]) -> None:
         """Load the additional checkpoint information that was previously
-        added by calling the method `_add_checkpoint_info()`.
+        added by calling the method `_add_extra_chkpoint_info()`.
 
         Parameters
         ----------
-        checkpoint : mapping of str to any
+        checkpoint : Mapping of str to any
             Mapping containing the checkpoint information.
 
         """
@@ -146,7 +146,7 @@ class PytorchTrainer(Trainer):
     def validation_step(
         self,
         batch: tuple[list[Any], torch.Tensor]) -> tuple[torch.Tensor, float]:
-        """Performs a validation step.
+        """Perform a validation step.
 
         Parameters
         ----------
@@ -168,7 +168,7 @@ class PytorchTrainer(Trainer):
     def training_step(
         self,
         batch: tuple[list[Any], torch.Tensor]) -> tuple[torch.Tensor, float]:
-        """Performs a training step.
+        """Perform a training step.
 
         Parameters
         ----------

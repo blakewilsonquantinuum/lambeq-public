@@ -76,7 +76,7 @@ class TketModel(Model):
         return np.random.randint(low, high)
 
     def _normalise(self, predictions: np.ndarray) -> np.ndarray:
-        """apply smoothing to predictions"""
+        """Apply smoothing to predictions."""
         predictions = np.abs(predictions) + self.SMOOTHING
         return predictions / predictions.sum()
 
@@ -148,7 +148,7 @@ class TketModel(Model):
         Returns
         -------
         np.ndarray
-            Resulting array
+            Resulting array.
 
         """
         if len(self.weights) == 0 or not self.symbols:

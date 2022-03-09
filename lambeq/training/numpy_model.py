@@ -164,7 +164,7 @@ class NumpyModel(Model):
         Returns
         -------
         np.ndarray
-            Resulting array
+            Resulting array.
 
         """
         if len(self.weights) == 0 or not self.symbols:
