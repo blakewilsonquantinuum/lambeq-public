@@ -41,6 +41,7 @@ __all__ = [
         'diagram2str',
         'create_pregroup_diagram',
         'is_pregroup_diagram',
+        'remove_cups',
 
         'Reader',
         'LinearReader',
@@ -93,7 +94,8 @@ from lambeq.ccg2discocat import (
 from lambeq.core.types import AtomicType
 from lambeq.core.globals import VerbosityLevel
 from lambeq.pregroups import (diagram2str,
-                              create_pregroup_diagram, is_pregroup_diagram)
+                              create_pregroup_diagram, is_pregroup_diagram,
+                              remove_cups)
 from lambeq.reader import (Reader, LinearReader, TreeReader, TreeReaderMode,
                            bag_of_words_reader, cups_reader, spiders_reader,
                            stairs_reader, word_sequence_reader)

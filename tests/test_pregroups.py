@@ -1,8 +1,11 @@
 import pytest
 
-from lambeq.pregroups import create_pregroup_diagram
+from discopy import Cap, Cup, Diagram, Ob, Id, Swap, Ty, Word
+from discopy.rigid import Spider
+
+from lambeq.pregroups import create_pregroup_diagram, remove_cups
 from lambeq.core.types import AtomicType
-from discopy import Cup, Ob, Swap, Ty, Word
+
 
 n = AtomicType.NOUN
 s = AtomicType.SENTENCE
@@ -57,3 +60,61 @@ def test_diagram_with_a_single_box():
     words = [Word("Yes", s)]
     d = create_pregroup_diagram(words, s)
     assert d.boxes == words and d.offsets == [0]
+
+
+def test_remove_cups():
+    n = Ty('n')
+    s = Ty('s')
+
+    d1 = (
+        Word("box1", n @ n @ s) @ Word("box2", (n @ s).r)
+        >> Id(n) @ Diagram.cups(n @ s, (n @ s).r))
+    expect_d1 = (
+        Word("box1", n @ n @ s) >> Id(n) @ Word("box2", (n @ s).r).l.dagger())
+    assert remove_cups(d1) == expect_d1
+
+    d2 = (
+        Word("box1", n @ s) @ Word("box2", s.r @ n) @ Word("box3", n.r @ n.r)
+        >> Id(n) @ Cup(s, s.r) @ Cup(n, n.r) @ Id(n.r) >> Cup(n, n.r))
+    expect_d2 = (
+        Word("box3", n.r @ n.r) >> Id(n.r) @ Cap(s.r.r, s.r) @ Id(n.r)
+        >> Word("box2", s.r @ n).r.dagger() @ Word("box1", n @ s).r.dagger())
+    assert remove_cups(d2) == expect_d2
+
+    d3 = (
+        (Word("box1", n) >> Spider(1, 2, n)) @ Word("box2", n.r @ n.r @ n)
+        >> Diagram.cups(n @ n, n.r @ n.r) @ Id(n))
+    expect_d3 = (
+        Word("box2", n.r @ n.r @ n)
+        >> (Word("box1", n) >> Spider(1, 2, n)).r.dagger() @ Id(n)
+    )
+    assert remove_cups(d3) == expect_d3
+
+    # test disconnected
+    assert (remove_cups(Id().tensor(d1, d2, d3))
+            == Id().tensor(*map(remove_cups, (d1, d2, d3))))
+
+    # test illegal cups
+    assert remove_cups(d1.r) == remove_cups(d1).r
+    assert remove_cups(d3.l) == remove_cups(d3).l
+
+    # scalars can be bent both ways
+    assert remove_cups(d2.r) == remove_cups(d2).dagger().normal_form()
+
+    d4 = (
+        Word('box1', n) @ Word('box2', n) @ Word('box3', n.r @ n.r @ n)
+        >> Diagram.cups(n @ n, (n @ n).r) @ Id(n))
+    expect_d4 = (
+        Word('box3', n.r @ n.r @ n) >>
+        (Word('box1', n) @ Word('box2', n)).r.dagger() @ Id(n))
+    assert remove_cups(d4) == expect_d4
+
+    assert remove_cups(d4 @ Id(n @ s) @ d4) == expect_d4 @ Id(n @ s) @ expect_d4
+
+    type_raised = (
+        Diagram.caps(s @ n @ s, (s @ n @ s).l) @ Word('w1', s) @ Word('w2', n @ s)
+        >> Id(s @ n @ s) @ Diagram.cups((s @ n @ s).l, s @ n @ s))
+
+    def remove_caps(diagram):
+        return remove_cups(diagram.dagger()).dagger()
+    assert remove_caps(remove_cups(type_raised)) == Word('w1', s) @ Word('w2', n @ s)

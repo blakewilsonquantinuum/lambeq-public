@@ -16,7 +16,9 @@ from __future__ import annotations
 
 from typing import Optional
 
-from discopy import Cup, Diagram, Swap, Ty, Word
+from discopy import Box, Cup, Diagram, Swap, Id, Ty, Word
+
+CUP_TOKEN = '**CUP**'
 
 
 def is_pregroup_diagram(diagram: Diagram) -> bool:
@@ -105,3 +107,86 @@ def create_pregroup_diagram(
         offsets.append(actual_idx)
 
     return Diagram(dom=Ty(), cod=cod, boxes=boxes, offsets=offsets)
+
+
+def _compress_cups(diagram: Diagram) -> Diagram:
+    layers: list[tuple[Box, int]] = []
+    for box, offset in zip(diagram.boxes, diagram.offsets):
+        nested_cup = (isinstance(box, Cup)
+                      and layers
+                      and isinstance(layers[-1][0].boxes[0], Cup)
+                      and offset == layers[-1][1] - 1)
+        if nested_cup:
+            dom = box.dom[:1] @ layers[-1][0].dom @ box.dom[1:]
+            layers[-1] = (Box(CUP_TOKEN, dom, Ty()), offset)
+        else:
+            layers.append((box, offset))
+    boxes, offsets = zip(*layers)
+    return Diagram(
+        dom=diagram.dom, cod=diagram.cod, boxes=boxes, offsets=offsets)
+
+
+def _remove_cups(diagram: Diagram) -> Diagram:
+    diags: list[Diagram] = [Id(diagram.dom)]
+    for box, offset in zip(diagram.boxes, diagram.offsets):
+        i = 0
+        off = offset
+        # find the first box to contract
+        while i < len(diags) and off >= len(diags[i].cod):
+            off -= len(diags[i].cod)
+            i += 1
+        if off == 0 and not box.dom:
+            diags.insert(i, box)
+        else:
+            left, right = diags[i], Id(Ty())
+            j = 1
+            # add boxes to the right until they are enough to contract
+            # |   left   |  right  |
+            #   off  |  box  |
+            while len(left.cod @ right.cod) < off + len(box.dom):
+                assert i + j < len(diags)
+                right = right @ diags[i + j]
+                j += 1
+
+            cod = left.cod @ right.cod
+            wires_l = Id(cod[:off])
+            wires_r = Id(cod[off + len(box.dom):])
+            if box.name == CUP_TOKEN or isinstance(box, Cup):
+                # contract greedily, else combine
+                pg_len = len(box.dom) // 2
+                pg_type1, pg_type2 = box.dom[:pg_len], box.dom[pg_len:]
+                if len(left.cod) == pg_len and not left.dom:
+                    if pg_type1.r == pg_type2:
+                        new_diag = right >> (left.r.dagger() @ wires_r)
+                    else:  # illegal cup
+                        new_diag = right >> (left.l.dagger() @ wires_r)
+                elif len(right.cod) == pg_len and not right.dom:
+                    if pg_type1.r == pg_type2:
+                        new_diag = left >> (wires_l @ right.l.dagger())
+                    else:
+                        new_diag = left >> (wires_l @ right.r.dagger())
+                else:
+                    box = Diagram.cups(pg_type1, pg_type2)
+                    new_diag = left @ right >> wires_l @ box @ wires_r
+            else:
+                new_diag = left @ right >> wires_l @ box @ wires_r
+            diags[i:i+j] = [new_diag]
+
+    return Id().tensor(*diags)
+
+
+def remove_cups(diagram: Diagram) -> Diagram:
+    """Remove cups from a :py:class:`discopy.rigid.Diagram`.
+
+    Diagrams with less cups become circuits with less post-selection, which
+    results in faster QML experiments.
+
+    Parameters
+    ----------
+    diagram : discopy.rigid.Diagram
+        The diagram from which cups will be removed.
+    """
+    try:
+        return _remove_cups(_compress_cups(_remove_cups(diagram)))
+    except Exception:  # pragma: no cover
+        return diagram  # pragma: no cover
