@@ -61,6 +61,8 @@ jobs:
       run: pip install .
     - name: Check package import works
       run: python -c 'import lambeq'
+    - name: Install Cython
+      run: pip install cython
     - name: Install extra dependencies and tester
       run: pip install .[extras] .[test] depccg==2.0.3.2
     - name: Locate depccg pre-trained model cache
