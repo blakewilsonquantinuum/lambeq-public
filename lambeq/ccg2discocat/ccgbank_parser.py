@@ -36,9 +36,9 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Optional, Union
 
-import tqdm
 from discopy.biclosed import Ty
 from discopy.rigid import Diagram
+from tqdm.auto import tqdm
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_rule import CCGRule
@@ -203,9 +203,10 @@ class CCGBankParser(CCGParser):
                 if verbose == VerbosityLevel.TEXT.value:
                     print(f'Parsing "{file}"', file=sys.stderr)
                 line_no = 0
-                for line in tqdm.tqdm(
+                for line in tqdm(
                         f,
                         desc=f'Parsing "{file}"',
+                        leave=False,
                         disable=verbose != VerbosityLevel.PROGRESS.value):
                     line_no += 1
                     match = self.id_regex.fullmatch(line)

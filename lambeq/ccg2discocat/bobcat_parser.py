@@ -28,8 +28,9 @@ import warnings
 from discopy.biclosed import Ty
 
 import torch
-import tqdm
 from transformers import AutoTokenizer
+from tqdm import TqdmWarning
+from tqdm.auto import tqdm
 
 from lambeq.ccg2discocat.bobcat import (BertForChartClassification, Category,
                                         ChartParser, Grammar, ParseTree,
@@ -83,12 +84,12 @@ def download_model(
 
         def update(self, chunk: int, chunk_size: int, size: int) -> None:
             if self.bar is None:
-                self.bar = tqdm.tqdm(
+                self.bar = tqdm(
                         bar_format='Downloading model: {percentage:3.1f}%|'
                                    '{bar}|{n:.3f}/{total:.3f}GB '
                                    '[{elapsed}<{remaining}]',
                         total=size/1e9)
-            warnings.filterwarnings('ignore', category=tqdm.TqdmWarning)
+            warnings.filterwarnings('ignore', category=TqdmWarning)
             self.bar.update(chunk_size/1e9)
 
         def close(self):
@@ -315,9 +316,10 @@ class BobcatParser(CCGParser):
             tags = tag_results.tags
             if verbose == VerbosityLevel.TEXT.value:
                 print('Parsing tagged sentences.', file=sys.stderr)
-            for sent in tqdm.tqdm(
+            for sent in tqdm(
                     tag_results.sentences,
                     desc='Parsing tagged sentences',
+                    leave=False,
                     disable=verbose != VerbosityLevel.PROGRESS.value):
                 words = sent.words
                 sent_tags = [[Supertag(tags[id], prob)

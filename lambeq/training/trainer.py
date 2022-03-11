@@ -27,16 +27,18 @@ import os
 import pickle
 import random
 import socket
+import sys
 from abc import ABC, abstractmethod
 from datetime import datetime
 from math import ceil
 from typing import TYPE_CHECKING, Any, Callable, Mapping, Optional, Union
 
-from tqdm import tqdm
+from tqdm.auto import tqdm, trange
 
 if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
 
+from lambeq.core.globals import VerbosityLevel
 from lambeq.training.dataset import Dataset
 from lambeq.training.model import Model
 
@@ -62,7 +64,7 @@ class Trainer(ABC):
                  use_tensorboard: bool = False,
                  log_dir: Optional[Union[str, os.PathLike]] = None,
                  from_checkpoint: bool = False,
-                 verbose: str = 'text',
+                 verbose: str = VerbosityLevel.TEXT.value,
                  seed: Optional[int] = None) -> None:
         """Initialise a lambeq trainer.
 
@@ -85,10 +87,10 @@ class Trainer(ABC):
             `runs/**CURRENT_DATETIME_HOSTNAME**`.
         from_checkpoint : bool, default: False
             Starts training from the checkpoint, saved in the log_dir.
-        verbose : str, default: \'text\',
+        verbose : str, default: 'text',
             Controls the form of progress tracking for the trainer. Set to
-            \'text\` for text outputs, \'progress\' for a progress bar, or
-            \'suppress\' to have no output.
+            'text` for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output.
         seed : int, optional
             Random seed.
 
@@ -126,16 +128,9 @@ class Trainer(ABC):
                 self.train_results[name] = []
                 self._train_results_epoch[name] = []
 
-        verbose_fields = ('progress', 'suppress', 'text')
-        if self.verbose not in verbose_fields:
-            raise ValueError('The `verbose flag must contain any of the '
-                             f'following: {verbose_fields}. `{self.verbose}` '
-                             f'was given.')
-
-        if self.verbose == 'text':
-            self.printer = print
-        else:
-            self.printer = lambda *args, **kwargs: None
+        if not VerbosityLevel.has_value(self.verbose):
+            raise ValueError(f'`{self.verbose} flag is not supported by '
+                             'this trainer.')
 
         if self.seed is not None:
             random.seed(self.seed)
@@ -172,7 +167,8 @@ class Trainer(ABC):
         FileNotFoundError
             If the file does not exists.
         """
-        self.printer("Restore last checkpoint...")
+        if self.verbose == VerbosityLevel.TEXT.value:
+            print("Restore last checkpoint...", file=sys.stderr)
         checkpoint_path = os.path.join(log_dir, 'model.lt')
         if os.path.exists(checkpoint_path):
             with open(checkpoint_path, 'rb') as ckp:
@@ -188,7 +184,8 @@ class Trainer(ABC):
             self.start_step = checkpoint['step']
             if self.seed is not None:
                 random.setstate(checkpoint['random_state'])
-            self.printer("Checkpoint restored successfully!")
+            if self.verbose == VerbosityLevel.TEXT.value:
+                print("Checkpoint restored successfully!", file=sys.stderr)
             return checkpoint
         else:
             raise FileNotFoundError('Checkpoint not found! Check path '
@@ -300,15 +297,29 @@ class Trainer(ABC):
         # initialise progress bar
         step = self.start_step
         batches_per_epoch = ceil(len(train_dataset)/train_dataset.batch_size)
-        pbar = tqdm(total=batches_per_epoch * self.epochs,
-                    desc='Epoch -, batch -, loss: -',
-                    disable=self.verbose != 'progress')
-        pbar.update(self.start_epoch * batches_per_epoch)
+        status_bar = tqdm(total=float('inf'),
+                          bar_format='{desc}',
+                          desc=self._generate_stat_report(),
+                          disable=self.verbose != VerbosityLevel.PROGRESS.value,
+                          leave=True,
+                          position=0)
 
         # start training loop
-        for epoch in range(self.start_epoch, self.epochs):
+        for epoch in trange(self.start_epoch,
+                            self.epochs,
+                            desc='Epoch',
+                            disable=self.verbose !=
+                                VerbosityLevel.PROGRESS.value,
+                            leave=False,
+                            position=1):
             epoch_loss: float = 0.0
-            for batch_idx, batch in enumerate(train_dataset):
+            for batch in tqdm(train_dataset,
+                              desc="Batch",
+                              total=batches_per_epoch,
+                              disable=self.verbose !=
+                                  VerbosityLevel.PROGRESS.value,
+                              leave=False,
+                              position=2):
                 step += 1
                 x, y_label = batch
                 y_hat, loss = self.training_step(batch)
@@ -317,14 +328,13 @@ class Trainer(ABC):
                     for metr, func in self.evaluate_functions.items():
                         res = func(y_hat, y_label)
                         self._train_results_epoch[metr].append(len(x)*res)
-                self.printer(f'Epoch: {epoch+1}, Batch: {batch_idx+1}, '
-                             f'train/loss: {loss:.4f}')
                 epoch_loss += len(batch[0])*loss
                 writer_helper('train/step_loss', loss, step)
-                pbar.set_description(f'Epoch: {epoch+1}, '
-                                     f'Batch: {batch_idx+1}, '
-                                     f'loss: {loss:.4f}')
-                pbar.update(1)
+                status_bar.set_description(
+                        self._generate_stat_report(
+                            train_loss=loss,
+                            val_loss=self.val_costs[-1] if
+                            len(self.val_costs) > 0 else None))
             self.train_epoch_costs.append(epoch_loss/len(train_dataset))
             writer_helper('train/epoch_loss',
                           self.train_epoch_costs[-1], epoch+1)
@@ -340,15 +350,29 @@ class Trainer(ABC):
                     writer_helper(
                         f'train/{name}', self.train_results[name][-1],
                         epoch+1)
-                    self.printer(
-                        f'Epoch: {epoch+1}, train/{name}: '
-                        f'{self.train_results[name][-1]:.4f}')
+                    if self.verbose == VerbosityLevel.TEXT.value:
+                        print(f'Epoch: {epoch+1}, train/{name}: '
+                              f'{self.train_results[name][-1]:.4f}',
+                              file=sys.stderr)
+                    if self.verbose == VerbosityLevel.PROGRESS.value:
+                        status_bar.set_description(
+                                self._generate_stat_report(
+                                    train_loss=self.train_epoch_costs[-1],
+                                    val_loss=self.val_costs[-1] if
+                                    len(self.val_costs) > 0 else None))
 
             # evaluate metrics on validation data
             if val_dataset is not None:
                 if epoch % evaluation_step == 0:
                     val_loss: float = 0.0
-                    for v_batch in val_dataset:
+                    batches_per_validation = ceil(len(val_dataset)/val_dataset.batch_size)
+                    for v_batch in tqdm(val_dataset,
+                                        desc="Validation batch",
+                                        total=batches_per_validation,
+                                        disable=self.verbose !=
+                                            VerbosityLevel.PROGRESS.value,
+                                        leave=False,
+                                        position=2):
                         x_val, y_label_val = v_batch
                         y_hat_val, cur_loss = self.validation_step(v_batch)
                         val_loss += cur_loss * len(x_val)
@@ -357,24 +381,38 @@ class Trainer(ABC):
                                 res = func(y_hat_val, y_label_val)
                                 self._val_results_epoch[metr].append(
                                     len(x_val)*res)
+                        status_bar.set_description(
+                                self._generate_stat_report(
+                                    train_loss=self.train_epoch_costs[-1],
+                                    val_loss=val_loss))
                     val_loss /= len(val_dataset)
                     self.val_costs.append(val_loss)
-                    self.printer(f'Epoch: {epoch+1}, val/loss: {val_loss:.4f}')
+                    if self.verbose == VerbosityLevel.TEXT.value:
+                        print(f'Epoch: {epoch+1}, val/loss: {val_loss:.4f}',
+                              file=sys.stderr)
+                    status_bar.set_description(
+                            self._generate_stat_report(
+                                train_loss=self.train_epoch_costs[-1],
+                                val_loss=val_loss))
                     writer_helper('val/loss', val_loss, epoch+1)
 
                     if self.evaluate_functions is not None:
                         for name in self._val_results_epoch:
                             self.val_results[name].append(
                                 sum(self._val_results_epoch[name])
-                                    /len(val_dataset)
-                            )
+                                    / len(val_dataset))
                             self._val_results_epoch[name] = []  # reset
                             writer_helper(
                                 f'val/{name}', self.val_results[name][-1],
-                                epoch+1)
-                            self.printer(
-                                f'Epoch: {epoch+1}, val/{name}: '
-                                f'{self.val_results[name][-1]:.4f}')
+                                epoch + 1)
+                            if self.verbose == VerbosityLevel.TEXT.value:
+                                print(f'Epoch: {epoch+1}, val/{name}: '
+                                      f'{self.val_results[name][-1]:.4f}',
+                                      file=sys.stderr)
+                            status_bar.set_description(
+                                    self._generate_stat_report(
+                                        train_loss=self.train_epoch_costs[-1],
+                                        val_loss=val_loss))
 
             # save checkpoint info
             save_dict = {'epoch': epoch+1,
@@ -387,8 +425,54 @@ class Trainer(ABC):
                          'val_results': self.val_results,
                          'random_state': random.getstate(),
                          'step': step}
-            self.printer("Storing checkpoint...")
+            if self.verbose == VerbosityLevel.TEXT.value:
+                print("Storing checkpoint...", file=sys.stderr)
             self.save_checkpoint(save_dict, self.log_dir)
-            self.printer("Storing checkpoint finished!")
-        pbar.close()
-        self.printer("\nTraining successful!")
+            if self.verbose == VerbosityLevel.TEXT.value:
+                print("Storing checkpoint finished!", file=sys.stderr)
+        status_bar.close()
+        if self.verbose == VerbosityLevel.TEXT.value:
+            print("\nTraining completed!", file=sys.stderr)
+
+    def _generate_stat_report(self,
+                              train_loss: Optional[float] = None,
+                              val_loss: Optional[float] = None) -> str:
+        """Generate a text to be displayed together with the progress bar,
+        containing various information about the model.
+
+        Parameters
+        ----------
+        train_loss : float, optional.
+            Current training loss.
+        val_loss : float, optional
+            Current validation loss.
+
+        Returns
+        -------
+        str
+            Formatted text to be displayed
+
+        """
+
+        report = []
+        for name, value in [('train/loss', train_loss),
+                            ('valid/loss', val_loss)]:
+            if value is None:
+                report.append(f'{name}: -----')
+            else:
+                report.append(f'{name}: {value:.4f}')
+        if self.evaluate_on_train and self.evaluate_functions is not None:
+            for name in self.train_results:
+                if len(self.train_results[name]) > 0:
+                    report.append(f'train/{name}: '
+                                  f'{self.train_results[name][-1]:.4f}')
+                else:
+                    report.append(f'train/{name}: -----')
+        if self.evaluate_functions is not None:
+            for name in self.val_results:
+                if len(self.val_results[name]) > 0:
+                    report.append(f'valid/{name}: '
+                                  f'{self.val_results[name][-1]:.4f}')
+                else:
+                    report.append(f'valid/{name}: -----')
+        return '      '.join(report)

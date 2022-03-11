@@ -26,6 +26,7 @@ import os
 
 import numpy as np
 
+from lambeq.core.globals import VerbosityLevel
 from lambeq.training.numpy_model import NumpyModel
 from lambeq.training.tket_model import TketModel
 from lambeq.training.trainer import Trainer
@@ -49,7 +50,7 @@ class QuantumTrainer(Trainer):
             use_tensorboard: bool = False,
             log_dir: Optional[Union[str, os.PathLike]] = None,
             from_checkpoint: bool = False,
-            verbose: str = 'text',
+            verbose: str = VerbosityLevel.TEXT.value,
             seed: Optional[int] = None) -> None:
         """Initialise a :py:class:`.Trainer` instance using a quantum backend.
 
@@ -78,10 +79,10 @@ class QuantumTrainer(Trainer):
             `runs/**CURRENT_DATETIME_HOSTNAME**`.
         from_checkpoint : bool, default: False
             Starts training from the checkpoint, saved in the log_dir.
-        verbose : str, default: \'text\',
+        verbose : str, default: 'text',
             Controls the form of progress tracking for the trainer. Set to
-            \'text\` for text outputs, \'progress\' for a progress bar, or
-            \'suppress\' to have no output.
+            'text' for text outputs, 'progress' for a progress bar, or
+            'suppress' to have no output.
         seed : int, optional
             Random seed.
 

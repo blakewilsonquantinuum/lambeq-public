@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import os
 import pickle
-from copy import deepcopy
 from typing import Union
 
 import tensornetwork as tn

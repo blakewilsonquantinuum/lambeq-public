@@ -19,8 +19,8 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-import tqdm
 from discopy import Diagram
+from tqdm.autonotebook import tqdm
 
 from lambeq.ccg2discocat.ccg_tree import CCGTree
 from lambeq.core.globals import VerbosityLevel
@@ -168,9 +168,10 @@ class CCGParser(ABC):
             verbose = self.verbose
         if verbose is VerbosityLevel.TEXT.value:
             print('Turning parse trees to diagrams.', file=sys.stderr)
-        for tree in tqdm.tqdm(
+        for tree in tqdm(
                 trees,
                 desc='Parse trees to diagrams',
+                leave=False,
                 disable=verbose != VerbosityLevel.PROGRESS.value):
             if tree is not None:
                 try:

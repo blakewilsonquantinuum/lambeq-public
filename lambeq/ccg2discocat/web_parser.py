@@ -22,7 +22,7 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-import tqdm
+from tqdm.auto import tqdm
 
 from lambeq.ccg2discocat.ccg_parser import CCGParser
 from lambeq.ccg2discocat.ccg_tree import CCGTree
@@ -141,9 +141,10 @@ class WebParser(CCGParser):
         trees: list[Optional[CCGTree]] = []
         if verbose == VerbosityLevel.TEXT.value:
             print('Parsing sentences.', file=sys.stderr)
-        for sent in tqdm.tqdm(
+        for sent in tqdm(
                 sentences,
                 desc='Parsing sentences',
+                leave=False,
                 disable=verbose != VerbosityLevel.PROGRESS.value):
             params = urlencode({'sentence': sent})
             url = f'{self.service_url}?{params}'

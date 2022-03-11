@@ -19,8 +19,8 @@ from dataclasses import asdict, dataclass
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import torch
-import tqdm
 from torch import nn
+from tqdm.auto import trange
 from transformers import (BertConfig, BertModel, BertPreTrainedModel,
                           PreTrainedModel, PreTrainedTokenizerFast)
 from transformers.modeling_outputs import ModelOutput
@@ -391,9 +391,10 @@ class Tagger:
                               cats=self.model.config.cats,
                               sentences=[])
 
-        for i in tqdm.trange(0, len(inputs), batch_size,
-                             desc='Tagging sentences',
-                             disable=verbose != VerbosityLevel.PROGRESS.value):
+        for i in trange(0, len(inputs), batch_size,
+                        desc='Tagging sentences',
+                        leave=False,
+                        disable=verbose != VerbosityLevel.PROGRESS.value):
             output.sentences.extend(self.parse(inputs[i:i+batch_size]))
 
         return output

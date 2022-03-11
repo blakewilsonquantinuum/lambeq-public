@@ -18,6 +18,14 @@ from enum import Enum
 
 
 class VerbosityLevel(Enum):
+    """Available options for the verbosity of progress reporting. Value
+    'progress'vcorresponds to a progress bar, 'text' for text reports, and
+    'suppress' for no output. All outputs are printed to stderr.
+    Visual Studio Code does not always display progress bars correctly, use
+    'progress' level reporting in Visual Studio Code at your own risk.
+
+    """
+
     PROGRESS = 'progress'
     SUPPRESS = 'suppress'
     TEXT = 'text'
