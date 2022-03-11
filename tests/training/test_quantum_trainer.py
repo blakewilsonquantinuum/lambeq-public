@@ -1,4 +1,5 @@
 import numpy as np
+import tensornetwork as tn
 import shutil
 import uuid
 from discopy import Cup, Word, Tensor
@@ -36,6 +37,7 @@ acc = lambda y_hat, y: np.sum(np.round(y_hat) == y) / len(y) / 2
 
 def test_trainer():
     Tensor.np = np
+    tn.set_default_backend('numpy')
     model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)
 
     trainer = QuantumTrainer(

@@ -1,13 +1,14 @@
 import os
 import pickle
 import pytest
+from copy import deepcopy
 
 import numpy as np
 from jax import numpy as jnp
 from discopy import Cup, Word, Tensor
-from discopy.quantum.circuit import Id
+from discopy.quantum import CRz, CX, H, Id, Ket, Measure, SWAP
 
-from lambeq import AtomicType, IQPAnsatz, NumpyModel
+from lambeq import AtomicType, IQPAnsatz, NumpyModel, Symbol
 
 def test_init():
     Tensor.np = np
@@ -36,7 +37,24 @@ def test_forward():
     pred = model.forward(diagrams)
     assert pred.shape == (len(diagrams), s_dim)
 
-def test_make_lambda_error():
+
+def test_jax_forward():
+    Tensor.np = jnp
+
+    N = AtomicType.NOUN
+    S = AtomicType.SENTENCE
+
+    s_dim = 2
+    ansatz = IQPAnsatz({N: 1, S: 1}, n_layers=1)
+    diagrams = [ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))]
+    model = NumpyModel.initialise_symbols(diagrams)
+    model.initialise_weights()
+    pred = model.forward(diagrams)
+    assert pred.shape == (len(diagrams), s_dim)
+    Tensor.np = np
+
+
+def test__lambda_error():
     Tensor.np = np
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
@@ -44,7 +62,7 @@ def test_make_lambda_error():
     diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
     with pytest.raises(ValueError):
         model = NumpyModel()
-        model._make_lambda(diagram)
+        model._get_lambda(diagram)
 
 def test_initialise_weights_error():
     Tensor.np = np
@@ -69,8 +87,8 @@ def test_jax_usage():
     ansatz = IQPAnsatz({N: 1, S: 1}, n_layers=1)
     diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
     model = NumpyModel.initialise_symbols([diagram])
-    diag_f = model._make_lambda(diagram)
-    assert type(diag_f).__name__ == 'CompiledFunction'  # TODO needs better solution
+    lam = model._get_lambda(diagram)
+    assert type(lam).__name__ == 'CompiledFunction'  # TODO needs better solution
     Tensor.np = np
 
 def test_checkpoint_loading():
@@ -90,7 +108,8 @@ def test_checkpoint_loading():
     os.remove('model.lt')
     assert np.all(model.weights==model_new.weights)
     assert model_new.symbols==model.symbols
-    assert np.all(model([diagram])==model_new([diagram]))
+    # tensornetwork contraction order is non-deterministic
+    assert np.allclose(model([diagram]), model_new([diagram]))
 
 
 def test_checkpoint_loading_errors():
@@ -101,6 +120,7 @@ def test_checkpoint_loading_errors():
         _ = NumpyModel.load_from_checkpoint('model.lt')
     os.remove('model.lt')
 
+
 def test_checkpoint_loading_file_not_found_errors():
     try:
         os.remove('model.lt')
@@ -108,3 +128,19 @@ def test_checkpoint_loading_file_not_found_errors():
         pass
     with pytest.raises(FileNotFoundError):
         _ = NumpyModel.load_from_checkpoint('model.lt')
+
+
+def test_pickling():
+    phi = Symbol('phi', size=123)
+    diagram = Ket(0, 0) >> CRz(phi) >> H @ H >> CX >> SWAP >> Measure(2)
+
+    deepcopied_diagram = deepcopy(diagram)
+    pickled_diagram = pickle.loads(pickle.dumps(diagram))
+    assert pickled_diagram == diagram
+    pickled_diagram._data = 'new data'
+    for box in pickled_diagram.boxes:
+        box._name = 'Jim'
+        box._data = ['random', 'data']
+    assert diagram == deepcopied_diagram
+    assert diagram != pickled_diagram
+    assert deepcopied_diagram != pickled_diagram

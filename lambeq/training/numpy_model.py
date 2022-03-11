@@ -28,12 +28,13 @@ from __future__ import annotations
 
 import os
 import pickle
-from typing import TYPE_CHECKING, Any, Callable, Mapping, Union
+from typing import Any, Callable, Union
 
 import numpy
+import tensornetwork as tn
 from discopy import Tensor
 from discopy.tensor import Diagram
-from sympy import default_sort_key
+from sympy import default_sort_key, lambdify
 
 from lambeq.training.model import Model
 
@@ -57,7 +58,7 @@ class NumpyModel(Model):
         """
         super().__init__()
         self.np = Tensor.np
-        self.lambdas: Mapping[Diagram, Callable] = {}
+        self.lambdas: dict[Diagram, Callable] = {}
 
     @classmethod
     def initialise_symbols(cls, diagrams: list[Diagram], **kwargs):
@@ -74,11 +75,10 @@ class NumpyModel(Model):
         model.symbols = sorted(
             {sym for circ in diagrams for sym in circ.free_symbols},
             key=default_sort_key)
-        model.lambdas = {d: model._make_lambda(d) for d in diagrams}
         return model
 
-    def _make_lambda(self, diagram: Diagram) -> Callable[[Any], Any]:
-        """Make lambda function that evaluates the provided diagram.
+    def _get_lambda(self, diagram: Diagram) -> Callable[[Any], Any]:
+        """Get lambda function that evaluates the provided diagram.
 
         Raises
         ------
@@ -86,15 +86,19 @@ class NumpyModel(Model):
             If `model.symbols` are not initialised.
 
         """
+        from jax import jit
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`NumpyModel.initialise_symbols()`.')
-        diag_f = lambda *x: (
-            self._normalise(diagram.lambdify(*self.symbols)(*x).eval().array))
-        if Tensor.np.__name__ == 'jax.numpy':
-            from jax import jit
-            return jit(diag_f)
-        return diag_f
+        if diagram in self.lambdas:
+            return self.lambdas[diagram]
+
+        def diagram_output(*x):
+            result = diagram.lambdify(*self.symbols)(*x).eval().array
+            return self._normalise(result)
+
+        self.lambdas[diagram] = jit(diagram_output)
+        return self.lambdas[diagram]
 
     def _normalise(self, predictions: numpy.ndarray) -> numpy.ndarray:
         """Apply smoothing to predictions."""
@@ -174,10 +178,35 @@ class NumpyModel(Model):
                              'then call `initialise_weights()`, or load '
                              'from pre-trained checkpoint.')
 
-        lambdified_diagrams = [self.lambdas.get(d, self._make_lambda(d))
-                               for d in diagrams]
-        return numpy.array([diag_f(*self.weights)
-                            for diag_f in lambdified_diagrams])
+        if Tensor.np.__name__ == 'jax.numpy':
+            lambdified_diagrams = [self._get_lambda(d) for d in diagrams]
+            return numpy.array([diag_f(*self.weights)
+                                for diag_f in lambdified_diagrams])
+
+        parameters = {k: v for k, v in zip(self.symbols, self.weights)}
+        diagrams = pickle.loads(pickle.dumps(diagrams))  # does fast deepcopy
+        for diagram in diagrams:
+            for b in diagram._boxes:
+                if b.free_symbols:
+                    while hasattr(b, 'controlled'):
+                        b._free_symbols = set()
+                        b = b.controlled
+                    syms, values = [], []
+                    for sym in b._free_symbols:
+                        syms.append(sym)
+                        try:
+                            values.append(parameters[sym])
+                        except KeyError:
+                            raise KeyError(f'Unknown symbol {sym!r}.')
+                    b._data = lambdify(syms, b._data)(*values)
+                    b.drawing_name = b.name
+                    b._free_symbols = set()
+                    if hasattr(b, '_phase'):
+                        b._phase = b._data
+
+        return numpy.array([
+            self._normalise(tn.contractors.auto(*d.to_tn()).tensor)
+            for d in diagrams])
 
     def forward(self, x: list[Diagram]) -> numpy.ndarray:
         """Perform default forward pass of a lambeq model.
