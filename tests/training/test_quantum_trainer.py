@@ -35,10 +35,14 @@ loss = lambda y_hat, y: -np.sum(y * np.log(y_hat)) / len(y)
 acc = lambda y_hat, y: np.sum(np.round(y_hat) == y) / len(y) / 2
 
 
-def test_trainer():
+def test_trainer(tmp_path):
     Tensor.np = np
     tn.set_default_backend('numpy')
     model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)
+    log_root = tmp_path / 'test_runs'
+    log_root.mkdir()
+    log_dir = log_root / UUID
+    log_dir.mkdir()
 
     trainer = QuantumTrainer(
         model=model,
@@ -49,7 +53,7 @@ def test_trainer():
         evaluate_functions={"acc": acc},
         evaluate_on_train=True,
         use_tensorboard=True,
-        log_dir='test_runs/' + UUID,
+        log_dir=log_dir,
         verbose='suppress',
         seed=42,
     )
@@ -61,21 +65,24 @@ def test_trainer():
     assert len(trainer.train_costs) == EPOCHS
     assert len(trainer.val_results["acc"]) == EPOCHS
 
-def test_restart_training():
+def test_restart_training(tmp_path):
     Tensor.np = np
     model = NumpyModel()
-
+    log_root = tmp_path / 'test_runs'
+    log_root.mkdir()
+    log_dir = log_root / UUID
+    log_dir.mkdir()
+    model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)
     trainer = QuantumTrainer(
         model=model,
         loss_function=loss,
         optimizer=SPSAOptimiser,
         optim_hyperparams={'a': 0.02, 'c': 0.06, 'A':0.01*EPOCHS},
-        epochs=EPOCHS + 1,
+        epochs=EPOCHS,
         evaluate_functions={"acc": acc},
         evaluate_on_train=True,
         use_tensorboard=True,
-        log_dir='test_runs/' + UUID,
-        from_checkpoint=True,
+        log_dir=log_dir,
         verbose='suppress',
         seed=42,
     )
@@ -84,8 +91,24 @@ def test_restart_training():
     val_dataset = Dataset(dev_circuits, dev_targets)
 
     trainer.fit(train_dataset, val_dataset)
-    shutil.rmtree(trainer.log_dir, ignore_errors=True)
-    assert len(trainer.train_costs) == EPOCHS+1
-    assert len(trainer.val_costs) == EPOCHS+1
-    assert len(trainer.val_results["acc"]) == EPOCHS+1
-    assert len(trainer.train_results["acc"]) == EPOCHS+1
+
+    trainer_restarted = QuantumTrainer(
+        model=model,
+        loss_function=loss,
+        optimizer=SPSAOptimiser,
+        optim_hyperparams={'a': 0.02, 'c': 0.06, 'A':0.01*EPOCHS},
+        epochs=EPOCHS + 1,
+        evaluate_functions={"acc": acc},
+        evaluate_on_train=True,
+        use_tensorboard=True,
+        log_dir=log_dir,
+        from_checkpoint=True,
+        verbose='suppress',
+        seed=42,
+    )
+
+    trainer_restarted.fit(train_dataset, val_dataset)
+    assert len(trainer_restarted.train_costs) == EPOCHS+1
+    assert len(trainer_restarted.val_costs) == EPOCHS+1
+    assert len(trainer_restarted.val_results["acc"]) == EPOCHS+1
+    assert len(trainer_restarted.train_results["acc"]) == EPOCHS+1

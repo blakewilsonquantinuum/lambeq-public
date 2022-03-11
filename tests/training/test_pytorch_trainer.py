@@ -37,9 +37,14 @@ ansatz = SpiderAnsatz({N: Dim(2), S: Dim(2)})
 train_circuits = [ansatz(d) for d in train_diagrams]
 dev_circuits = [ansatz(d) for d in dev_diagrams]
 
-def test_trainer():
+def test_trainer(tmp_path):
     model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
 
+    log_root = tmp_path / 'test_runs'
+    log_root.mkdir()
+    log_dir = log_root / UUID
+    log_dir.mkdir()
+    
     trainer = PytorchTrainer(
         model=model,
         loss_function=torch.nn.BCEWithLogitsLoss(),
@@ -49,7 +54,7 @@ def test_trainer():
         evaluate_functions={"acc": acc},
         evaluate_on_train=True,
         use_tensorboard=True,
-        log_dir='test_runs/' + UUID,
+        log_dir=log_dir,
         verbose='suppress',
         seed=0
     )
@@ -62,20 +67,23 @@ def test_trainer():
     assert len(trainer.train_costs) == EPOCHS
     assert len(trainer.val_results["acc"]) == EPOCHS
 
-def test_restart_training():
-    model = PytorchModel()
-
+def test_restart_training(tmp_path):
+    model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
+    log_root = tmp_path / 'test_runs'
+    log_root.mkdir()
+    log_dir = log_root / UUID
+    log_dir.mkdir()
+ 
     trainer = PytorchTrainer(
         model=model,
         loss_function=torch.nn.BCEWithLogitsLoss(),
         optimizer=torch.optim.AdamW,
         learning_rate=3e-3,
-        epochs=EPOCHS+1,
+        epochs=EPOCHS,
         evaluate_functions={"acc": acc},
         evaluate_on_train=True,
         use_tensorboard=True,
-        log_dir='test_runs/' + UUID,
-        from_checkpoint=True,
+        log_dir=log_dir,
         verbose='suppress',
         seed=0
     )
@@ -84,15 +92,36 @@ def test_restart_training():
     val_dataset = Dataset(dev_circuits, dev_targets)
 
     trainer.fit(train_dataset, val_dataset)
-    shutil.rmtree(trainer.log_dir, ignore_errors=True)
-    Tensor.np = np
-    assert len(trainer.train_costs) == EPOCHS+1
-    assert len(trainer.val_costs) == EPOCHS+1
-    assert len(trainer.val_results["acc"]) == EPOCHS+1
-    assert len(trainer.train_results["acc"]) == EPOCHS+1
 
-def test_evaluation_skipping():
+    trainer_restarted = PytorchTrainer(
+        model=model,
+        loss_function=torch.nn.BCEWithLogitsLoss(),
+        optimizer=torch.optim.AdamW,
+        learning_rate=3e-3,
+        epochs=EPOCHS+1,
+        evaluate_functions={"acc": acc},
+        evaluate_on_train=True,
+        use_tensorboard=True,
+        log_dir=log_dir,
+        from_checkpoint=True,
+        verbose='suppress',
+        seed=0
+    )
+
+    trainer_restarted.fit(train_dataset, val_dataset)
+    Tensor.np = np
+    assert len(trainer_restarted.train_costs) == EPOCHS+1
+    assert len(trainer_restarted.val_costs) == EPOCHS+1
+    assert len(trainer_restarted.val_results["acc"]) == EPOCHS+1
+    assert len(trainer_restarted.train_results["acc"]) == EPOCHS+1
+
+def test_evaluation_skipping(tmp_path):
     model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
+    log_root = tmp_path / 'test_runs'
+    log_root.mkdir()
+    log_dir = log_root / UUID
+    log_dir.mkdir()
+
     epochs = 4
     eval_step = 2
     trainer = PytorchTrainer(
@@ -104,7 +133,7 @@ def test_evaluation_skipping():
         evaluate_functions={"acc": acc},
         evaluate_on_train=True,
         use_tensorboard=True,
-        log_dir='test_runs/' + UUID,
+        log_dir=log_dir,
         verbose='suppress',
         seed=0
     )

@@ -1,6 +1,7 @@
 import os
 import pickle
 import pytest
+from unittest.mock import mock_open, patch
 
 import numpy as np
 from discopy import Cup, Word, Tensor
@@ -60,32 +61,31 @@ def test_get_diagram_output_error():
 def test_checkpoint_loading():
     checkpoint = {'model_weights': np.array([1,2,3]),
                   'model_symbols': ['a', 'b', 'c']}
-    with open('model.lt', 'wb') as f:
-        pickle.dump(checkpoint, f)
-    model = TketModel.load_from_checkpoint('model.lt',
-                                           backend_config=backend_config)
-    os.remove('model.lt')
-    assert np.all(model.weights==checkpoint['model_weights'])
-    assert model.symbols==checkpoint['model_symbols']
+    with patch('lambeq.training.tket_model.open', mock_open(read_data=pickle.dumps(checkpoint))) as m, \
+            patch('lambeq.training.tket_model.os.path.exists', lambda x: True) as p:
+        model = TketModel.load_from_checkpoint('model.lt',
+                                               backend_config=backend_config)
+        m.assert_called_with('model.lt', 'rb')
+        assert np.all(model.weights == checkpoint['model_weights'])
+        assert model.symbols == checkpoint['model_symbols']
 
 
 def test_checkpoint_loading_errors():
     checkpoint = {'model_weights': np.array([1,2,3])}
-    with open('model.lt', 'wb') as f:
-        pickle.dump(checkpoint, f)
-    with pytest.raises(KeyError):
-        _ = TketModel.load_from_checkpoint('model.lt',
-                                           backend_config=backend_config)
-    os.remove('model.lt')
+    with patch('lambeq.training.tket_model.open', mock_open(read_data=pickle.dumps(checkpoint))) as m, \
+            patch('lambeq.training.tket_model.os.path.exists', lambda x: True) as p:
+        with pytest.raises(KeyError):
+            _ = TketModel.load_from_checkpoint('model.lt',
+                                               backend_config=backend_config)
+        m.assert_called_with('model.lt', 'rb')
 
 def test_checkpoint_loading_file_not_found_errors():
-    try:
-        os.remove('model.lt')
-    except:
-        pass
-    with pytest.raises(FileNotFoundError):
-        _ = TketModel.load_from_checkpoint('model.lt',
-                                           backend_config=backend_config)
+    with patch('lambeq.training.tket_model.open', mock_open(read_data='Not a valid checkpoint.')) as m, \
+            patch('lambeq.training.tket_model.os.path.exists', lambda x: False) as p:
+        with pytest.raises(FileNotFoundError):
+            _ = TketModel.load_from_checkpoint('model.lt',
+                                               backend_config=backend_config)
+        m.assert_not_called()
 
 def test_missing_field_error():
     with pytest.raises(KeyError):
