@@ -71,6 +71,9 @@ def test_tree_reader(sentence, words, parser):
         TreeReader(ccg_parser='parser')
 
     with pytest.raises(ValueError):
+        TreeReader(ccg_parser=lambda: 'parser')
+
+    with pytest.raises(ValueError):
         TreeReader(mode='party mode')
 
     the_words = Id().tensor(*[Word(w, S) for w in words])
