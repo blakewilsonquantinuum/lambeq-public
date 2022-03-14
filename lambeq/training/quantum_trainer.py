@@ -15,8 +15,7 @@
 """
 QuantumTrainer
 ==============
-A trainer that wraps the training loop of a :py:class:`NumpyModel` or
-a :py:class:`TketModel`.
+A trainer that wraps the training loop of a :py:class:`QuantumModel`
 
 """
 from __future__ import annotations
@@ -27,8 +26,7 @@ import os
 import numpy as np
 
 from lambeq.core.globals import VerbosityLevel
-from lambeq.training.numpy_model import NumpyModel
-from lambeq.training.tket_model import TketModel
+from lambeq.training.quantum_model import QuantumModel
 from lambeq.training.trainer import Trainer
 from lambeq.training.optimiser import Optimiser
 
@@ -36,11 +34,11 @@ from lambeq.training.optimiser import Optimiser
 class QuantumTrainer(Trainer):
     """A Trainer for the quantum pipeline."""
 
-    model: Union[NumpyModel, TketModel]
+    model: QuantumModel
 
     def __init__(
             self,
-            model: Union[NumpyModel, TketModel],
+            model: QuantumModel,
             loss_function: Callable,
             epochs: int,
             optimizer: Type[Optimiser],
@@ -56,7 +54,7 @@ class QuantumTrainer(Trainer):
 
         Parameters
         ----------
-        model : Model
+        model : QuantumModel
             A lambeq Model.
         loss_function : callable
             A loss function.

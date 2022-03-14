@@ -20,22 +20,18 @@ Module implementing a lambeq model based on a quantum backend, via `tket`.
 """
 from __future__ import annotations
 
-import os
-import pickle
-from typing import Any, Callable, Union
+from typing import Any, Callable
 
 import numpy as np
 from discopy.quantum import Circuit, Id, Measure
 from discopy.tensor import Diagram, Tensor
 
-from lambeq.training.model import Model
+from lambeq.training.quantum_model import QuantumModel
 
 
-class TketModel(Model):
+class TketModel(QuantumModel):
     """A lambeq model for either shot-based simulations of a quantum
     pipeline or experiments run on quantum hardware using `tket`."""
-
-    SMOOTHING = 1e-9
 
     def __init__(self, **kwargs) -> None:
         """Initialise TketModel based on the `t|ket>` backend.
@@ -53,7 +49,7 @@ class TketModel(Model):
             fields.
 
         """
-        if not 'backend_config' in kwargs:
+        if 'backend_config' not in kwargs:
             raise KeyError('Please provide a backend configuration.')
 
         super().__init__()
@@ -74,63 +70,6 @@ class TketModel(Model):
 
     def _randint(self, low=-1 << 63, high=(1 << 63)-1):
         return np.random.randint(low, high)
-
-    def _normalise(self, predictions: np.ndarray) -> np.ndarray:
-        """Apply smoothing to predictions."""
-        predictions = np.abs(predictions) + self.SMOOTHING
-        return predictions / predictions.sum()
-
-    def initialise_weights(self) -> None:
-        """Initialise the weights of the model.
-
-        Raises
-        ------
-        ValueError
-            If `model.symbols` are not initialised.
-
-        """
-        if not self.symbols:
-            raise ValueError('Symbols not initialised. Instantiate through '
-                             '`TketModel.initialise_symbols()`.')
-        assert all(w.size == 1 for w in self.symbols)
-        self.weights = np.random.rand(len(self.symbols))
-
-    @classmethod
-    def load_from_checkpoint(cls,
-                             checkpoint_path: Union[str, os.PathLike],
-                             **kwargs) -> TketModel:
-        """Load the model weights and symbols from a training checkpoint.
-
-        Parameters
-        ----------
-        checkpoint_path : str or PathLike
-            Path that points to the checkpoint file.
-
-        Keyword Args
-        ------------
-        backend_config : dict
-            Dictionary containing the backend configuration. Must include the
-            fields `'backend'`, `'compilation'` and `'shots'`.
-
-        Raises
-        ------
-        FileNotFoundError
-            If checkpoint file does not exist.
-
-        """
-        model = cls(**kwargs)
-        if os.path.exists(checkpoint_path):
-            with open(checkpoint_path, 'rb') as ckp:
-                checkpoint = pickle.load(ckp)
-            try:
-                model.symbols = checkpoint['model_symbols']
-                model.weights = checkpoint['model_weights']
-                return model
-            except KeyError as e:
-                raise e
-        else:
-            raise FileNotFoundError('Checkpoint not found! Check path '
-                                    f'{checkpoint_path}')
 
     def get_diagram_output(self, diagrams: list[Diagram]) -> np.ndarray:
         """Return the prediction for each diagram using t|ket>.

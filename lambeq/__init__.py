@@ -83,6 +83,7 @@ __all__ = [
         'Model',
         'NumpyModel',
         'PytorchModel',
+        'QuantumModel',
         'TketModel',
 
         'Trainer',
@@ -117,5 +118,6 @@ from lambeq.rewrite import (RewriteRule, CoordinationRewriteRule,
                             SimpleRewriteRule, Rewriter)
 from lambeq.tokeniser import Tokeniser, SpacyTokeniser
 from lambeq.training import (Dataset, Optimiser, SPSAOptimiser,
-                             Model, NumpyModel, PytorchModel, TketModel,
-                             Trainer, PytorchTrainer, QuantumTrainer)
+                             Model, NumpyModel, PytorchModel, QuantumModel,
+                             TketModel, Trainer, PytorchTrainer,
+                             QuantumTrainer)

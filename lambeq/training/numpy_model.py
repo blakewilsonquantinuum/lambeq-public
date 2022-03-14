@@ -26,9 +26,8 @@ noiseless and not shot-based.
 """
 from __future__ import annotations
 
-import os
 import pickle
-from typing import Any, Callable, Union
+from typing import Any, Callable, Mapping
 
 import numpy
 import tensornetwork as tn
@@ -36,14 +35,12 @@ from discopy import Tensor
 from discopy.tensor import Diagram
 from sympy import default_sort_key, lambdify
 
-from lambeq.training.model import Model
+from lambeq.training.quantum_model import QuantumModel
 
 
-class NumpyModel(Model):
+class NumpyModel(QuantumModel):
     """A lambeq model for an exact classical simulation of a
     quantum pipeline."""
-
-    SMOOTHING = 1e-9
 
     def __init__(self, **kwargs) -> None:
         """Initialise an NumpyModel. If you want to use jax support,
@@ -99,58 +96,6 @@ class NumpyModel(Model):
 
         self.lambdas[diagram] = jit(diagram_output)
         return self.lambdas[diagram]
-
-    def _normalise(self, predictions: numpy.ndarray) -> numpy.ndarray:
-        """Apply smoothing to predictions."""
-        predictions = self.np.abs(predictions) + self.SMOOTHING
-        return predictions / predictions.sum()
-
-    def initialise_weights(self) -> None:
-        """Initialise the weights of the model.
-
-        Raises
-        ------
-        ValueError
-            If `model.symbols` are not initialised.
-
-        """
-        if not self.symbols:
-            raise ValueError('Symbols not initialised. Instantiate through '
-                             '`NumpyModel.initialise_symbols()`.')
-        assert all(w.size == 1 for w in self.symbols)
-        self.weights = self.np.array(
-            numpy.random.uniform(size=len(self.symbols)))
-
-    @classmethod
-    def load_from_checkpoint(cls,
-                             checkpoint_path: Union[str, os.PathLike],
-                             **kwargs) -> NumpyModel:
-        """Load the model weights and symbols from a training checkpoint.
-
-        Parameters
-        ----------
-        checkpoint_path : str or PathLike
-            Path that points to the checkpoint file.
-
-        Raises
-        ------
-        FileNotFoundError
-            If checkpoint file does not exist.
-
-        """
-        model = cls(**kwargs)
-        if os.path.exists(checkpoint_path):
-            with open(checkpoint_path, 'rb') as ckp:
-                checkpoint = pickle.load(ckp)
-            try:
-                model.symbols = checkpoint['model_symbols']
-                model.weights = checkpoint['model_weights']
-                return model
-            except KeyError as e:
-                raise e
-        else:
-            raise FileNotFoundError('Checkpoint not found! Check path '
-                                    f'{checkpoint_path}')
 
     def get_diagram_output(self, diagrams: list[Diagram]) -> numpy.ndarray:
         """Return the exact prediction for each diagram.
