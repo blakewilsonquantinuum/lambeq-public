@@ -1,5 +1,3 @@
-import shutil
-import uuid
 from math import ceil
 
 import numpy as np
@@ -14,7 +12,6 @@ from lambeq import (AtomicType, Dataset, PytorchModel, PytorchTrainer,
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
 EPOCHS = 1
-UUID = str(uuid.uuid1())
 
 sig = torch.sigmoid
 acc = lambda y_hat, y: torch.sum(torch.eq(torch.round(sig(y_hat)), y))/len(y)/2
@@ -40,11 +37,8 @@ dev_circuits = [ansatz(d) for d in dev_diagrams]
 def test_trainer(tmp_path):
     model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
 
-    log_root = tmp_path / 'test_runs'
-    log_root.mkdir()
-    log_dir = log_root / UUID
+    log_dir = tmp_path / 'test_runs'
     log_dir.mkdir()
-    
     trainer = PytorchTrainer(
         model=model,
         loss_function=torch.nn.BCEWithLogitsLoss(),
@@ -69,11 +63,8 @@ def test_trainer(tmp_path):
 
 def test_restart_training(tmp_path):
     model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
-    log_root = tmp_path / 'test_runs'
-    log_root.mkdir()
-    log_dir = log_root / UUID
+    log_dir = tmp_path / 'test_run'
     log_dir.mkdir()
- 
     trainer = PytorchTrainer(
         model=model,
         loss_function=torch.nn.BCEWithLogitsLoss(),
@@ -117,11 +108,7 @@ def test_restart_training(tmp_path):
 
 def test_evaluation_skipping(tmp_path):
     model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
-    log_root = tmp_path / 'test_runs'
-    log_root.mkdir()
-    log_dir = log_root / UUID
-    log_dir.mkdir()
-
+    log_dir = tmp_path / 'test_run'
     epochs = 4
     eval_step = 2
     trainer = PytorchTrainer(

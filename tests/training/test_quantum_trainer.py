@@ -1,7 +1,5 @@
 import numpy as np
 import tensornetwork as tn
-import shutil
-import uuid
 from discopy import Cup, Word, Tensor
 from discopy.quantum.circuit import Id
 
@@ -10,7 +8,6 @@ from lambeq import AtomicType, IQPAnsatz, Dataset, NumpyModel, QuantumTrainer, S
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
 EPOCHS = 1
-UUID = str(uuid.uuid1())
 Tensor.np = np
 
 train_diagrams = [
@@ -39,9 +36,7 @@ def test_trainer(tmp_path):
     Tensor.np = np
     tn.set_default_backend('numpy')
     model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)
-    log_root = tmp_path / 'test_runs'
-    log_root.mkdir()
-    log_dir = log_root / UUID
+    log_dir = tmp_path / 'test_runs'
     log_dir.mkdir()
 
     trainer = QuantumTrainer(
@@ -68,10 +63,7 @@ def test_trainer(tmp_path):
 def test_restart_training(tmp_path):
     Tensor.np = np
     model = NumpyModel()
-    log_root = tmp_path / 'test_runs'
-    log_root.mkdir()
-    log_dir = log_root / UUID
-    log_dir.mkdir()
+    log_dir = tmp_path / 'test_runs'
     model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)
     trainer = QuantumTrainer(
         model=model,
