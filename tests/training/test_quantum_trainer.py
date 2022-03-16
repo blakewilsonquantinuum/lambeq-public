@@ -1,6 +1,6 @@
 import numpy as np
 import tensornetwork as tn
-from discopy import Cup, Word, Tensor
+from discopy import Cup, Word
 from discopy.quantum.circuit import Id
 
 from lambeq import AtomicType, IQPAnsatz, Dataset, NumpyModel, QuantumTrainer, SPSAOptimiser
@@ -8,7 +8,6 @@ from lambeq import AtomicType, IQPAnsatz, Dataset, NumpyModel, QuantumTrainer, S
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
 EPOCHS = 1
-Tensor.np = np
 
 train_diagrams = [
     (Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)),
@@ -33,7 +32,6 @@ acc = lambda y_hat, y: np.sum(np.round(y_hat) == y) / len(y) / 2
 
 
 def test_trainer(tmp_path):
-    Tensor.np = np
     tn.set_default_backend('numpy')
     model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)
     log_dir = tmp_path / 'test_runs'
@@ -61,7 +59,6 @@ def test_trainer(tmp_path):
     assert len(trainer.val_results["acc"]) == EPOCHS
 
 def test_restart_training(tmp_path):
-    Tensor.np = np
     model = NumpyModel()
     log_dir = tmp_path / 'test_runs'
     model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)

@@ -1,6 +1,5 @@
 from math import ceil
 
-import numpy as np
 import torch
 
 from discopy import Cup, Dim, Tensor, Word
@@ -57,7 +56,7 @@ def test_trainer(tmp_path):
     val_dataset = Dataset(dev_circuits, dev_targets)
 
     trainer.fit(train_dataset, val_dataset)
-    Tensor.np = np
+
     assert len(trainer.train_costs) == EPOCHS
     assert len(trainer.val_results["acc"]) == EPOCHS
 
@@ -100,7 +99,6 @@ def test_restart_training(tmp_path):
     )
 
     trainer_restarted.fit(train_dataset, val_dataset)
-    Tensor.np = np
     assert len(trainer_restarted.train_costs) == EPOCHS+1
     assert len(trainer_restarted.val_costs) == EPOCHS+1
     assert len(trainer_restarted.val_results["acc"]) == EPOCHS+1
@@ -129,6 +127,6 @@ def test_evaluation_skipping(tmp_path):
     val_dataset = Dataset(dev_circuits, dev_targets)
 
     trainer.fit(train_dataset, val_dataset, evaluation_step=eval_step)
-    Tensor.np = np
+
     assert len(trainer.train_costs) == epochs
     assert len(trainer.val_results["acc"]) == ceil(epochs/eval_step)

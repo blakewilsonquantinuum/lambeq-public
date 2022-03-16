@@ -24,8 +24,10 @@ from typing import Any, Callable, Mapping, Optional, Union
 import os
 
 import torch
+from discopy import Tensor
 
 from lambeq.core.globals import VerbosityLevel
+from lambeq.training.dataset import Dataset
 from lambeq.training.pytorch_model import PytorchModel
 from lambeq.training.trainer import Trainer
 
@@ -105,6 +107,7 @@ class PytorchTrainer(Trainer):
                          verbose,
                          seed)
 
+        self.backend = 'pytorch'
         self.learning_rate = learning_rate
         self.device = torch.device('cpu' if device < 0 else f'cuda:{device}')
         if device >= 0:

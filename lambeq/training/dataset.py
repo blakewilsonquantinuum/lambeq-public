@@ -29,7 +29,19 @@ from discopy import Tensor
 
 
 class Dataset:
-    """Dataset class for the training of a lambeq model."""
+    """Dataset class for the training of a lambeq model.
+
+    Data is returned in the format of :py:class:`discopy.tensor.Tensor`'s
+    backend, which by default is set to NumPy.
+    For example, to access the dataset as PyTorch tensors:
+
+        >>> dataset = Dataset(['data1'], [[0, 1, 2, 3]])
+        >>> with Tensor.backend('pytorch'):
+        ...     print(dataset[0])  # becomes pytorch tensor
+        ('data1', tensor([0, 1, 2, 3]))
+        >>> print(dataset[0])  # numpy array again
+        ('data1', array([0, 1, 2, 3]))
+    """
     def __init__(self,
                  data: list[Any],
                  targets: list[Any],
@@ -60,7 +72,6 @@ class Dataset:
         self.targets = targets
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.np = Tensor.np
 
         if self.batch_size == 0:
             self.batch_size = len(self.data)
@@ -71,7 +82,7 @@ class Dataset:
         """Get a single item or a subset from the dataset."""
         x = self.data[index]
         y = self.targets[index]
-        return x, self.np.array(y)
+        return x, Tensor.get_backend().array(y)
 
     def __len__(self) -> int:
         return len(self.data)
@@ -91,11 +102,12 @@ class Dataset:
         if self.shuffle:
             new_data, new_targets = self.shuffle_data(new_data, new_targets)
 
+        backend = Tensor.get_backend()
         for start_idx in range(0, len(self.data), self.batch_size):
             yield (new_data[start_idx: start_idx+self.batch_size],
-                   self.np.array(
+                   backend.array(
                        new_targets[start_idx: start_idx+self.batch_size],
-                       dtype=self.np.float32))
+                       dtype=backend.float32))
 
     @staticmethod
     def shuffle_data(data: list[Any],

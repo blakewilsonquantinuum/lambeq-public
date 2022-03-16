@@ -4,15 +4,12 @@ from copy import deepcopy
 from unittest.mock import mock_open, patch
 
 import numpy as np
-from jax import numpy as jnp
 from discopy import Cup, Word, Tensor
 from discopy.quantum import CRz, CX, H, Id, Ket, Measure, SWAP
 
 from lambeq import AtomicType, IQPAnsatz, NumpyModel, Symbol
 
 def test_init():
-    Tensor.np = np
-
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
 
@@ -24,8 +21,6 @@ def test_init():
     assert isinstance(model.weights, np.ndarray)
 
 def test_forward():
-    Tensor.np = np
-
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
 
@@ -39,23 +34,19 @@ def test_forward():
 
 
 def test_jax_forward():
-    Tensor.np = jnp
-
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
 
     s_dim = 2
     ansatz = IQPAnsatz({N: 1, S: 1}, n_layers=1)
     diagrams = [ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))]
-    model = NumpyModel.initialise_symbols(diagrams)
+    model = NumpyModel.initialise_symbols(diagrams, use_jit=True)
     model.initialise_weights()
     pred = model.forward(diagrams)
     assert pred.shape == (len(diagrams), s_dim)
-    Tensor.np = np
 
 
-def test__lambda_error():
-    Tensor.np = np
+def test_lambda_error():
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
     ansatz = IQPAnsatz({N: 1, S: 1}, n_layers=1)
@@ -65,13 +56,11 @@ def test__lambda_error():
         model._get_lambda(diagram)
 
 def test_initialise_weights_error():
-    Tensor.np = np
     with pytest.raises(ValueError):
         model = NumpyModel()
         model.initialise_weights()
 
 def test_get_diagram_output_error():
-    Tensor.np = np
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
     ansatz = IQPAnsatz({N: 1, S: 1}, n_layers=1)
@@ -81,15 +70,13 @@ def test_get_diagram_output_error():
         model.get_diagram_output([diagram])
 
 def test_jax_usage():
-    Tensor.np = jnp
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
     ansatz = IQPAnsatz({N: 1, S: 1}, n_layers=1)
     diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
-    model = NumpyModel.initialise_symbols([diagram])
+    model = NumpyModel.initialise_symbols([diagram], use_jit=True)
     lam = model._get_lambda(diagram)
-    assert type(lam).__name__ == 'CompiledFunction'  # TODO needs better solution
-    Tensor.np = np
+    assert type(lam).__name__ == 'CompiledFunction'
 
 def test_checkpoint_loading():
     N = AtomicType.NOUN

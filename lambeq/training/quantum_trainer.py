@@ -24,8 +24,10 @@ from typing import Any, Callable, Mapping, Optional, Type, Union
 import os
 
 import numpy as np
+from discopy import Tensor
 
 from lambeq.core.globals import VerbosityLevel
+from lambeq.training.dataset import Dataset
 from lambeq.training.quantum_model import QuantumModel
 from lambeq.training.trainer import Trainer
 from lambeq.training.optimiser import Optimiser

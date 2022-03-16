@@ -51,12 +51,12 @@ class QuantumModel(Model):
 
     def __init__(self) -> None:
         """Initialise an instance of a :py:class:`QuantumModel` base class."""
-        self.np = Tensor.np
         super().__init__()
 
     def _normalise(self, predictions: np.ndarray) -> np.ndarray:
         """Apply smoothing to predictions."""
-        predictions = self.np.abs(predictions) + self.SMOOTHING
+        backend = Tensor.get_backend()
+        predictions = backend.abs(predictions) + self.SMOOTHING
         return predictions / predictions.sum()
 
     def initialise_weights(self) -> None:

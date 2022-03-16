@@ -4,13 +4,11 @@ import pytest
 from unittest.mock import mock_open, patch
 
 import numpy as np
-from discopy import Cup, Word, Tensor
+from discopy import Cup, Word
 from discopy.quantum.circuit import Id
 from pytket.extensions.qiskit import AerBackend
 
 from lambeq import AtomicType, IQPAnsatz, TketModel
-
-Tensor.np = np
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -43,13 +41,11 @@ def test_forward():
     assert pred2.shape == (2*len(diagrams), 2)
 
 def test_initialise_weights_error():
-    Tensor.np = np
     with pytest.raises(ValueError):
         model = TketModel(backend_config=backend_config)
         model.initialise_weights()
 
 def test_get_diagram_output_error():
-    Tensor.np = np
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
     ansatz = IQPAnsatz({N: 1, S: 1}, n_layers=1)

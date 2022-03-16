@@ -34,6 +34,7 @@ from math import ceil
 from typing import TYPE_CHECKING, Any, Callable, Mapping, Optional, Union
 
 from tqdm.auto import tqdm, trange
+from discopy import Tensor
 
 if TYPE_CHECKING:
     from torch.utils.tensorboard import SummaryWriter
@@ -104,6 +105,7 @@ class Trainer(ABC):
         self.log_dir = log_dir
         os.makedirs(self.log_dir, exist_ok=True)
 
+        self.backend = 'numpy'
         self.model = model
         self.loss_function = loss_function
         self.epochs = epochs
@@ -353,28 +355,30 @@ class Trainer(ABC):
                             leave=False,
                             position=1):
             train_loss = 0.0
-            for batch in tqdm(train_dataset,
-                              desc="Batch",
-                              total=batches_per_epoch,
-                              disable=self.verbose !=
+            with Tensor.backend(self.backend):
+                for batch in tqdm(train_dataset,
+                                  desc="Batch",
+                                  total=batches_per_epoch,
+                                  disable=self.verbose !=
                                   VerbosityLevel.PROGRESS.value,
-                              leave=False,
-                              position=2):
-                step += 1
-                x, y_label = batch
-                y_hat, loss = self.training_step(batch)
-                if (self.evaluate_on_train and
-                        self.evaluate_functions is not None):
-                    for metr, func in self.evaluate_functions.items():
-                        res = func(y_hat, y_label)
-                        self._train_results_epoch[metr].append(len(x) * res)
-                train_loss += len(batch[0]) * loss
-                writer_helper('train/step_loss', loss, step)
-                status_bar.set_description(
-                        self._generate_stat_report(
-                            train_loss=loss,
-                            val_loss=(self.val_costs[-1] if self.val_costs
-                                      else None)))
+                                  leave=False,
+                                  position=2):
+                    step += 1
+                    x, y_label = batch
+                    y_hat, loss = self.training_step(batch)
+                    if (self.evaluate_on_train and
+                            self.evaluate_functions is not None):
+                        for metr, func in self.evaluate_functions.items():
+                            res = func(y_hat, y_label)
+                            metric = self._train_results_epoch[metr]
+                            metric.append(len(x) * res)
+                    train_loss += len(batch[0]) * loss
+                    writer_helper('train/step_loss', loss, step)
+                    status_bar.set_description(
+                            self._generate_stat_report(
+                                train_loss=loss,
+                                val_loss=(self.val_costs[-1] if self.val_costs
+                                          else None)))
             train_loss /= len(train_dataset)
             self.train_epoch_costs.append(train_loss)
             writer_helper('train/epoch_loss', train_loss, epoch + 1)
@@ -402,39 +406,40 @@ class Trainer(ABC):
                 if epoch % evaluation_step == 0:
                     val_loss = 0.0
                     batches_per_validation = ceil(len(val_dataset)
-                                                   / val_dataset.batch_size)
-                    for v_batch in tqdm(val_dataset,
-                                        desc="Validation batch",
-                                        total=batches_per_validation,
-                                        disable=self.verbose !=
+                                                  / val_dataset.batch_size)
+                    with Tensor.backend(self.backend):
+                        for v_batch in tqdm(val_dataset,
+                                            desc="Validation batch",
+                                            total=batches_per_validation,
+                                            disable=self.verbose !=
                                             VerbosityLevel.PROGRESS.value,
-                                        leave=False,
-                                        position=2):
-                        x_val, y_label_val = v_batch
-                        y_hat_val, cur_loss = self.validation_step(v_batch)
-                        val_loss += cur_loss * len(x_val)
-                        if self.evaluate_functions is not None:
-                            for metr, func in self.evaluate_functions.items():
-                                res = func(y_hat_val, y_label_val)
-                                self._val_results_epoch[metr].append(
-                                    len(x_val)*res)
+                                            leave=False,
+                                            position=2):
+                            x_val, y_label_val = v_batch
+                            y_hat_val, cur_loss = self.validation_step(v_batch)
+                            val_loss += cur_loss * len(x_val)
+                            if self.evaluate_functions is not None:
+                                for metr, func in self.evaluate_functions.items():
+                                    res = func(y_hat_val, y_label_val)
+                                    self._val_results_epoch[metr].append(
+                                        len(x_val)*res)
+                            status_bar.set_description(
+                                    self._generate_stat_report(
+                                        train_loss=train_loss,
+                                        val_loss=val_loss))
+                        val_loss /= len(val_dataset)
+                        self.val_costs.append(val_loss)
                         status_bar.set_description(
                                 self._generate_stat_report(
                                     train_loss=train_loss,
                                     val_loss=val_loss))
-                    val_loss /= len(val_dataset)
-                    self.val_costs.append(val_loss)
-                    status_bar.set_description(
-                            self._generate_stat_report(
-                                train_loss=train_loss,
-                                val_loss=val_loss))
-                    writer_helper('val/loss', val_loss, epoch+1)
+                        writer_helper('val/loss', val_loss, epoch+1)
 
                     if self.evaluate_functions is not None:
                         for name in self._val_results_epoch:
                             self.val_results[name].append(
                                 sum(self._val_results_epoch[name])
-                                    / len(val_dataset))
+                                / len(val_dataset))
                             self._val_results_epoch[name] = []  # reset
                             writer_helper(
                                 f'val/{name}', self.val_results[name][-1],

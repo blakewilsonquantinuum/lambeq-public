@@ -2,12 +2,10 @@ import pytest
 
 import numpy as np
 
-from discopy import Cup, Word, Tensor
+from discopy import Cup, Word
 from discopy.quantum.circuit import Id
 
 from lambeq import AtomicType, IQPAnsatz, SPSAOptimiser
-
-Tensor.np = np
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE

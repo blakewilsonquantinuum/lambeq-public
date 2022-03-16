@@ -42,23 +42,24 @@ class NumpyModel(QuantumModel):
     """A lambeq model for an exact classical simulation of a
     quantum pipeline."""
 
-    def __init__(self, **kwargs) -> None:
-        """Initialise an NumpyModel. If you want to use jax support,
-        use
+    def __init__(self, use_jit=False, **kwargs) -> None:
+        """Initialise an NumpyModel.
 
-        ```
-        import jax
-        from discopy import Tensor
-        Tensor.np = jax.numpy
-        ```
+        Parameters
+        ----------
+        use_jit : bool, default: False
+            Whether to use JAX's Just-In-Time compilation.
 
         """
         super().__init__()
-        self.np = Tensor.np
+        self.use_jit = use_jit
         self.lambdas: dict[Diagram, Callable] = {}
 
     @classmethod
-    def initialise_symbols(cls, diagrams: list[Diagram], **kwargs):
+    def initialise_symbols(cls,
+                           diagrams: list[Diagram],
+                           use_jit: bool = False,
+                           **kwargs) -> NumpyModel:
         """Extract the symbols from a list of :py:class:`Diagram`s and creates
         a dictionary that maps the diagrams to the according lambda functions.
 
@@ -66,9 +67,16 @@ class NumpyModel(QuantumModel):
         ----------
         diagrams : list of :py:class:`Diagram`
             List of lambeq diagrams.
+        use_jit : bool, default: False
+            Whether to use JAX's Just-In-Time compilation.
+
+        Returns
+        -------
+        NumpyModel
+            The NumPy model initialised from the diagrams.
 
         """
-        model = cls(**kwargs)
+        model = cls(use_jit=use_jit, **kwargs)
         model.symbols = sorted(
             {sym for circ in diagrams for sym in circ.free_symbols},
             key=default_sort_key)
@@ -91,8 +99,9 @@ class NumpyModel(QuantumModel):
             return self.lambdas[diagram]
 
         def diagram_output(*x):
-            result = diagram.lambdify(*self.symbols)(*x).eval().array
-            return self._normalise(result)
+            with Tensor.backend('jax'):
+                result = diagram.lambdify(*self.symbols)(*x).eval().array
+                return self._normalise(result)
 
         self.lambdas[diagram] = jit(diagram_output)
         return self.lambdas[diagram]
@@ -123,7 +132,7 @@ class NumpyModel(QuantumModel):
                              'then call `initialise_weights()`, or load '
                              'from pre-trained checkpoint.')
 
-        if Tensor.np.__name__ == 'jax.numpy':
+        if self.use_jit:
             lambdified_diagrams = [self._get_lambda(d) for d in diagrams]
             return numpy.array([diag_f(*self.weights)
                                 for diag_f in lambdified_diagrams])
@@ -149,9 +158,10 @@ class NumpyModel(QuantumModel):
                     if hasattr(b, '_phase'):
                         b._phase = b._data
 
-        return numpy.array([
-            self._normalise(tn.contractors.auto(*d.to_tn()).tensor)
-            for d in diagrams])
+        with Tensor.backend('numpy'):
+            return numpy.array([
+                self._normalise(tn.contractors.auto(*d.to_tn()).tensor)
+                for d in diagrams])
 
     def forward(self, x: list[Diagram]) -> numpy.ndarray:
         """Perform default forward pass of a lambeq model.

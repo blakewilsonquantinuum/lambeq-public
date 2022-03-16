@@ -53,7 +53,6 @@ class TketModel(QuantumModel):
             raise KeyError('Please provide a backend configuration.')
 
         super().__init__()
-        Tensor.np = np
 
         backend_config = kwargs['backend_config']
         fields = ('backend', 'compilation', 'shots')

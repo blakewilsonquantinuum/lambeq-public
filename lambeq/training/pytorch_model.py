@@ -41,10 +41,6 @@ class PytorchModel(Model, torch.nn.Module):
         Model.__init__(self)
         torch.nn.Module.__init__(self)
 
-        Tensor.np = torch
-        tn.set_default_backend('pytorch')
-        torch.array = torch.as_tensor   # type: ignore
-
     def initialise_weights(self) -> None:
         """Initialise the weights of the model.
 
@@ -123,9 +119,9 @@ class PytorchModel(Model, torch.nn.Module):
                     except:
                         raise KeyError(f'Unknown symbol {b._data!r}.')
 
-        return torch.stack(
-            [tn.contractors.auto(*d.to_tn()).tensor
-                for d in diagrams])
+        with Tensor.backend('pytorch'), tn.DefaultBackend('pytorch'):
+            return torch.stack(
+                [tn.contractors.auto(*d.to_tn()).tensor for d in diagrams])
 
     def forward(self, x: list[Diagram]) -> torch.Tensor:
         """Perform default forward pass of a lambeq model by contracting
