@@ -27,33 +27,30 @@ class FastIntEnum(int, metaclass=FastIntEnumType):
     """An enumeration that subclasses `int`.
 
     To define an enumeration, subclass `FastIntEnum`:
-    ```
-    class Colour(FastIntEnum):
-        values = ['red', 'green', 'blue']
-    ```
+
+        >>> class Colour(FastIntEnum):
+        ...     values = ['red', 'green', 'blue']
+
 
     The members can then be accessed as class attributes:
-    ```
-    >>> Colour.RED
-    Colour.RED
-    >>> str(Colour.RED)
-    red
-    >>> Colour.RED == 0
-    True
-    ```
+
+        >>> Colour.RED
+        Colour.RED
+        >>> str(Colour.RED)
+        'red'
+        >>> Colour.RED == 0
+        True
 
     Custom names can be provided as a list that is at most as long as
     the list of values:
-    ```
-    class Colour(FastIntEnum):
-        values = ['red', 'green', 'blue']
-        names = ['R']
 
-    >>> Colour.R
-    Colour.R
-    >>> Colour.GREEN
-    Colour.GREEN
-    ```
+        >>> class Colour(FastIntEnum):
+        ...     values = ['red', 'green', 'blue']
+        ...     names = ['R']
+        >>> Colour.R
+        Colour.R
+        >>> Colour.GREEN
+        Colour.GREEN
 
     Any remaining values have names that are their uppercase.
 
