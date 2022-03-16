@@ -50,6 +50,9 @@ class PytorchModel(Model, torch.nn.Module):
             If `model.symbols` are not initialised.
 
         """
+        for module in self.modules():
+            if hasattr(module, 'reset_parameters'):
+                module.reset_parameters()  # type: ignore
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`PytorchModel.initialise_symbols()`.')
