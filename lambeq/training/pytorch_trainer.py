@@ -57,7 +57,7 @@ class PytorchTrainer(Trainer):
 
         Parameters
         ----------
-        model : ClassicalModel
+        model : :py:class:`.PytorchModel`
             A lambeq Model using the PyTorch backend for tensor computation.
         loss_function : callable
             A PyTorch loss function from `torch.nn`.

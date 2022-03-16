@@ -56,7 +56,7 @@ class QuantumTrainer(Trainer):
 
         Parameters
         ----------
-        model : QuantumModel
+        model : :py:class:`.QuantumModel`
             A lambeq Model.
         loss_function : callable
             A loss function.

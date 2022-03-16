@@ -25,7 +25,7 @@ from typing import Any, Callable, Optional, Union
 from numpy.typing import ArrayLike
 
 import numpy as np
-from lambeq.training.numpy_model import NumpyModel
+from lambeq.training.quantum_model import QuantumModel
 from lambeq.training.optimiser import Optimiser
 from lambeq.training.tket_model import TketModel
 
@@ -35,30 +35,28 @@ class SPSAOptimiser(Optimiser):
     See https://ieeexplore.ieee.org/document/705889 for details.
     """
 
-    def __init__(self, model: Union[NumpyModel, TketModel],
+    def __init__(self, model: QuantumModel,
                  hyperparams: dict[str, float],
                  loss_fn: Callable[[Any, Any], Any],
                  bounds: Optional[ArrayLike] = None) -> None:
         """Initialise the SPSA optimiser.
 
-        The hyperparameters must contain the following key value pairs:
+        The hyperparameters must contain the following key value pairs::
 
-        ```
-        hyperparams = {
-            'a': A learning rate parameter, float
-            'c': The parameter shift scaling factor, float
-            'A': A stability constant, approx. 0.01 * Num Training steps, float
-        }
-        ```
+            hyperparams = {
+                'a': A learning rate parameter, float
+                'c': The parameter shift scaling factor, float
+                'A': A stability constant, approx. 0.01 * Num Training steps, float
+            }
 
         Parameters
         ----------
-        model : NumpyModel or TketModel
-            A lambeq model.
+        model : :py:class:`.QuantumModel`
+            A lambeq quantum model.
         hyperparams : dict of str to float.
             A dictionary containing the models hyperparameters.
         loss_fn : Callable
-            A loss function of form `loss(prediction, labels)`.
+            A loss function of form `loss(prediction, labels)`\.
         bounds : ArrayLike, optional
             The range of each of the model parameters.
 

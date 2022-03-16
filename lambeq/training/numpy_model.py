@@ -60,7 +60,7 @@ class NumpyModel(QuantumModel):
                            diagrams: list[Diagram],
                            use_jit: bool = False,
                            **kwargs) -> NumpyModel:
-        """Extract the symbols from a list of :py:class:`Diagram`s and creates
+        """Extract the symbols from a list of :py:class:`Diagram`\s and creates
         a dictionary that maps the diagrams to the according lambda functions.
 
         Parameters

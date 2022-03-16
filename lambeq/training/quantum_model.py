@@ -38,7 +38,7 @@ class QuantumModel(Model):
     Attributes
     ----------
     symbols : list of symbols
-        A sorted list of all :py:class:`.Symbol`s occurring in the data.
+        A sorted list of all :py:class:`.Symbol`\s occurring in the data.
     weights : SizedIterable
         A data structure containing the numeric values of the model
         parameters
@@ -85,8 +85,8 @@ class QuantumModel(Model):
         checkpoint_path : str or PathLike
             Path that points to the checkpoint file.
 
-        Keyword Args
-        ------------
+        Other Parameters
+        ----------------
         backend_config : dict
             Dictionary containing the backend configuration for the
             :py:class:`TketModel`. Must include the fields `'backend'`,
@@ -115,10 +115,12 @@ class QuantumModel(Model):
     @abstractmethod
     def get_diagram_output(self, diagrams: list[Diagram]) -> np.ndarray:
         """Return the diagram prediction.
+
         Parameters
         ----------
-        diagrams : list of diagram
+        diagrams : list of :py:class:`Diagram`
             List of lambeq diagrams.
+
         """
 
     @abstractmethod

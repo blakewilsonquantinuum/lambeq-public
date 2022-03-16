@@ -36,8 +36,8 @@ class TketModel(QuantumModel):
     def __init__(self, **kwargs) -> None:
         """Initialise TketModel based on the `t|ket>` backend.
 
-        Keyword Args
-        ------------
+        Other Parameters
+        ----------------
         backend_config : dict
             Dictionary containing the backend configuration. Must include the
             fields `'backend'`, `'compilation'` and `'shots'`.

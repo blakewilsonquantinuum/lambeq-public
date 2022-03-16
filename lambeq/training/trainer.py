@@ -73,7 +73,7 @@ class Trainer(ABC):
 
         Parameters
         ----------
-        model : Model
+        model : :py:class:`.Model`
             A lambeq Model.
         loss_function : callable
             A loss function to compare the prediction to the true label.

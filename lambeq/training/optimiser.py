@@ -38,7 +38,7 @@ class Optimiser(ABC):
 
         Parameters
         ----------
-        model : Model
+        model : :py:class:`.QuantumModel`
             A lambeq model.
         hyperparams : dict of str to float.
             A dictionary containing the models hyperparameters.

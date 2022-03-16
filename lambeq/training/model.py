@@ -43,7 +43,7 @@ class Model(ABC):
     Attributes
     ----------
     symbols : list of symbols
-        A sorted list of all :py:class:`.Symbol`s occuring in the data.
+        A sorted list of all :py:class:`.Symbol`\s occuring in the data.
     weights : SizedIterable
         A data structure containing the numeric values of
         the model's parameters.
@@ -74,8 +74,8 @@ class Model(ABC):
         checkpoint_path : str or PathLike
             Path that points to the checkpoint file.
 
-        Keyword Args
-        ------------
+        Other Parameters
+        ----------------
         backend_config : dict
             Dictionary containing the backend configuration for the
             :py:class:`TketModel`. Must include the fields `'backend'`,
@@ -89,7 +89,7 @@ class Model(ABC):
 
         Parameters
         ----------
-        diagrams : list of diagram
+        diagrams : list of :py:class:`Diagram`
             List of lambeq diagrams.
 
         """
@@ -100,15 +100,15 @@ class Model(ABC):
 
     @classmethod
     def initialise_symbols(cls, diagrams: list[Diagram], **kwargs) -> Model:
-        """Extract the symbols from a list of :py:class:`Diagram`s.
+        """Extract the symbols from a list of :py:class:`Diagram`\s.
 
         Parameters
         ----------
         diagrams : list of :py:class:`Diagram`
             List of lambeq diagrams.
 
-        Keyword Args
-        ------------
+        Other Parameters
+        ----------------
         backend_config : dict
             Dictionary containing the backend configuration for the
             :py:class:`TketModel`. Must include the fields `'backend'`,
