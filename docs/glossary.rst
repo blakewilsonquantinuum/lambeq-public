@@ -9,10 +9,13 @@ Glossary
         In ``lambeq``, each :term:`pregroup <pregroup grammar>` type :math:`p` has a left (:math:`p^l`) and a right (:math:`p^r`) adjoint, which are used to represent arguments in composite types. For example, a transitive verb has type :math:`n^r \cdot s \cdot n^l`, meaning it expects a noun argument on both sides in order to return a sentence.
 
     ansatz (plural: ansätze)
-	A map that determines choices such as the number of :term:`qubits <qubit>` that every wire of a :term:`string diagram` is associated with and the concrete parameterised quantum states that correspond to each word. For the classical case, an ansatz determines the number of dimensions associated to each type, and the way that large tensors are represented as :term:`matrix product states <matrix product state (MPS)>`.
+        A map that determines choices such as the number of :term:`qubits <qubit>` that every wire of a :term:`string diagram` is associated with and the concrete parameterised quantum states that correspond to each word. For the classical case, an ansatz determines the number of dimensions associated to each type, and the way that large tensors are represented as :term:`matrix product states <matrix product state (MPS)>`.
 
     bag-of-words
         A :term:`compositional model` of meaning which represents a sentence as a multiset of words; that is, it does not take into account the order of words or any other syntactic relationship between them.
+
+    Bobcat
+        A state-of-the-art statistical :term:`CCG <Combinatory Categorial Grammar (CCG)>` parser based on [SC2021]_. Bobcat is ``lambeq``'s default parser.
 
     cap
         A special morphism in a :term:`rigid category`, which, together with a :term:`cup` morphism, obey certain conditions called :term:`snake equations`. In diagrammatic form, a cap is depicted as a wire with downward concavity (:math:`\cap`). In the context of :term:`DisCoCat`, a cap is mostly used to "bridge" disconnected wires in order to alter the normal "flow" of information from one word to another, for example in cases such as *type-raising*.
@@ -59,11 +62,17 @@ Glossary
     matrix product state (MPS)
         A factorization of a large tensor into a chain-like product of smaller tensors. ``lambeq`` is equipped with :term:`ansätze <ansatz (plural: ansätze)>` that implement various forms of matrix product states, allowing the execution of large :term:`tensor networks <tensor network>` on classical hardware.
 
+    model
+        A ``lambeq`` model is a class holding the trainable weights and other model-specific information, used in supervised learning. A model is always associated with a specific backend, such as PyTorch, numpy, or :term:`tket`, and is paired with a matching :term:`trainer`.
+
     monoidal category
         A :term:`category` equipped with the monoidal product :math:`\otimes` and monoidal unit :math:`I`, providing an abstraction suitable for quantum computation.  :term:`Categorical quantum mechanics (CQM) <categorical quantum mechanics (CQM)>` and :term:`DisCoCat` are both based on the mathematical framework of monoidal categories.
 
     natural language processing (NLP)
         The use of computational methods for solving language-related problems.
+
+    parser
+        A statistical tool that converts a sentence into a hierarchical representation that reflects the syntactic relationships between the words (a :term:`syntax tree`) based on a specific grammar formalism.
 
     pregroup grammar
         A grammar formalism developed by Joachim Lambek in 1999 [Lam1999]_ based on the notion of a *pregroup*. Pregroup grammars are closely related to categorial grammars (such as :term:`CCG <Combinatory Categorial Grammar (CCG)>`). In category-theoretic terms, a pregroup grammar forms a :term:`rigid category`, sometimes also referred to as a non-symmetric :term:`compact closed category`.
@@ -125,8 +134,11 @@ Glossary
     tket
         Stylised :math:`\textrm{t}|\textrm{ket}\rangle`. A quantum software development platform produced by Cambridge Quantum. The heart of ``tket`` is a language-agnostic optimising compiler designed to generate code for a variety of NISQ devices, which has several features designed to minimise the influence of device error.
 
-    parser
-        A statistical tool that converts a sentence into a hierarchical representation that reflects the syntactic relationships between the words (a :term:`syntax tree`) based on a specific grammar formalism. A parser usually works in two steps: first, a POS-tagger assigns part-of-speech tags to the words in a sentence; next, the parser uses its statistical model to try and combine the words into meaningful compositions following the rules of the grammar formalism.
+    trainer
+        In ``lambeq``, a trainer is a class related to a given backend (for example PyTorch, NumPy, :term:`tket` and so on) that is used for supervised learning. A trainer is always paired with a matching :term:`model`, a structure that contains the trainable weights and other parameters of the model.
+
+    tree reader
+        In ``lambeq``, a tree :term:`reader` converts a sentence into a :term:`monoidal <monoidal category>` diagram by following directly its :term:`CCG <Combinatory Categorial Grammar (CCG)>` :term:`syntax tree`, as provided by a :term:`parser`. In other words, no explicit :term:`pregroup <pregroup grammar>` diagram is generated. Composition takes place by boxes that combine word states based on the grammatical rules found in the tree.
 
     word-sequence model
-        A :term:`compositional model` that respects the order of words in a sentence, but it does not take into account any other syntactic information. In ``lambeq``, the model is implemented as a :term:`tensor train`.
+        A :term:`compositional model` that respects the order of words in a sentence, but does not take into account any other syntactic information.

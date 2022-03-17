@@ -15,7 +15,7 @@ lambeq is a toolkit for quantum natural language processing (QNLP).
 - Documentation: https://cqcl.github.io/lambeq/
 - User support: <lambeq-support@cambridgequantum.com>
 - Contributions: Please read [our guide](https://cqcl.github.io/lambeq/CONTRIBUTING.html).
-- If you want to subscribe to lambeq's mailing list, send an email to <lambeq-users@cambridgequantum.com> with the word "subscribe" as subject.
+- If you want to subscribe to lambeq's mailing list, let us know by sending an email to <lambeq-support@cambridgequantum.com>. 
 
 ---
 **Note:** Please do not try to read the documentation directly from the preview provided in the [repository](https://github.com/CQCL/lambeq/tree/main/docs), since some of the pages will not be rendered properly.
@@ -26,7 +26,7 @@ lambeq is a toolkit for quantum natural language processing (QNLP).
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.8-3.9
 
 ### Installation
 
@@ -34,6 +34,8 @@ lambeq can be installed with the command:
 ```bash
 pip install lambeq
 ```
+
+The default installation of lambeq includes Bobcat parser, a state-of-the-art statistical parser (see [related paper](https://arxiv.org/abs/2109.10044)) fully integrated with the toolkit.
 
 To install lambeq with optional dependencies for extra features, run:
 ```bash
@@ -85,12 +87,6 @@ make clean
 make html
 ```
 the docs will be under `docs/_build`.
-
-To rebuild the rst files themselves, run:
-
-```bash
-sphinx-apidoc --force -o docs lambeq
-```
 
 ## License
 

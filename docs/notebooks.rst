@@ -11,5 +11,6 @@ Examples
     ../examples/circuit.ipynb
     ../examples/tensor.ipynb
     ../examples/classical_pipeline.ipynb
+    ../examples/quantum_pipeline.ipynb
     ../examples/quantum_pipeline_jax.ipynb
-    ../examples/quantum_pipeline_tket.ipynb
+

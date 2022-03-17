@@ -9,6 +9,8 @@ Installation
 
    pip install lambeq
 
+The default installation of ``lambeq`` includes :term:`Bobcat` parser, a state-of-the-art statistical parser fully integrated with the toolkit.
+
 To install ``lambeq`` with optional dependencies for extra features, run::
 
    pip install lambeq[extras]
