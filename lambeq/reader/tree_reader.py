@@ -32,6 +32,7 @@ S = AtomicType.SENTENCE
 
 
 class TreeReaderMode(Enum):
+    """An enumeration for :py:class:`TreeReader`."""
     NO_TYPE = 0
     RULE_ONLY = 1
     RULE_TYPE = 2

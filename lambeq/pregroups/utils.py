@@ -28,7 +28,7 @@ def is_pregroup_diagram(diagram: Diagram) -> bool:
 
     Parameters
     ----------
-    diagram: discopy.Diagram
+    diagram: discopy.rigid.Diagram
         The diagram to be checked.
 
     Returns
@@ -81,6 +81,7 @@ def create_pregroup_diagram(
     ------
     :py:class:`discopy.cat.AxiomError`
         If the provided morphism list does not type-check properly.
+
     """
     if morphisms is None:
         morphisms = []
@@ -185,6 +186,12 @@ def remove_cups(diagram: Diagram) -> Diagram:
     ----------
     diagram : discopy.rigid.Diagram
         The diagram from which cups will be removed.
+
+    Returns
+    -------
+    discopy.rigid.Diagram
+        Diagram with some cups removed.
+
     """
     try:
         return _remove_cups(_compress_cups(_remove_cups(diagram)))

@@ -63,7 +63,7 @@ class QuantumTrainer(Trainer):
         epochs : int
             Number of training epochs
         optimizer : Optimiser
-            A optimizer of type `lambeq.training.Optimiser`.
+            An optimizer of type :py:class:`lambeq.training.Optimiser`.
         evaluate_functions : mapping of str to callable, optional
             Mapping of evaluation metric functions from their names.
             Structure [{\"metric\": func}].
@@ -141,12 +141,12 @@ class QuantumTrainer(Trainer):
 
         Parameters
         ----------
-        batch : tuple of list and np.array
+        batch : tuple of list and np.ndarray
             Current batch.
 
         Returns
         -------
-        Tuple of np.Array and float
+        Tuple of np.ndarray and float
             The model predictions and the calculated loss.
 
         """
@@ -168,7 +168,7 @@ class QuantumTrainer(Trainer):
 
         Returns
         -------
-        Tuple of np.Array and float
+        tuple of np.ndarray and float
             The model predictions and the calculated loss.
 
         """

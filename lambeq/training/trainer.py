@@ -203,7 +203,7 @@ class Trainer(ABC):
         Raises
         ------
         FileNotFoundError
-            If the file does not exists.
+            If the file does not exist.
         """
         if self.verbose == VerbosityLevel.TEXT.value:
             print("Restore last checkpoint...", file=sys.stderr)

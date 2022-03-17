@@ -104,7 +104,7 @@ class SPSAOptimiser(Optimiser):
 
         Returns
         -------
-        Tuple of np.Array and float
+        tuple of np.ndarray and float
             The model predictions and the calculated loss.
 
         """

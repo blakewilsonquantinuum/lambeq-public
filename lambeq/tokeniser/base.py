@@ -50,7 +50,7 @@ class Tokeniser(ABC):
 
         Returns
         -------
-        list of lists of str
+        list of list of str
             A list of tokenised sentences. Each sentence is given as a list
             of tokens - strings
 
