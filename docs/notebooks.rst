@@ -7,6 +7,7 @@ Examples
 
     ../examples/ccg2discocat.ipynb
     ../examples/reader.ipynb
+    ../examples/tree_reader.ipynb
     ../examples/rewrite.ipynb
     ../examples/circuit.ipynb
     ../examples/tensor.ipynb
