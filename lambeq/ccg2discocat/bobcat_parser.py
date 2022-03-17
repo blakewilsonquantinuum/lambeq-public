@@ -188,8 +188,8 @@ class BobcatParser(CCGParser):
             absolute threshold.
 
         Chart parser parameters:
-        eisner_normal_form : bool, optional
-            Whether to use eisner normal form. TODO: explain
+        eisner_normal_form : bool, default: True
+            Whether to use eisner normal form.
         max_parse_trees : int, optional
             A safety limit to the number of parse trees that can be
             generated per parse before automatically failing.
