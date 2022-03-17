@@ -251,7 +251,7 @@ class Trainer(ABC):
     def _add_extra_chkpoint_info(self) -> Mapping[str, Any]:
         """Add any additional information to the training checkpoint. These
         might include model-specific information like the random state of the
-        backend or the state of the optimiser.
+        backend or the state of the optimizer.
 
         Returns
         -------

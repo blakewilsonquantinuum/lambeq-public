@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['Dataset', 'Model',  'NumpyModel', 'Optimiser',
+__all__ = ['Dataset', 'Model',  'NumpyModel', 'Optimizer',
            'PytorchModel', 'PytorchTrainer', 'QuantumTrainer',
-           'QuantumModel', 'SPSAOptimiser', 'TketModel', 'Trainer']
+           'QuantumModel', 'SPSAOptimizer', 'TketModel', 'Trainer']
 
 from lambeq.training.dataset import Dataset
 
@@ -28,5 +28,5 @@ from lambeq.training.pytorch_model import PytorchModel
 from lambeq.training.quantum_model import QuantumModel
 from lambeq.training.tket_model import TketModel
 
-from lambeq.training.optimiser import Optimiser
-from lambeq.training.spsa_optimiser import SPSAOptimiser
+from lambeq.training.optimizer import Optimizer
+from lambeq.training.spsa_optimizer import SPSAOptimizer

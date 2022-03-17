@@ -5,7 +5,7 @@ import numpy as np
 from discopy import Cup, Word
 from discopy.quantum.circuit import Id
 
-from lambeq import AtomicType, IQPAnsatz, SPSAOptimiser
+from lambeq import AtomicType, IQPAnsatz, SPSAOptimizer
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -40,7 +40,7 @@ loss = lambda yhat, y: np.abs(yhat-y).sum()**2
 def test_init():
     model = ModelDummy.initialise_symbols(diagrams)
     model.initialise_weights()
-    optim = SPSAOptimiser(model,
+    optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss,
                           bounds=[[0, 10]]*len(model.weights))
@@ -58,7 +58,7 @@ def test_backward():
     np.random.seed(3)
     model = ModelDummy.initialise_symbols(diagrams)
     model.initialise_weights()
-    optim = SPSAOptimiser(model,
+    optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss,
                           bounds=[[0, 10]]*len(model.weights))
@@ -70,7 +70,7 @@ def test_step():
     np.random.seed(3)
     model = ModelDummy.initialise_symbols(diagrams)
     model.initialise_weights()
-    optim = SPSAOptimiser(model,
+    optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss,
                           bounds=[[0, 10]]*len(model.weights))
@@ -86,7 +86,7 @@ def test_project():
     np.random.seed(4)
     model = ModelDummy.initialise_symbols(diagrams)
     model.weights = np.array([0, 10, 0])
-    optim = SPSAOptimiser(model,
+    optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss,
                           bounds=[[0, 10]]*len(model.weights))
@@ -97,7 +97,7 @@ def test_project():
 def test_missing_field():
     model = ModelDummy
     with pytest.raises(KeyError):
-        _ = SPSAOptimiser(model=model,
+        _ = SPSAOptimizer(model=model,
                                 hyperparams={},
                                 loss_fn=loss)
 
@@ -105,7 +105,7 @@ def test_bound_error():
     model = ModelDummy()
     model.initialise_weights()
     with pytest.raises(ValueError):
-        _ = SPSAOptimiser(model=model,
+        _ = SPSAOptimizer(model=model,
                                 hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                                 loss_fn=loss,
                                 bounds=[[0, 10]]*(len(model.weights)-1))
@@ -120,7 +120,7 @@ def test_load_state_dict():
     model = ModelDummy()
     model.initialise_symbols(diagrams)
     model.initialise_weights()
-    optim = SPSAOptimiser(model,
+    optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
                           loss_fn= loss)
     optim.load_state_dict(state_dict)

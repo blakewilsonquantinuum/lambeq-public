@@ -3,7 +3,7 @@ import tensornetwork as tn
 from discopy import Cup, Word
 from discopy.quantum.circuit import Id
 
-from lambeq import AtomicType, IQPAnsatz, Dataset, NumpyModel, QuantumTrainer, SPSAOptimiser
+from lambeq import AtomicType, IQPAnsatz, Dataset, NumpyModel, QuantumTrainer, SPSAOptimizer
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -40,7 +40,7 @@ def test_trainer(tmp_path):
     trainer = QuantumTrainer(
         model=model,
         loss_function=loss,
-        optimizer=SPSAOptimiser,
+        optimizer=SPSAOptimizer,
         optim_hyperparams={'a': 0.02, 'c': 0.06, 'A':0.01*EPOCHS},
         epochs=EPOCHS,
         evaluate_functions={"acc": acc},
@@ -65,7 +65,7 @@ def test_restart_training(tmp_path):
     trainer = QuantumTrainer(
         model=model,
         loss_function=loss,
-        optimizer=SPSAOptimiser,
+        optimizer=SPSAOptimizer,
         optim_hyperparams={'a': 0.02, 'c': 0.06, 'A':0.01*EPOCHS},
         epochs=EPOCHS,
         evaluate_functions={"acc": acc},
@@ -84,7 +84,7 @@ def test_restart_training(tmp_path):
     trainer_restarted = QuantumTrainer(
         model=model,
         loss_function=loss,
-        optimizer=SPSAOptimiser,
+        optimizer=SPSAOptimizer,
         optim_hyperparams={'a': 0.02, 'c': 0.06, 'A':0.01*EPOCHS},
         epochs=EPOCHS + 1,
         evaluate_functions={"acc": acc},

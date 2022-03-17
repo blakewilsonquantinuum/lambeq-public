@@ -77,8 +77,8 @@ __all__ = [
 
         'Dataset',
 
-        'Optimiser',
-        'SPSAOptimiser',
+        'Optimizer',
+        'SPSAOptimizer',
 
         'Model',
         'NumpyModel',
@@ -117,7 +117,7 @@ from lambeq.reader import (Reader, LinearReader, TreeReader, TreeReaderMode,
 from lambeq.rewrite import (RewriteRule, CoordinationRewriteRule,
                             SimpleRewriteRule, Rewriter)
 from lambeq.tokeniser import Tokeniser, SpacyTokeniser
-from lambeq.training import (Dataset, Optimiser, SPSAOptimiser,
+from lambeq.training import (Dataset, Optimizer, SPSAOptimizer,
                              Model, NumpyModel, PytorchModel, QuantumModel,
                              TketModel, Trainer, PytorchTrainer,
                              QuantumTrainer)

@@ -30,7 +30,7 @@ from lambeq.core.globals import VerbosityLevel
 from lambeq.training.dataset import Dataset
 from lambeq.training.quantum_model import QuantumModel
 from lambeq.training.trainer import Trainer
-from lambeq.training.optimiser import Optimiser
+from lambeq.training.optimizer import Optimizer
 
 
 class QuantumTrainer(Trainer):
@@ -43,7 +43,7 @@ class QuantumTrainer(Trainer):
             model: QuantumModel,
             loss_function: Callable,
             epochs: int,
-            optimizer: Type[Optimiser],
+            optimizer: Type[Optimizer],
             optim_hyperparams: dict[str, float],
             evaluate_functions: Optional[Mapping[str, Callable]] = None,
             evaluate_on_train: bool = True,
@@ -62,8 +62,8 @@ class QuantumTrainer(Trainer):
             A loss function.
         epochs : int
             Number of training epochs
-        optimizer : Optimiser
-            An optimizer of type :py:class:`lambeq.training.Optimiser`.
+        optimizer : Optimizer
+            An optimizer of type :py:class:`lambeq.training.Optimizer`.
         evaluate_functions : mapping of str to callable, optional
             Mapping of evaluation metric functions from their names.
             Structure [{\"metric\": func}].
@@ -108,7 +108,7 @@ class QuantumTrainer(Trainer):
     def _add_extra_chkpoint_info(self) -> Mapping[str, Any]:
         """Add any additional information to the training checkpoint. These
         might include model-specific information like the random state of the
-        backend or the state of the optimiser.
+        backend or the state of the optimizer.
 
         Returns
         -------

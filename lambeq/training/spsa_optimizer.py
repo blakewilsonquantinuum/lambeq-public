@@ -13,10 +13,10 @@
 # limitations under the License.
 
 """
-SPASOptimiser
+SPASOptimizer
 =============
 Module implementing the Simultaneous Perturbation Stochastic Approximation
-optimiser.
+optimizer.
 
 """
 from __future__ import annotations
@@ -26,12 +26,12 @@ from numpy.typing import ArrayLike
 
 import numpy as np
 from lambeq.training.quantum_model import QuantumModel
-from lambeq.training.optimiser import Optimiser
+from lambeq.training.optimizer import Optimizer
 from lambeq.training.tket_model import TketModel
 
 
-class SPSAOptimiser(Optimiser):
-    """An Optimiser using simultaneous perturbation stochastic approximations.
+class SPSAOptimizer(Optimizer):
+    """An Optimizer using simultaneous perturbation stochastic approximations.
     See https://ieeexplore.ieee.org/document/705889 for details.
     """
 
@@ -39,7 +39,7 @@ class SPSAOptimiser(Optimiser):
                  hyperparams: dict[str, float],
                  loss_fn: Callable[[Any, Any], Any],
                  bounds: Optional[ArrayLike] = None) -> None:
-        """Initialise the SPSA optimiser.
+        """Initialise the SPSA optimizer.
 
         The hyperparameters must contain the following key value pairs::
 
@@ -153,12 +153,12 @@ class SPSAOptimiser(Optimiser):
         self.ck = self.hyperparams['c']/c_decay
 
     def state_dict(self) -> dict:
-        """Return optimiser states as dictionary.
+        """Return optimizer states as dictionary.
 
         Returns
         -------
         dict
-            A dictionary containing the current state of the optimiser.
+            A dictionary containing the current state of the optimizer.
 
         """
         return {'A': self.A,
@@ -169,12 +169,12 @@ class SPSAOptimiser(Optimiser):
                 'current_sweep': self.current_sweep}
 
     def load_state_dict(self, state_dict: dict) -> None:
-        """Load state of the optimiser from the state dictionary.
+        """Load state of the optimizer from the state dictionary.
 
         Parameters
         ----------
         state_dict : dict
-            A dictionary containing a snapshot of the optimiser state.
+            A dictionary containing a snapshot of the optimizer state.
 
         """
         self.A = state_dict['A']

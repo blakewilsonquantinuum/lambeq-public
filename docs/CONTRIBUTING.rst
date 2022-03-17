@@ -9,7 +9,7 @@ Contributions to ``lambeq`` are welcome, especially with regard to adding:
 - :term:`Compositional schemes <compositional model>` and :term:`readers <reader>` (extensions of the :py:class:`.Reader` class)
 - :term:`Rewrite rules <rewrite rule>` (extensions of the :py:class:`.RewriteRule` class)
 - Tensor and circuit :term:`ansätze <ansatz (plural: ansätze)>` (extensions of the :py:class:`.TensorAnsatz` and :py:class:`.CircuitAnsatz` classes)
-- New :term:`trainers <trainer>`, :term:`models <model>`, and optimisers for the :py:mod:`.training` package.
+- New :term:`trainers <trainer>`, :term:`models <model>`, and optimizers for the :py:mod:`.training` package.
 
 All accepted contributions will be included in the next official release and contributors will be properly attributed in the corresponding release notes.
 

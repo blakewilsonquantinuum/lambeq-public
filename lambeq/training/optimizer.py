@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """
-Optimiser
+Optimizer
 =========
-Module containing the base class for a lambeq optimiser.
+Module containing the base class for a lambeq optimizer.
 
 """
 from __future__ import annotations
@@ -28,13 +28,13 @@ import numpy as np
 from lambeq.training.model import Model
 
 
-class Optimiser(ABC):
-    """Optimiser base class."""
+class Optimizer(ABC):
+    """Optimizer base class."""
 
     def __init__(self, model: Model, hyperparams: dict[Any, Any],
                  loss_fn: Callable[[Any, Any], Any],
                  bounds: Optional[ArrayLike] = None) -> None:
-        """Initialise the optimiser base class.
+        """Initialise the optimizer base class.
 
         Parameters
         ----------
@@ -78,11 +78,11 @@ class Optimiser(ABC):
 
     @abstractmethod
     def state_dict(self) -> dict:
-        """Return optimiser states as dictionary."""
+        """Return optimizer states as dictionary."""
 
     @abstractmethod
     def load_state_dict(self, state: dict) -> None:
-        """Load state of the optimiser from the state dictionary."""
+        """Load state of the optimizer from the state dictionary."""
 
     def zero_grad(self):
         """Reset the gradients to zero."""
