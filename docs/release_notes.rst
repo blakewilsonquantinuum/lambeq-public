@@ -15,6 +15,7 @@ Release notes
 - A new :py:mod:`~lambeq.pregroups` package that provides methods for easy creation of pregroup diagrams, removal of cups, and printing of diagrams in text form (i.e. in a terminal).
 - A new :py:class:`.TreeReader` class that exploits the biclosed structure of CCG grammatical derivations.
 - Three new rewrite rules for relative pronouns [SCC2014a]_ [SCC2014b]_ and coordination [Kar2016]_.
+- Tokenisation features have been added in all parsers and readers.
 - Additional generator methods and minor improvements for the :py:class:`.CCGBankParser` class.
 - Improved and more detailed package structure.
 - Most classes and functions can now be imported from :py:mod:`lambeq` directly, instead of having to import from the subpackages.

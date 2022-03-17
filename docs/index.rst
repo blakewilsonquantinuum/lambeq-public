@@ -63,6 +63,7 @@ If you use ``lambeq`` for your research, please cite the accompanying paper [Kea
    manual_training
    advanced
    ../tutorials/extend-lambeq.ipynb
+   notebooks
 
 .. toctree::
    :caption: Toolkit
@@ -70,7 +71,6 @@ If you use ``lambeq`` for your research, please cite the accompanying paper [Kea
 
    root-api
    cli
-   notebooks
 
 .. toctree::
    :caption: Reference
@@ -82,7 +82,7 @@ If you use ``lambeq`` for your research, please cite the accompanying paper [Kea
    release_notes
 
 .. toctree::
-   :caption: Links
+   :caption: External links
    :maxdepth: 1
 
    Resources <https://qnlp.cambridgequantum.com/downloads.html>

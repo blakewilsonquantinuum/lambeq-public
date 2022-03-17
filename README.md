@@ -42,9 +42,9 @@ To install lambeq with optional dependencies for extra features, run:
 pip install lambeq[extras]
 ```
 
-To enable depccg support, install depccg. More information can be found
+To enable depccg support, you will need to install depccg separately. More information can be found
 on the [depccg homepage](//github.com/masashi-y/depccg).
-Currently, only version 2.0.3.2 is supported.
+Currently, only version 2.0.3.2 of depccg is supported.
 
 ## Usage
 
