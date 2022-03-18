@@ -3,7 +3,7 @@
 Advanced: Manual training
 =========================
 
-While the :py:mod:`.training` package is the recommended way of performing supervised learning with ``lambeq``, there might be use cases where more flexibility is needed, for example when someone wants to use an unsupported ML backend. In this tutorial we show how training can be performed with ``lambeq`` at a lower level.
+While the :py:mod:`.training` package is the recommended way of performing supervised learning with ``lambeq``, there might be use cases where more flexibility is needed, for example when someone wants to use an unsupported ML backend. In this tutorial, we show how training can be performed with ``lambeq`` at a lower level.
 
 In general, there are many ways to train a ``lambeq`` model, and the right one to use depends on the task at hand, the type of experiment (quantum or classical), and even other factors, such as hardware requirements. At the highest level, the process involves the following steps (for the classical case):
 
@@ -11,7 +11,7 @@ In general, there are many ways to train a ``lambeq`` model, and the right one t
 2. Assign tensors to each one of the words in the vocabulary, initialised randomly.
 3. Training loop:
 
-    3.1. Substitute the tensors from the vocabulary in for the corresponding words in the diagram.
+    3.1. Substitute the tensors from the vocabulary for the corresponding words in the diagram.
 
     3.2. Contract the diagram to get a result.
 

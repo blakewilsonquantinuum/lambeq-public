@@ -10,7 +10,7 @@ Motivation and connection to tensor networks
 
 In order to simplify :term:`NLP <natural language processing (NLP)>` design on quantum hardware, ``lambeq`` represents sentences as :term:`string diagrams <string diagram>` (:numref:`fig-stringdiagram`). This choice stems from the fact that a :term:`string diagram` expresses computations in a :ref:`monoidal category </tutorials/monoidal.ipynb#Monoidal-categories>`, an abstraction well-suited to model the way a quantum computer works and processes data.
 
-From a more practical point of view, a :term:`string diagram` can be seen as an enriched :term:`tensor network`, a mathematical structure with many applications in quantum physics. Compared to tensor networks, string diagrams have some additional convenient properties, for example they respect the order of words, and allow easy rewriting/modification of their structure.
+From a more practical point of view, a :term:`string diagram` can be seen as an enriched :term:`tensor network`, a mathematical structure with many applications in quantum physics. Compared to tensor networks, string diagrams have some additional convenient properties, for example, they respect the order of words, and allow easy rewriting/modification of their structure.
 
 .. _fig-stringdiagram:
 .. figure:: ./_static/images/string_diagram.png

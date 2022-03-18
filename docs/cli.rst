@@ -5,7 +5,7 @@
 Command-line interface
 ======================
 
-While ``lambeq`` is primarily aimed for programmatic use, since Release :ref:`rel-0.2.0` it is also equipped with a command-line interface which provides immediate and easy access to most of the toolkit's functionality. A summary of the available options is given below.
+While ``lambeq`` is primarily aimed for programmatic use, since Release :ref:`rel-0.2.0` it is also equipped with a command-line interface that provides immediate and easy access to most of the toolkit's functionality. A summary of the available options is given below.
 
 ::
 
@@ -30,7 +30,7 @@ The following sections provide an introduction to the command-line interface usa
 Basic usage
 -----------
 
-The most straightforward use of the command-line interface of ``lambeq`` is to use it as a :term:`pregroup <pregroup grammar>` :term:`parser`. To get the pregroup diagram for a sentence use the following command:
+The most straightforward use of the command-line interface of ``lambeq`` is to use it as a :term:`pregroup <pregroup grammar>` :term:`parser`. To get the pregroup diagram for a sentence, use the following command:
 
 .. code-block:: console
 
@@ -136,7 +136,7 @@ or
 Text output is also available with ascii-only characters:
 
 .. code-block:: console
-    
+
     $ lambeq -f text-ascii "John gave Mary a flower."
 
      John       gave      Mary    a    flower.
@@ -144,9 +144,9 @@ Text output is also available with ascii-only characters:
       n    n.r s n.l n.l   n    n n.l     n   
       \_____/  |  |   \____/    |  \______/   
                |  \_____________/             
- 
+
 To avoid repeated long commands, arguments can be stored into a YAML file ``conf.yaml`` by adding an argument ``-y conf.yaml``.
-To load the configuration from this file next time, ``-l conf.yaml`` can be added. Any arguments that were not provided in the command line will be taken from that file. If an argument is specified both in command line and in the configuration file, the command-line argument takes priority.
+To load the configuration from this file next time, ``-l conf.yaml`` can be added. Any arguments that were not provided in the command line will be taken from that file. If an argument is specified both in the command line and in the configuration file, the command-line argument takes priority.
 
 .. _sec-detailed_options:
 
