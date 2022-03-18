@@ -73,13 +73,13 @@ class Grammar:
             data = json.load(f)
         return cls(**data)
 
-    def save(self, filename: StrPathT) -> None:
+    def save(self, filename: StrPathT) -> None:  # pragma: no cover
         """Save the grammar to a JSON file."""
         with open(filename, 'w') as f:
             json.dump(asdict(self), f, indent=1)
 
 
-def read_grammar_dir(directory: StrPathT) -> Grammar:
+def read_grammar_dir(directory: StrPathT) -> Grammar:  # pragma: no cover
     """Read a grammar from a directory."""
 
     grammar_dir = Path(directory)

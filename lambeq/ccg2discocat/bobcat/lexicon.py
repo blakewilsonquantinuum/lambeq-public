@@ -149,7 +149,7 @@ class Category:
 
     def _str(self,
              full: bool = False,
-             slot_counter: int = 0) -> Tuple[str, int]:
+             slot_counter: int = 0) -> Tuple[str, int]:  # pragma: no cover
         """Helper function to stringify a Category."""
         if self.atomic:
             output = f'{self.atom}'

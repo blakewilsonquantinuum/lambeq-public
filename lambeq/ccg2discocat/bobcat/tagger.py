@@ -162,7 +162,9 @@ class BertForChartClassification(BertPreTrainedModel):
         span_logits = self.span_classifier(self.dropout(span_input))
 
         loss = None
-        if tag_labels is not None and span_labels is not None:
+        if (tag_labels is not None
+                and span_labels is not None):  # pragma: no cover
+            # this is only used for training
             loss_fct_tag = nn.CrossEntropyLoss()
             if self.config.empty_span_weight is not None:
                 weight = torch.ones(self.config.num_cats, device=self.device)
@@ -194,7 +196,7 @@ class BertForChartClassification(BertPreTrainedModel):
 
             loss = (tag_loss*n_tags + span_loss*n_spans) / (n_tags + n_spans)
 
-        if not return_dict:
+        if not return_dict:  # pragma: no cover
             output = (tag_logits, span_logits, *outputs[2:])
             return (loss, *output) if loss is not None else output
 
@@ -233,14 +235,15 @@ class TaggerOutput:
     cats: list[str]
     sentences: list[TaggerOutputSentence]
 
-    def asdict(self) -> dict[str, Any]:
+    def asdict(self) -> dict[str, Any]:  # pragma: no cover
         return asdict(self)
 
     @staticmethod
-    def tags_str(tags: list[tuple[int, float]], precision: int) -> str:
+    def tags_str(tags: list[tuple[int, float]],
+                 precision: int) -> str:  # pragma: no cover
         return ','.join(f'{idx}={logp:.{precision}}' for idx, logp in tags)
 
-    def astext(self, precision: int = 3) -> str:
+    def astext(self, precision: int = 3) -> str:  # pragma: no cover
         """Convert into a form that can be passed to Java C&C."""
 
         tags = ' '.join(self.tags)

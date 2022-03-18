@@ -49,7 +49,8 @@ StrPathT = Union[str, 'os.PathLike[str]']
 MODELS = {'bert': 'https://qnlp.cambridgequantum.com/models/bert.tar.gz'}
 
 
-def get_model_dir(model: str, cache_dir: StrPathT = None) -> Path:
+def get_model_dir(model: str,
+                  cache_dir: StrPathT = None) -> Path:  # pragma: no cover
     if cache_dir is None:
         try:
             cache_dir = Path(os.getenv('XDG_CACHE_HOME'))

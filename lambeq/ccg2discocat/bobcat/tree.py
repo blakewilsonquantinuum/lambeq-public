@@ -89,10 +89,7 @@ class Variable:
 
     def __add__(self, other: Any) -> Variable:
         ret = Variable()
-        try:
-            ret.fillers = self.fillers + other.fillers
-        except AttributeError:
-            return NotImplemented
+        ret.fillers = self.fillers + other.fillers
         return ret
 
     def as_filled(self, filled: bool) -> Variable:

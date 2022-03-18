@@ -175,16 +175,16 @@ class ParseResult:
                                                              list[ParseTree]]:
         return self.root[index]
 
-    def c_line(self) -> str:
+    def c_line(self) -> str:  # pragma: no cover
         ret = '<c>'
         for word, tag in zip(self.words, self._output_tags):
             ret += f' {word}|UNK|{tag}'.replace('[X]', '')
         return ret
 
-    def deps(self) -> str:
+    def deps(self) -> str:  # pragma: no cover
         return self._deps(self.root[0])
 
-    def _deps(self, tree: ParseTree) -> str:
+    def _deps(self, tree: ParseTree) -> str:  # pragma: no cover
         output = ''.join(f'{dep}\n' for dep in tree.filled_deps)
 
         if tree.left:
@@ -195,7 +195,9 @@ class ParseResult:
             self._output_tags.append(tree.cat)
         return output
 
-    def skim_deps(self, start: int = 0, end: Optional[int] = None) -> str:
+    def skim_deps(self,
+                  start: int = 0,
+                  end: Optional[int] = None) -> str:  # pragma: no cover
         if end is None:
             end = len(self.words) - 1
 
