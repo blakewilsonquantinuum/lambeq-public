@@ -55,6 +55,12 @@ def create_pregroup_diagram(
 ) -> Diagram:
     r"""Create a :py:class:`discopy.rigid.Diagram` from a list of cups and swaps.
 
+        >>> n, s = Ty('n'), Ty('s')
+        >>> words = [
+        ...     Word('she', n), Word('goes', n.r @ s @ n.l), Word('home', n)]
+        >>> morphisms = [(Cup, 0, 1), (Cup, 3, 4)]
+        >>> diagram = create_pregroup_diagram(words, Ty('s'), morphisms)
+
     Parameters
     ----------
     words : list of :py:class:`discopy.grammar.pregroup.Word`
@@ -62,13 +68,11 @@ def create_pregroup_diagram(
         the words of the sentence.
     cod : :py:class:`discopy.rigid.Ty`
         The output type of the diagram.
-    morphisms: A list of tuple[type, int, int]
+    morphisms: list of tuple[type, int, int]
         A list of tuples of the form (morphism, start_wire_idx, end_wire_idx).
         Morphisms can be :py:class:`~discopy.rigid.Cup` s or
         :py:class:`~discopy.rigid.Swap` s, while the two numbers define the
-        indices of the wires on which the morphism is applied. The index range
-        is [1..n], where 1 corresponds to the first atomic type of the first
-        word, and `n` to the last atomic type of the last word.
+        indices of the wires on which the morphism is applied.
 
     Returns
     -------
