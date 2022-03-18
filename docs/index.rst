@@ -70,6 +70,7 @@ If you use ``lambeq`` for your research, please cite the accompanying paper [Kea
    :maxdepth: 4
 
    root-api
+   package-api
    cli
 
 .. toctree::

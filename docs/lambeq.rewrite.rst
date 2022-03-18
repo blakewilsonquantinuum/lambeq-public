@@ -1,8 +1,7 @@
-lambeq package
+lambeq.rewrite
 ==============
 
-.. automodule:: lambeq
+.. automodule:: lambeq.rewrite
    :members:
    :undoc-members:
    :show-inheritance:
-   :inherited-members:
