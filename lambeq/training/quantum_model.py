@@ -38,7 +38,7 @@ class QuantumModel(Model):
     Attributes
     ----------
     symbols : list of symbols
-        A sorted list of all :py:class:`.Symbol`\s occurring in the data.
+        A sorted list of all :py:class:`.Symbol` s occurring in the data.
     weights : SizedIterable
         A data structure containing the numeric values of the model
         parameters
@@ -92,6 +92,11 @@ class QuantumModel(Model):
             :py:class:`TketModel`. Must include the fields `'backend'`,
             `'compilation'` and `'shots'`.
 
+        Returns
+        -------
+        :py:class:`QuantumModel`
+            The initialised model.
+
         Raises
         ------
         FileNotFoundError
@@ -119,7 +124,7 @@ class QuantumModel(Model):
         Parameters
         ----------
         diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
+            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
 
         """
 

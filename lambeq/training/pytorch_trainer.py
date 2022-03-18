@@ -86,9 +86,7 @@ class PytorchTrainer(Trainer):
         from_checkpoint : bool, default: False
             Starts training from the checkpoint, saved in the log_dir.
         verbose : str, default: 'text',
-            Controls the form of progress tracking for the trainer. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output.
+            See :py:class:`VerbosityLevel` for options.
         seed : int, optional
             Random seed.
 

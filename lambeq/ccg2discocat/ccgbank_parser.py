@@ -106,9 +106,7 @@ class CCGBankParser(CCGParser):
             Path to the root of the corpus. The sections must be located
             in `<root>/data/AUTO`.
         verbose : str, default: 'suppress',
-            Controls the form of progress tracking. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output.
+            See :py:class:`VerbosityLevel` for options.
 
         """
         if not VerbosityLevel.has_value(verbose):
@@ -132,11 +130,9 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a tree.
-        verbose : str, optional, default: :py:obj:`None`,
-            Controls the form of progress tracking. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output. If set, takes priority over
-            the :py:attr:`verbose` attribute of the parser.
+        verbose : str, optional
+            See :py:class:`VerbosityLevel` for options. If set, takes priority
+            over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
@@ -173,11 +169,9 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a tree.
-        verbose : str, optional, default: :py:obj:`None`,
-            Controls the form of progress tracking. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output. If set, takes priority over
-            the :py:attr:`verbose` attribute of the parser.
+        verbose : str, optional
+            See :py:class:`VerbosityLevel` for options. If set, takes priority
+            over the :py:attr:`verbose` attribute of the parser.
 
         Yields
         ------
@@ -244,11 +238,9 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a diagram.
-        verbose : str, optional, default: :py:obj:`None`,
-            Controls the form of progress tracking. Set to 'text' for
-            text outputs, 'progress' for a progress bar, or 'suppress' to
-            have no output. If set, takes priority over the :py:attr:`verbose`
-            attribute of the parser.
+        verbose : str, optional
+            See :py:class:`VerbosityLevel` for options. If set, takes priority
+            over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
@@ -290,11 +282,9 @@ class CCGBankParser(CCGParser):
         suppress_exceptions : bool, default: False
             Stop exceptions from being raised, instead returning
             :py:obj:`None` for a diagram.
-        verbose : str, optional, default: :py:obj:`None`,
-            Controls the form of progress tracking. Set to 'text' for text
-            outputs, 'progress' for a progress bar, or 'suppress' to have
-            no output. If set, takes priority over the :py:attr:`verbose`
-            attribute of the parser.
+        verbose : str, optional
+            See :py:class:`VerbosityLevel` for options. If set, takes priority
+            over the :py:attr:`verbose` attribute of the parser.
 
         Yields
         ------
@@ -352,11 +342,9 @@ class CCGBankParser(CCGParser):
         tokenised : bool, default: False
             Whether the sentence has been passed as a list of tokens.
             For CCGBankParser, it should be kept `False`.
-        verbose : str, optional, default: :py:obj:`None`,
-            Controls the form of progress tracking. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output. If set, takes priority over
-            the :py:attr:`verbose` attribute of the parser.
+        verbose : str, optional
+            See :py:class:`VerbosityLevel` for options. If set, takes priority
+            over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------

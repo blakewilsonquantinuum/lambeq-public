@@ -119,14 +119,14 @@ class CCGTree:
 
         Parameters
         ----------
-        text : str or None, default: None
+        text : str, optional
             The word or phrase associated to the whole tree. If
             :py:obj:`None`, it is inferred from its children.
         rule : CCGRule, default: CCGRule.UNKNOWN
             The final :py:class:`.CCGRule` used in the derivation.
         biclosed_type : discopy.biclosed.Ty
             The type associated to the derived phrase.
-        children : list of CCGTree or None, default: None
+        children : list of CCGTree, optional
             A list of JSON subtrees. The types of these subtrees can be
             combined with the :py:obj:`rule` to produce the output
             :py:obj:`type`. A leaf node has an empty list of children.

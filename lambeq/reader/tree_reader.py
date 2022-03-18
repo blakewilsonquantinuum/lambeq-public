@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 
 __all__ = ['TreeReader', 'TreeReaderMode']
 
@@ -32,14 +32,7 @@ S = AtomicType.SENTENCE
 
 
 class TreeReaderMode(Enum):
-    """An enumeration for :py:class:`TreeReader`."""
-    NO_TYPE = 0
-    RULE_ONLY = 1
-    RULE_TYPE = 2
-
-
-class TreeReader(Reader):
-    """A reader that combines words according to a parse tree.
+    """An enumeration for :py:class:`TreeReader`.
 
     The words in the tree diagram can be combined using 3 modes:
 
@@ -60,6 +53,13 @@ class TreeReader(Reader):
             :py:obj:`FA(N << N)`.
 
     """
+    NO_TYPE = 0
+    RULE_ONLY = 1
+    RULE_TYPE = 2
+
+
+class TreeReader(Reader):
+    """A reader that combines words according to a parse tree."""
 
     def __init__(self,
                  ccg_parser: Union[CCGParser, Callable[[], CCGParser]] =
@@ -77,6 +77,7 @@ class TreeReader(Reader):
             tree diagram.
         mode : TreeReaderMode, default: TreeReaderMode.NO_TYPE
             Determines what boxes are used to combine the tree.
+            See :py:class:`TreeReaderMode` for options.
         word_type : Ty, default: core.types.AtomicType.SENTENCE
             The type of each word box. By default, it uses the sentence
             type from :py:class:`.core.types.AtomicType`.
@@ -108,11 +109,23 @@ class TreeReader(Reader):
 
     def sentence2diagram(self,
                          sentence: SentenceType,
-                         tokenised: bool = False) -> Diagram:
-        """Parse a sentence into a DisCoPy diagram.
+                         tokenised: bool = False) -> Optional[Diagram]:
+        """Parse a sentence into a :py:class:`~discopy.rigid.Diagram` .
 
         This produces a tree-shaped diagram based on the output of the CCG
         parser.
+
+        Parameters
+        ----------
+        sentence : str or list of str
+            The sentence to be parsed.
+        tokenised : bool, default: False
+            Whether the sentence has been passed as a list of tokens.
+
+        Returns
+        -------
+        :py:class:`discopy.rigid.Diagram` or None
+            The parsed diagram, or :py:obj:`None` on failure.
 
         """
 

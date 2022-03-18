@@ -42,7 +42,7 @@ class NumpyModel(QuantumModel):
     """A lambeq model for an exact classical simulation of a
     quantum pipeline."""
 
-    def __init__(self, use_jit=False, **kwargs) -> None:
+    def __init__(self, use_jit: bool = False, **kwargs) -> None:
         """Initialise an NumpyModel.
 
         Parameters
@@ -60,13 +60,13 @@ class NumpyModel(QuantumModel):
                            diagrams: list[Diagram],
                            use_jit: bool = False,
                            **kwargs) -> NumpyModel:
-        """Extract the symbols from a list of :py:class:`Diagram`\s and creates
+        """Extract the symbols from a list of :py:class:`Diagram` s and creates
         a dictionary that maps the diagrams to the according lambda functions.
 
         Parameters
         ----------
         diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
+            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
         use_jit : bool, default: False
             Whether to use JAX's Just-In-Time compilation.
 
@@ -112,7 +112,7 @@ class NumpyModel(QuantumModel):
         Parameters
         ----------
         diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
+            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
 
         Raises
         ------
@@ -172,7 +172,7 @@ class NumpyModel(QuantumModel):
         Parameters
         ----------
         x : list of :py:class:`Diagram`
-            List of input diagrams.
+            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
 
         Returns
         -------

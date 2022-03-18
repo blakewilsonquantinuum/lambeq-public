@@ -60,19 +60,17 @@ class CCGParser(ABC):
             its return entry is :py:obj:`None`.
         tokenised : bool, default: False
             Whether each sentence has been passed as a list of tokens.
-        verbose : str, optional, default: :py:obj:`None`,
-            Controls the form of progress tracking. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output. Not all parsers
+        verbose : str, optional
+            See :py:class:`VerbosityLevel` for options. Not all parsers
             implement all three levels of progress reporting, see the
-            respective documentation for each parser. If set, it takes priority
+            respective documentation for each parser. If set, takes priority
             over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
         list of CCGTree or None
-            The parsed trees. (may contain :py:obj:`None` if exceptions
-            are suppressed)
+            The parsed trees. May contain :py:obj:`None` if exceptions
+            are suppressed.
 
         """
 
@@ -144,19 +142,17 @@ class CCGParser(ABC):
             its return entry is :py:obj:`None`.
         tokenised : bool, default: False
             Whether each sentence has been passed as a list of tokens.
-        verbose : str, optional, default: :py:obj:`None`,
-            Controls the form of progress tracking. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output. Not all parsers
+        verbose : str, optional
+            See :py:class:`VerbosityLevel` for options. Not all parsers
             implement all three levels of progress reporting, see the
-            respective documentation for each parser. If set, it takes priority
+            respective documentation for each parser. If set, takes priority
             over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
         list of discopy.Diagram or None
-            The parsed diagrams. (may contain :py:obj:`None` if
-            exceptions are suppressed)
+            The parsed diagrams. May contain :py:obj:`None` if
+            exceptions are suppressed.
 
         """
         trees = self.sentences2trees(sentences,

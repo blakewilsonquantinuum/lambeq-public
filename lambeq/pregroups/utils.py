@@ -14,21 +14,19 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from discopy import Box, Cup, Diagram, Swap, Id, Ty, Word
 
 CUP_TOKEN = '**CUP**'
 
 
 def is_pregroup_diagram(diagram: Diagram) -> bool:
-    """Check if a DisCoPy diagram is a pregroup diagram.
+    """Check if a :py:class:`discopy.rigid.Diagram` is a pregroup diagram.
 
-    Adapted from `discopy.grammar.pregroup.draw()`.
+    Adapted from :py:class:`discopy.grammar.pregroup.draw`.
 
     Parameters
     ----------
-    diagram: discopy.rigid.Diagram
+    diagram : :py:class:`discopy.rigid.Diagram`
         The diagram to be checked.
 
     Returns
@@ -53,28 +51,28 @@ def is_pregroup_diagram(diagram: Diagram) -> bool:
 def create_pregroup_diagram(
     words: list[Word],
     cod: Ty,
-    morphisms: Optional[list[tuple[type, int, int]]] = None
+    morphisms: list[tuple[type, int, int]]
 ) -> Diagram:
-    r"""Create a DisCoPy pregroup diagram from a list of cups and swaps.
+    r"""Create a :py:class:`discopy.rigid.Diagram` from a list of cups and swaps.
 
     Parameters
     ----------
-    words: A list of :py:class:`discopy.Word` \s.
-        A list of :py:class:`discopy.Word` objects corresponding to
+    words : list of :py:class:`discopy.grammar.pregroup.Word`
+        A list of :py:class:`~discopy.grammar.pregroup.Word` s corresponding to
         the words of the sentence.
-    cod: discopy.Ty
+    cod : :py:class:`discopy.rigid.Ty`
         The output type of the diagram.
-    morphisms: A list of `tuple[type, int, int]` or None, default = None
+    morphisms: A list of tuple[type, int, int]
         A list of tuples of the form (morphism, start_wire_idx, end_wire_idx).
-        Morphisms can be from :py:class:`discopy.Cup` and
-        :py:class:`discopy.Swap`, while the two numbers define the indices of
-        the wires on which the morphism is applied. The index range is [1..n],
-        where 1 correspond to the first atomic type of the first word, and `n`
-        to the last atomic type of the last word.
+        Morphisms can be :py:class:`~discopy.rigid.Cup` s or
+        :py:class:`~discopy.rigid.Swap` s, while the two numbers define the
+        indices of the wires on which the morphism is applied. The index range
+        is [1..n], where 1 corresponds to the first atomic type of the first
+        word, and `n` to the last atomic type of the last word.
 
     Returns
     -------
-    :py:obj:`discopy.Diagram`
+    :py:class:`discopy.rigid.Diagram`
         The generated pregroup diagram.
 
     Raises
@@ -83,8 +81,6 @@ def create_pregroup_diagram(
         If the provided morphism list does not type-check properly.
 
     """
-    if morphisms is None:
-        morphisms = []
 
     types: Ty = Ty()
     boxes: list[Word] = []
@@ -184,12 +180,12 @@ def remove_cups(diagram: Diagram) -> Diagram:
 
     Parameters
     ----------
-    diagram : discopy.rigid.Diagram
+    diagram : :py:class:`discopy.rigid.Diagram`
         The diagram from which cups will be removed.
 
     Returns
     -------
-    discopy.rigid.Diagram
+    :py:class:`discopy.rigid.Diagram`
         Diagram with some cups removed.
 
     """

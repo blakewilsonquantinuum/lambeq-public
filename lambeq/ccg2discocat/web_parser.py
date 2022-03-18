@@ -58,9 +58,7 @@ class WebParser(CCGParser):
             The URL to the parser. By default, use CQC's CCG tree
             parser.
         verbose : str, default: 'suppress',
-            Controls the form of progress tracking. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output.
+            See :py:class:`VerbosityLevel` for options.
 
         """
         self.service_url = service_url
@@ -86,17 +84,15 @@ class WebParser(CCGParser):
             Whether to suppress exceptions. If :py:obj:`True`, then if a
             sentence fails to parse, instead of raising an exception,
             its return entry is :py:obj:`None`.
-        verbose : str, optional, default: :py:obj:`None`,
-            Controls the form of progress tracking. Set to
-            'text' for text outputs, 'progress' for a progress bar, or
-            'suppress' to have no output. If set, it takes
+        verbose : str, optional
+            See :py:class:`VerbosityLevel` for options. If set, it takes
             priority over the :py:attr:`verbose` attribute of the parser.
 
         Returns
         -------
-        list of CCGTree or None
-            The parsed trees. (may contain :py:obj:`None` if exceptions
-            are suppressed)
+        list of :py:class:`CCGTree` or None
+            The parsed trees. May contain :py:obj:`None` if exceptions
+            are suppressed.
 
         Raises
         ------

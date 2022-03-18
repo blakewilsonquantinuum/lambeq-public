@@ -18,11 +18,28 @@ from enum import Enum
 
 
 class VerbosityLevel(Enum):
-    """Available options for the verbosity of progress reporting. Value
-    'progress'vcorresponds to a progress bar, 'text' for text reports, and
-    'suppress' for no output. All outputs are printed to stderr.
-    Visual Studio Code does not always display progress bars correctly, use
-    'progress' level reporting in Visual Studio Code at your own risk.
+    """Level of verbosity for progress reporting.
+
+    .. list-table:: Available Options
+        :widths: 25 25 50
+        :header-rows: 1
+
+        * - Option
+          - Value
+          - Description
+        * - PROGESS
+          - :py:obj:`'progress'`
+          - Use progress bar.
+        * - TEXT
+          - :py:obj:`'text'`
+          - Give text report.
+        * - SUPPRESS
+          - :py:obj:`'suppress'`
+          - No output.
+
+    All outputs are printed to stderr. Visual Studio Code does not always
+    display progress bars correctly, use :py:obj:`'progress'` level reporting
+    in Visual Studio Code at your own risk.
 
     """
 

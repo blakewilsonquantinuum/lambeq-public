@@ -34,7 +34,7 @@ from lambeq.training.model import Model
 
 
 class PytorchModel(Model, torch.nn.Module):
-    """A lambeq model for the classical pipeline using the Pytorch backend."""
+    """A lambeq model for the classical pipeline using the PyTorch backend."""
 
     def __init__(self, **kwargs) -> None:
         """Initialise a PytorchModel."""
@@ -97,8 +97,8 @@ class PytorchModel(Model, torch.nn.Module):
 
         Parameters
         ----------
-        diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
+        diagrams : list of :py:class:`discopy.tensor.Diagram`
+            The :py:class:`~discopy.tensor.Diagram` s to be evaluated.
 
         Raises
         ------
@@ -135,8 +135,8 @@ class PytorchModel(Model, torch.nn.Module):
 
         Parameters
         ----------
-        x : list of :py:class:`Diagram`
-            List of input diagrams.
+        x : list of :py:class:`discopy.tensor.Diagram`
+            The :py:class:`~discopy.tensor.Diagram` s to be evaluated.
 
         Returns
         -------

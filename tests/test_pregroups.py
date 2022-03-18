@@ -56,12 +56,6 @@ def test_diagram_with_cups_and_swaps():
     assert d.boxes == expected_boxes and d.offsets == expected_offsets
 
 
-def test_diagram_with_a_single_box():
-    words = [Word("Yes", s)]
-    d = create_pregroup_diagram(words, s)
-    assert d.boxes == words and d.offsets == [0]
-
-
 def test_remove_cups():
     n = Ty('n')
     s = Ty('s')

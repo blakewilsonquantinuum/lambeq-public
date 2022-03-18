@@ -24,7 +24,7 @@ from typing import Any, Callable
 
 import numpy as np
 from discopy.quantum import Circuit, Id, Measure
-from discopy.tensor import Diagram, Tensor
+from discopy.tensor import Diagram
 
 from lambeq.training.quantum_model import QuantumModel
 
@@ -76,7 +76,7 @@ class TketModel(QuantumModel):
         Parameters
         ----------
         diagrams : list of :py:class:`Diagram`
-            List of lambeq diagrams.
+            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
 
         Raises
         ------
@@ -119,7 +119,7 @@ class TketModel(QuantumModel):
         Parameters
         ----------
         x : list of :py:class:`Diagram`
-            List of input diagrams.
+            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
 
         Returns
         -------

@@ -105,7 +105,7 @@ class DepCCGParser(CCGParser):
         root_cats : str, default: 'S[dcl]|S[wq]|S[q]|S[qem]|NP'
             A bar-separated list of categories allowed at the root of
             the parse.
-        verbose : VerbosityLevel, default: 'progress',
+        verbose : str, default: 'progress',
             Controls the command-line output of the parser. Only
             'progress' option is available for this parser.
         **kwargs : dict, optional
@@ -165,7 +165,7 @@ class DepCCGParser(CCGParser):
             its return entry is :py:obj:`None`.
         tokenised : bool, default: False
             Whether each sentence has been passed as a list of tokens.
-        verbose : str, optional, default: :py:obj:`None`,
+        verbose : str, optional
             Controls the form of progress tracking. If set, takes priority
             over the :py:attr:`verbose` attribute of the parser. This class
             only supports 'progress' verbosity level - a progress bar.
@@ -173,8 +173,8 @@ class DepCCGParser(CCGParser):
         Returns
         -------
         list of CCGTree or None
-            The parsed trees. (may contain :py:obj:`None` if exceptions
-            are suppressed)
+            The parsed trees. May contain :py:obj:`None` if exceptions
+            are suppressed.
 
         Raises
         ------

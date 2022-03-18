@@ -100,12 +100,12 @@ class RewriteRule(ABC):
 
         Parameters
         ----------
-        box : discopy.rigid.Box
+        box : :py:class:`discopy.rigid.Box`
             The candidate box to be tested against this rewrite rule.
 
         Returns
         -------
-        discopy.rigid.Diagram, optional
+        :py:class:`discopy.rigid.Diagram`, optional
             The rewritten diagram, or :py:obj:`None` if rule
             does not apply.
 
@@ -140,9 +140,9 @@ class SimpleRewriteRule(RewriteRule):
 
         Parameters
         ----------
-        cod : discopy.rigid.Ty
+        cod : :py:class:`discopy.rigid.Ty`
             The type that the codomain of each box is matched against.
-        template : discopy.rigid.Diagram
+        template : :py:class:`discopy.rigid.Diagram`
             The diagram that a matching box is replaced with. A special
             placeholder box is replaced by the word in the matched box,
             and can be created using
@@ -182,13 +182,13 @@ class SimpleRewriteRule(RewriteRule):
 
         Parameters
         ----------
-        cod : discopy.rigid.Ty
+        cod : :py:class:`discopy.rigid.Ty`
             The codomain of the placeholder, and hence the word in the
             resulting rewritten diagram.
 
         Returns
         -------
-        discopy.rigid.Box
+        :py:class:`discopy.rigid.Box`
             A placeholder box with the given codomain.
 
         """
