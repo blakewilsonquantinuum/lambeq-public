@@ -43,7 +43,7 @@ class Model(ABC):
     Attributes
     ----------
     symbols : list of symbols
-        A sorted list of all :py:class:`.Symbol` s occuring in the data.
+        A sorted list of all :py:class:`Symbols <.Symbol>` occuring in the data.
     weights : SizedIterable
         A data structure containing the numeric values of
         the model's parameters.
@@ -89,7 +89,7 @@ class Model(ABC):
 
         Parameters
         ----------
-        diagrams : list of :py:class:`Diagram`
+        diagrams : list of :py:class:`~discopy.tensor.Diagram`
             The tensor or circuit diagrams to be evaluated.
 
         """
@@ -100,11 +100,12 @@ class Model(ABC):
 
     @classmethod
     def from_diagrams(cls, diagrams: list[Diagram], **kwargs) -> Model:
-        """Build model from a list of :py:class:`Diagram` s.
+        """Build model from a list of
+        :py:class:`Diagrams <discopy.tensor.Diagram>`.
 
         Parameters
         ----------
-        diagrams : list of :py:class:`Diagram`
+        diagrams : list of :py:class:`~discopy.tensor.Diagram`
             The tensor or circuit diagrams to be evaluated.
 
         Other Parameters

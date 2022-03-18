@@ -97,8 +97,8 @@ class PytorchModel(Model, torch.nn.Module):
 
         Parameters
         ----------
-        diagrams : list of :py:class:`discopy.tensor.Diagram`
-            The :py:class:`~discopy.tensor.Diagram` s to be evaluated.
+        diagrams : list of :py:class:`~discopy.tensor.Diagram`
+            The :py:class:`Diagrams <discopy.tensor.Diagram>` to be evaluated.
 
         Raises
         ------
@@ -135,8 +135,8 @@ class PytorchModel(Model, torch.nn.Module):
 
         Parameters
         ----------
-        x : list of :py:class:`discopy.tensor.Diagram`
-            The :py:class:`~discopy.tensor.Diagram` s to be evaluated.
+        x : list of :py:class:`~discopy.tensor.Diagram`
+            The :py:class:`Diagrams <discopy.tensor.Diagram>` to be evaluated.
 
         Returns
         -------

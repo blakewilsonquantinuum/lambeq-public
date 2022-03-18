@@ -38,10 +38,9 @@ class QuantumModel(Model):
     Attributes
     ----------
     symbols : list of symbols
-        A sorted list of all :py:class:`.Symbol` s occurring in the data.
+        A sorted list of all :py:class:`Symbols <.Symbol>` occurring in the data.
     weights : SizedIterable
-        A data structure containing the numeric values of the model
-        parameters
+        A data structure containing the numeric values of the model parameters
     SMOOTHING : float
         A smoothing constant
 
@@ -123,8 +122,9 @@ class QuantumModel(Model):
 
         Parameters
         ----------
-        diagrams : list of :py:class:`Diagram`
-            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
+        diagrams : list of :py:class:`~discopy.tensor.Diagram`
+            The :py:class:`Circuits <discopy.quantum.circuit.Circuit>` to be
+            evaluated.
 
         """
 

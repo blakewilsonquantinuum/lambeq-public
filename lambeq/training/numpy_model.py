@@ -60,12 +60,14 @@ class NumpyModel(QuantumModel):
                       diagrams: list[Diagram],
                       use_jit: bool = False,
                       **kwargs) -> NumpyModel:
-        """Build model from a list of :py:class:`Diagram` s.
+        """Build model from a list of
+        :py:class:`Diagrams <discopy.tensor.Diagram>`
 
         Parameters
         ----------
-        diagrams : list of :py:class:`Diagram`
-            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
+        diagrams : list of :py:class:`~discopy.tensor.Diagram`
+            The :py:class:`Circuits <discopy.quantum.circuit.Circuit>` to be
+            evaluated.
         use_jit : bool, default: False
             Whether to use JAX's Just-In-Time compilation.
 
@@ -110,8 +112,9 @@ class NumpyModel(QuantumModel):
 
         Parameters
         ----------
-        diagrams : list of :py:class:`Diagram`
-            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
+        diagrams : list of :py:class:`~discopy.tensor.Diagram`
+            The :py:class:`Circuits <discopy.quantum.circuit.Circuit>` to be
+            evaluated.
 
         Raises
         ------
@@ -170,8 +173,8 @@ class NumpyModel(QuantumModel):
 
         Parameters
         ----------
-        x : list of :py:class:`Diagram`
-            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
+        x : list of :py:class:`~discopy.tensor.Diagram`
+            The :py:class:`Circuits <discopy.quantum.circuit.Circuit>` to be evaluated.
 
         Returns
         -------

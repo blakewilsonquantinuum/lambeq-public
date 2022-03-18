@@ -75,8 +75,8 @@ class TketModel(QuantumModel):
 
         Parameters
         ----------
-        diagrams : list of :py:class:`Diagram`
-            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
+        diagrams : list of :py:class:`~discopy.tensor.Diagram`
+            The :py:class:`Circuits <discopy.quantum.circuit.Circuit>` to be evaluated.
 
         Raises
         ------
@@ -118,8 +118,9 @@ class TketModel(QuantumModel):
 
         Parameters
         ----------
-        x : list of :py:class:`Diagram`
-            The :py:class:`~discopy.quantum.circuit.Circuit` s to be evaluated.
+        x : list of :py:class:`~discopy.tensor.Diagram`
+            The :py:class:`Circuits <discopy.quantum.circuit.Circuit>` to be
+            evaluated.
 
         Returns
         -------
