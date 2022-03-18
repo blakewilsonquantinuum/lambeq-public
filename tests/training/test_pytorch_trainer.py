@@ -34,7 +34,7 @@ train_circuits = [ansatz(d) for d in train_diagrams]
 dev_circuits = [ansatz(d) for d in dev_diagrams]
 
 def test_trainer(tmp_path):
-    model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
+    model = PytorchModel.from_diagrams(train_circuits + dev_circuits)
 
     log_dir = tmp_path / 'test_runs'
     log_dir.mkdir()
@@ -61,7 +61,7 @@ def test_trainer(tmp_path):
     assert len(trainer.val_results["acc"]) == EPOCHS
 
 def test_restart_training(tmp_path):
-    model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
+    model = PytorchModel.from_diagrams(train_circuits + dev_circuits)
     log_dir = tmp_path / 'test_run'
     log_dir.mkdir()
     trainer = PytorchTrainer(
@@ -105,7 +105,7 @@ def test_restart_training(tmp_path):
     assert len(trainer_restarted.train_results["acc"]) == EPOCHS+1
 
 def test_evaluation_skipping(tmp_path):
-    model = PytorchModel.initialise_symbols(train_circuits + dev_circuits)
+    model = PytorchModel.from_diagrams(train_circuits + dev_circuits)
     log_dir = tmp_path / 'test_run'
     epochs = 4
     eval_step = 2

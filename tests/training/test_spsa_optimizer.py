@@ -24,7 +24,7 @@ class ModelDummy(Model):
     def __init__(self) -> None:
         super().__init__()
         self.initialise_weights()
-    def load_from_checkpoint():
+    def from_checkpoint():
         pass
     def _make_lambda(self, diagram):
         return diagram.lambdify(*self.symbols)
@@ -38,7 +38,7 @@ class ModelDummy(Model):
 loss = lambda yhat, y: np.abs(yhat-y).sum()**2
 
 def test_init():
-    model = ModelDummy.initialise_symbols(diagrams)
+    model = ModelDummy.from_diagrams(diagrams)
     model.initialise_weights()
     optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
@@ -56,7 +56,7 @@ def test_init():
 
 def test_backward():
     np.random.seed(3)
-    model = ModelDummy.initialise_symbols(diagrams)
+    model = ModelDummy.from_diagrams(diagrams)
     model.initialise_weights()
     optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
@@ -68,7 +68,7 @@ def test_backward():
 
 def test_step():
     np.random.seed(3)
-    model = ModelDummy.initialise_symbols(diagrams)
+    model = ModelDummy.from_diagrams(diagrams)
     model.initialise_weights()
     optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
@@ -84,7 +84,7 @@ def test_step():
 
 def test_project():
     np.random.seed(4)
-    model = ModelDummy.initialise_symbols(diagrams)
+    model = ModelDummy.from_diagrams(diagrams)
     model.weights = np.array([0, 10, 0])
     optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},
@@ -118,7 +118,7 @@ def test_load_state_dict():
                   'ck': 0.02,
                   'current_sweep': 10}
     model = ModelDummy()
-    model.initialise_symbols(diagrams)
+    model.from_diagrams(diagrams)
     model.initialise_weights()
     optim = SPSAOptimizer(model,
                           hyperparams={'a': 0.01, 'c': 0.1, 'A':0.001},

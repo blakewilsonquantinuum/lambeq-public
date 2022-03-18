@@ -55,15 +55,15 @@ class PytorchModel(Model, torch.nn.Module):
                 module.reset_parameters()  # type: ignore
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
-                             '`PytorchModel.initialise_symbols()`.')
+                             '`PytorchModel.from_diagrams()`.')
         self.weights = torch.nn.ParameterList(
             [torch.nn.Parameter(torch.rand(w.size, requires_grad=True))
                 for w in self.symbols])
 
     @classmethod
-    def load_from_checkpoint(cls,
-                             checkpoint_path: Union[str, os.PathLike],
-                             **kwargs) -> PytorchModel:
+    def from_checkpoint(cls,
+                        checkpoint_path: Union[str, os.PathLike],
+                        **kwargs) -> PytorchModel:
         """Load the model's weights and symbols from a training checkpoint.
 
         Parameters

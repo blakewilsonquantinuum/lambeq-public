@@ -28,7 +28,7 @@ def test_init():
         ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
     ]
 
-    model = PytorchModel.initialise_symbols(diagrams)
+    model = PytorchModel.from_diagrams(diagrams)
     model.initialise_weights()
     assert len(model.weights) == 2
     assert all(isinstance(x, Parameter) for x in model.weights)
@@ -39,7 +39,7 @@ def test_forward():
     diagrams = [
         ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
     ]
-    instance = PytorchModel.initialise_symbols(diagrams)
+    instance = PytorchModel.from_diagrams(diagrams)
     instance.initialise_weights()
     pred = instance.forward(diagrams)
     assert pred.size() == Size([len(diagrams), s_dim])
@@ -85,7 +85,7 @@ def test_checkpoint_loading():
     S = AtomicType.SENTENCE
     ansatz = SpiderAnsatz({N: Dim(2), S: Dim(2)})
     diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
-    model = PytorchModel.initialise_symbols([diagram])
+    model = PytorchModel.from_diagrams([diagram])
     model.initialise_weights()
 
     checkpoint = {'model_weights': model.weights,
@@ -93,7 +93,7 @@ def test_checkpoint_loading():
                   'model_state_dict': model.state_dict()}
     with patch('lambeq.training.pytorch_model.open', mock_open(read_data=pickle.dumps(checkpoint))) as m, \
             patch('lambeq.training.pytorch_model.os.path.exists', lambda x: True) as p:
-        model_new = PytorchModel.load_from_checkpoint('model.lt')
+        model_new = PytorchModel.from_checkpoint('model.lt')
         assert len(model_new.weights) == len(model.weights)
         assert model_new.symbols == model.symbols
         assert np.all(model([diagram]).detach().numpy() == model_new([diagram]).detach().numpy())
@@ -104,12 +104,12 @@ def test_checkpoint_loading_errors():
     with patch('lambeq.training.pytorch_model.open', mock_open(read_data=pickle.dumps(checkpoint))) as m, \
             patch('lambeq.training.pytorch_model.os.path.exists', lambda x: True) as p:
         with pytest.raises(KeyError):
-            _ = PytorchModel.load_from_checkpoint('model.lt')
+            _ = PytorchModel.from_checkpoint('model.lt')
         m.assert_called_with('model.lt', 'rb')
 
 def test_checkpoint_loading_file_not_found_errors():
     with patch('lambeq.training.pytorch_model.open', mock_open(read_data='Not a valid checkpoint.')) as m, \
             patch('lambeq.training.pytorch_model.os.path.exists', lambda x: False) as p:
         with pytest.raises(FileNotFoundError):
-            _ = PytorchModel.load_from_checkpoint('model.lt')
+            _ = PytorchModel.from_checkpoint('model.lt')
         m.assert_not_called()

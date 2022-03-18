@@ -56,12 +56,11 @@ class NumpyModel(QuantumModel):
         self.lambdas: dict[Diagram, Callable] = {}
 
     @classmethod
-    def initialise_symbols(cls,
-                           diagrams: list[Diagram],
-                           use_jit: bool = False,
-                           **kwargs) -> NumpyModel:
-        """Extract the symbols from a list of :py:class:`Diagram` s and creates
-        a dictionary that maps the diagrams to the according lambda functions.
+    def from_diagrams(cls,
+                      diagrams: list[Diagram],
+                      use_jit: bool = False,
+                      **kwargs) -> NumpyModel:
+        """Build model from a list of :py:class:`Diagram` s.
 
         Parameters
         ----------
@@ -94,7 +93,7 @@ class NumpyModel(QuantumModel):
         from jax import jit
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
-                             '`NumpyModel.initialise_symbols()`.')
+                             '`NumpyModel.from_diagrams()`.')
         if diagram in self.lambdas:
             return self.lambdas[diagram]
 
@@ -128,7 +127,7 @@ class NumpyModel(QuantumModel):
         if len(self.weights) == 0 or not self.symbols:
             raise ValueError('Weights and/or symbols not initialised. '
                              'Instantiate through '
-                             '`NumpyModel.initialise_symbols()` first, '
+                             '`NumpyModel.from_diagrams()` first, '
                              'then call `initialise_weights()`, or load '
                              'from pre-trained checkpoint.')
 

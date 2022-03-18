@@ -64,9 +64,9 @@ class Model(ABC):
 
     @classmethod
     @abstractmethod
-    def load_from_checkpoint(cls,
-                             checkpoint_path: Union[str, PathLike],
-                             **kwargs) -> Model:
+    def from_checkpoint(cls,
+                        checkpoint_path: Union[str, PathLike],
+                        **kwargs) -> Model:
         """Load the model weights and symbols from a training checkpoint.
 
         Parameters
@@ -99,8 +99,8 @@ class Model(ABC):
         """The forward pass of the model."""
 
     @classmethod
-    def initialise_symbols(cls, diagrams: list[Diagram], **kwargs) -> Model:
-        """Extract the symbols from a list of :py:class:`Diagram` s.
+    def from_diagrams(cls, diagrams: list[Diagram], **kwargs) -> Model:
+        """Build model from a list of :py:class:`Diagram` s.
 
         Parameters
         ----------

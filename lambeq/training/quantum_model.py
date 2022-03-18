@@ -70,14 +70,14 @@ class QuantumModel(Model):
         """
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
-                             '`initialise_symbols()`.')
+                             '`from_diagrams()`.')
         assert all(w.size == 1 for w in self.symbols)
         self.weights = np.random.rand(len(self.symbols))
 
     @classmethod
-    def load_from_checkpoint(cls,
-                             checkpoint_path: Union[str, os.PathLike],
-                             **kwargs) -> QuantumModel:
+    def from_checkpoint(cls,
+                        checkpoint_path: Union[str, os.PathLike],
+                        **kwargs) -> QuantumModel:
         """Load the model weights and symbols from a training checkpoint.
 
         Parameters

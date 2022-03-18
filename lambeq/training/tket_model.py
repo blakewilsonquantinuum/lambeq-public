@@ -92,7 +92,7 @@ class TketModel(QuantumModel):
         if len(self.weights) == 0 or not self.symbols:
             raise ValueError('Weights and/or symbols not initialised. '
                              'Instantiate through '
-                             '`TketModel.initialise_symbols()` first, '
+                             '`TketModel.from_diagrams()` first, '
                              'then call `initialise_weights()`, or load '
                              'from pre-trained checkpoint.')
 

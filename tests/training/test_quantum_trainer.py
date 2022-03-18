@@ -33,7 +33,7 @@ acc = lambda y_hat, y: np.sum(np.round(y_hat) == y) / len(y) / 2
 
 def test_trainer(tmp_path):
     tn.set_default_backend('numpy')
-    model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)
+    model = NumpyModel.from_diagrams(train_circuits + dev_circuits)
     log_dir = tmp_path / 'test_runs'
     log_dir.mkdir()
 
@@ -61,7 +61,7 @@ def test_trainer(tmp_path):
 def test_restart_training(tmp_path):
     model = NumpyModel()
     log_dir = tmp_path / 'test_runs'
-    model = NumpyModel.initialise_symbols(train_circuits + dev_circuits)
+    model = NumpyModel.from_diagrams(train_circuits + dev_circuits)
     trainer = QuantumTrainer(
         model=model,
         loss_function=loss,

@@ -27,13 +27,13 @@ diagrams = [
 ]
 
 def test_init():
-    model = TketModel.initialise_symbols(diagrams, backend_config=backend_config)
+    model = TketModel.from_diagrams(diagrams, backend_config=backend_config)
     model.initialise_weights()
     assert len(model.weights) == 4
     assert isinstance(model.weights, np.ndarray)
 
 def test_forward():
-    model = TketModel.initialise_symbols(diagrams, backend_config=backend_config)
+    model = TketModel.from_diagrams(diagrams, backend_config=backend_config)
     model.initialise_weights()
     pred = model.forward(diagrams)
     assert pred.shape == (len(diagrams), 2)
@@ -59,7 +59,7 @@ def test_checkpoint_loading():
                   'model_symbols': ['a', 'b', 'c']}
     with patch('lambeq.training.quantum_model.open', mock_open(read_data=pickle.dumps(checkpoint))) as m, \
             patch('lambeq.training.quantum_model.os.path.exists', lambda x: True) as p:
-        model = TketModel.load_from_checkpoint('model.lt',
+        model = TketModel.from_checkpoint('model.lt',
                                                backend_config=backend_config)
         m.assert_called_with('model.lt', 'rb')
         assert np.all(model.weights == checkpoint['model_weights'])
@@ -71,7 +71,7 @@ def test_checkpoint_loading_errors():
     with patch('lambeq.training.quantum_model.open', mock_open(read_data=pickle.dumps(checkpoint))) as m, \
             patch('lambeq.training.quantum_model.os.path.exists', lambda x: True) as p:
         with pytest.raises(KeyError):
-            _ = TketModel.load_from_checkpoint('model.lt',
+            _ = TketModel.from_checkpoint('model.lt',
                                                backend_config=backend_config)
         m.assert_called_with('model.lt', 'rb')
 
@@ -79,7 +79,7 @@ def test_checkpoint_loading_file_not_found_errors():
     with patch('lambeq.training.quantum_model.open', mock_open(read_data='Not a valid checkpoint.')) as m, \
             patch('lambeq.training.quantum_model.os.path.exists', lambda x: False) as p:
         with pytest.raises(FileNotFoundError):
-            _ = TketModel.load_from_checkpoint('model.lt',
+            _ = TketModel.from_checkpoint('model.lt',
                                                backend_config=backend_config)
         m.assert_not_called()
 
