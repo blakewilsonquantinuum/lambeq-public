@@ -119,7 +119,7 @@ class PytorchModel(Model, torch.nn.Module):
                     try:
                         b._data = parameters[b._data]
                         b._free_symbols = {}
-                    except:
+                    except KeyError:
                         raise KeyError(f'Unknown symbol {b._data!r}.')
 
         with Tensor.backend('pytorch'), tn.DefaultBackend('pytorch'):

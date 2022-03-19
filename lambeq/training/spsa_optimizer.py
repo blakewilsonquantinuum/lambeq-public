@@ -21,13 +21,12 @@ optimizer.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional
 from numpy.typing import ArrayLike
 
 import numpy as np
 from lambeq.training.quantum_model import QuantumModel
 from lambeq.training.optimizer import Optimizer
-from lambeq.training.tket_model import TketModel
 
 
 class SPSAOptimizer(Optimizer):
@@ -46,7 +45,7 @@ class SPSAOptimizer(Optimizer):
             hyperparams = {
                 'a': A learning rate parameter, float
                 'c': The parameter shift scaling factor, float
-                'A': A stability constant, approx. 0.01 * Num Training steps, float
+                'A': A stability constant (approx. 0.01 * Num Training steps), float
             }
 
         Parameters
@@ -56,7 +55,7 @@ class SPSAOptimizer(Optimizer):
         hyperparams : dict of str to float.
             A dictionary containing the models hyperparameters.
         loss_fn : Callable
-            A loss function of form `loss(prediction, labels)`\.
+            A loss function of form `loss(prediction, labels)`.
         bounds : ArrayLike, optional
             The range of each of the model parameters.
 

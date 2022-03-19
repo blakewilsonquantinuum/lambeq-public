@@ -52,6 +52,7 @@ def _import_tensorboard_writer() -> None:
         raise ImportError('tensorboard not found. Please install it using '
                           '`pip install tensorboard`.')
 
+
 _StrPathT = Union[str, 'os.PathLike[str]']
 
 
@@ -340,7 +341,8 @@ class Trainer(ABC):
         status_bar = tqdm(total=float('inf'),
                           bar_format='{desc}',
                           desc=self._generate_stat_report(),
-                          disable=self.verbose != VerbosityLevel.PROGRESS.value,
+                          disable=(
+                                self.verbose != VerbosityLevel.PROGRESS.value),
                           leave=True,
                           position=0)
 
@@ -348,8 +350,8 @@ class Trainer(ABC):
         for epoch in trange(self.start_epoch,
                             self.epochs,
                             desc='Epoch',
-                            disable=self.verbose !=
-                                VerbosityLevel.PROGRESS.value,
+                            disable=(
+                                self.verbose != VerbosityLevel.PROGRESS.value),
                             leave=False,
                             position=1):
             train_loss = 0.0
@@ -417,7 +419,8 @@ class Trainer(ABC):
                             y_hat_val, cur_loss = self.validation_step(v_batch)
                             val_loss += cur_loss * len(x_val)
                             if self.evaluate_functions is not None:
-                                for metr, func in self.evaluate_functions.items():
+                                for metr, func in (
+                                        self.evaluate_functions.items()):
                                     res = func(y_hat_val, y_label_val)
                                     self._val_results_epoch[metr].append(
                                         len(x_val)*res)

@@ -27,7 +27,7 @@ noiseless and not shot-based.
 from __future__ import annotations
 
 import pickle
-from typing import Any, Callable, Mapping
+from typing import Any, Callable
 
 import numpy
 import tensornetwork as tn

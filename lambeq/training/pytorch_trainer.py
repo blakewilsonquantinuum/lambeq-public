@@ -24,10 +24,8 @@ from typing import Any, Callable, Mapping, Optional, Union
 import os
 
 import torch
-from discopy import Tensor
 
 from lambeq.core.globals import VerbosityLevel
-from lambeq.training.dataset import Dataset
 from lambeq.training.pytorch_model import PytorchModel
 from lambeq.training.trainer import Trainer
 
@@ -146,8 +144,9 @@ class PytorchTrainer(Trainer):
             torch.set_rng_state(checkpoint['torch_random_state'])
 
     def validation_step(
-        self,
-        batch: tuple[list[Any], torch.Tensor]) -> tuple[torch.Tensor, float]:
+            self,
+            batch: tuple[list[Any], torch.Tensor]) -> tuple[torch.Tensor,
+                                                            float]:
         """Perform a validation step.
 
         Parameters
@@ -168,8 +167,9 @@ class PytorchTrainer(Trainer):
         return y_hat, loss.item()
 
     def training_step(
-        self,
-        batch: tuple[list[Any], torch.Tensor]) -> tuple[torch.Tensor, float]:
+            self,
+            batch: tuple[list[Any], torch.Tensor]) -> tuple[torch.Tensor,
+                                                            float]:
         """Perform a training step.
 
         Parameters

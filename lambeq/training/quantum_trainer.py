@@ -24,10 +24,8 @@ from typing import Any, Callable, Mapping, Optional, Type, Union
 import os
 
 import numpy as np
-from discopy import Tensor
 
 from lambeq.core.globals import VerbosityLevel
-from lambeq.training.dataset import Dataset
 from lambeq.training.quantum_model import QuantumModel
 from lambeq.training.trainer import Trainer
 from lambeq.training.optimizer import Optimizer
@@ -133,8 +131,8 @@ class QuantumTrainer(Trainer):
             np.random.set_state(checkpoint['numpy_random_state'])
 
     def training_step(
-        self,
-        batch: tuple[list[Any], np.ndarray]) -> tuple[np.ndarray, float]:
+            self,
+            batch: tuple[list[Any], np.ndarray]) -> tuple[np.ndarray, float]:
         """Perform a training step.
 
         Parameters
@@ -155,8 +153,8 @@ class QuantumTrainer(Trainer):
         return y_hat, loss
 
     def validation_step(
-        self,
-        batch: tuple[list[Any], np.ndarray]) -> tuple[np.ndarray, float]:
+            self,
+            batch: tuple[list[Any], np.ndarray]) -> tuple[np.ndarray, float]:
         """Perform a validation step.
 
         Parameters
