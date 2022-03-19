@@ -33,7 +33,7 @@ Pregroup grammars
     p \cdot p^r \to 1 \to p^r \cdot p
 
 .. note::
-   In ``lambeq`` and ``discopy``, the adjoints of a type ``p`` are represented as ``p.l`` and ``p.r``, while the tensor product is the symbol ``@``.
+   In ``lambeq`` and :term:`DisCoPy`, the adjoints of a type ``p`` are represented as ``p.l`` and ``p.r``, while the tensor product is the symbol ``@``.
 
 When annotated with pregroup types, the diagram in :numref:`fig-stringdiagram` takes the following form:
 

@@ -15,7 +15,7 @@ The process of training a :term:`model` involves the following steps:
 1. Instantiate the :py:class:`.Model`.
 2. Instantiate a :py:class:`.Trainer`, passing to it a :term:`model`, a loss function, and an optimizer.
 3. Create a :py:class:`.Dataset` for training, and optionally, one for evaluation.
-4. Train the :term:`model` by handing the dataset to the :py:meth:`~lambeq.training.trainer.Trainer.fit` method of the :term:`trainer`.
+4. Train the :term:`model` by handing the dataset to the :py:meth:`~lambeq.Trainer.fit` method of the :term:`trainer`.
 
 The following sections demonstrate the usage of the :py:mod:`.training` package for classical and quantum training scenarios.
 
