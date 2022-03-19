@@ -44,7 +44,11 @@ pip install lambeq[extras]
 
 To enable depccg support, you will need to install depccg separately. More information can be found
 on the [depccg homepage](//github.com/masashi-y/depccg).
-Currently, only version 2.0.3.2 of depccg is supported.
+Currently, only version 2.0.3.2 of depccg is supported. After installing depccg, you can download its model by using the script provided in the `contrib` folder of this repository:
+
+```bash
+python contrib/download_depccg_model.py
+```
 
 ## Usage
 
