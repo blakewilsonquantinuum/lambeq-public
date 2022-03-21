@@ -21,7 +21,7 @@ from lambeq import __version__
 release = version = __version__
 
 project = 'lambeq'
-copyright = '2021, Cambridge Quantum Computing Ltd.'
+copyright = '2021, 2022, Cambridge Quantum Computing Ltd.'
 author = 'Cambridge Quantum QNLP Dev Team'
 
 # -- General configuration ---------------------------------------------------

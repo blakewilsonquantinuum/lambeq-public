@@ -20,8 +20,8 @@ Subpackages
 +----------------------------+------------------------------------------------------+
 | :doc:`lambeq.ccg2discocat` | Package containing the interfaces for the CCG        |
 |                            | parsers (including a                                 |
-|                            | :py:class:`~lambeq.ccg2discocat.CCGBankParser`),     |
 |                            |                                                      |
+|                            | :py:class:`~lambeq.ccg2discocat.CCGBankParser`),     |
 |                            | as well as the code for :term:`Bobcat` parser.       |
 +----------------------------+------------------------------------------------------+
 | :doc:`lambeq.pregroups`    | A collection of useful utilities for easier          |
