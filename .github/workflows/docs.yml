@@ -1,10 +1,6 @@
 name: Build and deploy documentation
 
-on:
-  push:
-    branches: [ main, development ]
-  pull_request:
-    branches: [ main, development ]
+on: [ push, pull_request ]
 
 env:
   WORKFLOWS_DIR: .github/workflows
@@ -30,7 +26,7 @@ jobs:
     - name: Move install script
       run: mv install.sh docs/_build/html
     - name: Deploy documentation
-      if: ${{ github.event_name == 'push' && github.ref_name == 'development' }}
+      if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       uses: s0/git-publish-subdir-action@develop
       env:
         REPO: self
