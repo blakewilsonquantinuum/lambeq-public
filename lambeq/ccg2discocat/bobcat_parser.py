@@ -325,11 +325,10 @@ class BobcatParser(CCGParser):
                 spans = {(start, end): {id: score for id, score in scores}
                          for start, end, scores in sent.spans}
 
-                result = self.parser(Sentence(words, sent_tags, spans))
-
                 try:
+                    result = self.parser(Sentence(words, sent_tags, spans))
                     trees.append(self._build_ccgtree(result[0]))
-                except IndexError:
+                except Exception:
                     if suppress_exceptions:
                         trees.append(None)
                     else:

@@ -1,8 +1,9 @@
-from io import StringIO
 import pytest
+
+from io import StringIO
 from unittest.mock import patch
 
-from lambeq import BobcatParser, CCGAtomicType
+from lambeq import BobcatParseError, BobcatParser, CCGAtomicType
 from lambeq.core.globals import VerbosityLevel
 
 
@@ -24,6 +25,19 @@ def test_sentence2diagram(bobcat_parser, sentence):
 
 def test_sentence2tree(bobcat_parser, sentence):
     assert bobcat_parser.sentence2tree(sentence) is not None
+
+
+def test_empty_sentences(bobcat_parser):
+    with pytest.raises(ValueError):
+        bobcat_parser.sentence2tree('')
+    assert bobcat_parser.sentence2tree('', suppress_exceptions=True) is None
+
+
+def test_failed_sentence(bobcat_parser):
+    long_sentence = 'a ' * 513
+    with pytest.raises(BobcatParseError):
+        bobcat_parser.sentence2tree(long_sentence)
+    assert bobcat_parser.sentence2tree(long_sentence, suppress_exceptions=True) is None
 
 
 def test_sentence2tree_tokenised(bobcat_parser, tokenised_sentence):

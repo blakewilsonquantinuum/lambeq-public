@@ -94,7 +94,7 @@ jobs:
         coverage run --append --source=${{ env.SRC_DIR }} -m pytest -k test_depccg_parser.py
     - name: Coverage report
       run:
-        coverage report -m --omit 'lambeq/ccg2discocat/bobcat/*'
+        coverage report -m
   type_check:
     needs: lint
     runs-on: ubuntu-latest
