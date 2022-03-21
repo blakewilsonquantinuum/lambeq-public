@@ -126,9 +126,9 @@ class ArgumentListValidator(argparse.Action):
                  namespace: argparse.Namespace,
                  values: Union[str, Sequence[Any], None],
                  option_string: Optional[str] = None) -> None:
-        if values is None:
+        if values is None:  # pragma: no cover
             values = []
-        elif isinstance(values, str):
+        elif isinstance(values, str):  # pragma: no cover
             values = values.split()
         parsed_args = {}
         for argument in values:
@@ -451,10 +451,11 @@ class CircuitSaveModule(CLIModule):
                     module_input[i] = discopy.grammar.normal_form(
                                         module_input[i])
                     if not is_pregroup_diagram(module_input[i]):
-                        raise ValueError('Output format is set to '
-                                         f'{cl_args.output_fomat} but '
-                                         f'parsing sentence no. {i+1} did not '
-                                         'produce a valid pregroup diagram.')
+                        raise ValueError(  # pragma: no cover
+                                'Output format is set to '
+                                f'{cl_args.output_fomat} but '
+                                f'parsing sentence no. {i+1} did not '
+                                'produce a valid pregroup diagram.')
         if cl_args.output_format == 'json':
             with open(cl_args.output_file, 'w') as f:
                 json.dump([d.to_tree() for d in module_input], f)
@@ -505,7 +506,8 @@ class CircuitSaveModule(CLIModule):
                 else:
                     try:
                         normal_form = discopy.grammar.normal_form(diagram)
-                        discopy.grammar.draw(normal_form, **draw_args)
+                        discopy.grammar.draw(normal_form,  # pragma: no cover
+                                             **draw_args)
                     except ValueError:
                         diagram.draw(**draw_args)
 
@@ -545,5 +547,5 @@ def main() -> None:
         data = module(cl_args, data)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main()
