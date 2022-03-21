@@ -208,6 +208,26 @@ def test_reader(sentence_input, unicode_sentence_cups):
         assert fake_out.getvalue().rstrip() == unicode_sentence_cups
 
 
+def test_tree_reader(sentence_input):
+    with patch('sys.argv', ['lambeq', '-r', 'tree', '-f', 'image', '-u',
+                            'fig_width=16', 'fig_height=3', 'fontsize=12',
+                            '-o', 'diagram.pdf', sentence_input]),\
+         patch('lambeq.cli.discopy.monoidal.Diagram.draw',
+               new=unittest.mock.MagicMock()) as d:
+        main()
+        d.assert_called()
+
+
+def test_stairs_reader(sentence_input):
+    with patch('sys.argv', ['lambeq', '-r', 'stairs', '-f', 'image', '-u',
+                            'fig_width=16', 'fig_height=3', 'fontsize=12',
+                            '-o', 'diagram.pdf', sentence_input]),\
+         patch('lambeq.cli.discopy.monoidal.Diagram.draw',
+               new=unittest.mock.MagicMock()) as d:
+        main()
+        d.assert_called()
+
+
 def test_IQP_ansatz_and_rewrites(multi_sentence_input):
     with patch('sys.argv', ['lambeq', '-i', 'sentences.txt', '-t',
                             '-d', 'image_folder', '-f', 'image', '-g', 'png',
@@ -337,6 +357,7 @@ def test_args_validation_missing_output_file(arg_parser):
 def test_args_validation_both_parser_and_reader_given(arg_parser):
     cli_args = arg_parser.parse_args(['--parser', 'bobcat',
                                       '--reader', 'cups',
+                                      '--output_format','text-unicode',
                                       'Input sentence.'])
     with pytest.raises(ValueError):
         cli.validate_args(cli_args)

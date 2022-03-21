@@ -12,7 +12,7 @@ While ``lambeq`` is primarily aimed for programmatic use, since Release :ref:`re
     lambeq [-h] [-i INPUT_FILE] [-f {json,pickle,text-unicode,text-ascii,image}] 
            [-g {png,pdf,jpeg,jpg,eps,pgf,ps,raw,rgba,svg,svgz,tif,tiff}] 
            [-u [KEY=VAR ...]] [-o OUTPUT_FILE | -d OUTPUT_DIR] 
-           [-p {depccg}] [-t] [-s] [-r {spiders,cups}] 
+           [-p {depccg}] [-t] [-s] [-r {spiders,stairs,cups,tree}] 
            [-w [REWRITE_RULE ...]] [-a {iqp,tensor,spider,mps}] 
            [-n [KEY=VAR ...]] [-y STORE_ARGS] [-l LOAD_ARGS]
            [input_sentence]
@@ -92,7 +92,7 @@ Readers can be used for batch processing of entire files with the ``-i`` option,
     $ lambeq -r cups -i sentences.txt -o diagrams.txt
 
 .. note::
-    Some readers, such as the :py:obj:`spiders_reader` instance of the :py:class:`.LinearReader` class, may convert the pregroup diagram into a monoidal form that is too complicated to be rendered properly in a text console. In these cases, diagrams must be stored as images.
+    Some readers, such as the :py:obj:`spiders_reader`, :py:obj:`stairs_reader` instances of the :py:class:`.LinearReader` class, or an instance of a :py:class:`.TreeReader`, may convert the pregroup diagram into a monoidal form that is too complicated to be rendered properly in a text console. In these cases, diagrams cannot be displayed as text.
 
 Rewrite rules and ansätze
 -------------------------

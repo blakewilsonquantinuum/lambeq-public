@@ -40,7 +40,8 @@ from lambeq.ansatz.circuit import IQPAnsatz, CircuitAnsatz
 from lambeq.ansatz.tensor import TensorAnsatz, SpiderAnsatz, MPSAnsatz
 from lambeq.pregroups import text_printer
 from lambeq.pregroups.utils import is_pregroup_diagram
-from lambeq.reader import Reader, spiders_reader, cups_reader
+from lambeq.reader import (Reader, TreeReader, spiders_reader,
+                           stairs_reader, cups_reader)
 from lambeq.tokeniser import SpacyTokeniser
 
 import discopy
@@ -48,8 +49,11 @@ import discopy
 AVAILABLE_PARSERS: dict[str, type[CCGParser]] = {'bobcat': BobcatParser,
                                                  'depccg': DepCCGParser}
 
-AVAILABLE_READERS: dict[str, Reader] = {'spiders': spiders_reader,
-                                        'cups': cups_reader}
+AVAILABLE_READERS: dict[str, Union[Reader, type[Reader]]] = {
+        'spiders': spiders_reader,
+        'stairs': stairs_reader,
+        'cups': cups_reader,
+        'tree': TreeReader}
 
 AVAILABLE_ANSATZE: dict[str, type[BaseAnsatz]] = {'iqp': IQPAnsatz,
                                                   'tensor': TensorAnsatz,
@@ -329,10 +333,11 @@ def validate_args(cl_args: argparse.Namespace) -> None:
                              f'{cl_args.output_format} format. Use pickle or '
                              'image format or remove the --rewrite_rules '
                              'argument.')
-        if cl_args.reader == 'spiders':
+        if cl_args.reader in ['spiders', 'stairs', 'tree']:
             raise ValueError('Only pregroup diagrams can be stored in '
-                             f'{cl_args.output_format} format. Spiders '
-                             'reader does not return pregroup diagrams. '
+                             f'{cl_args.output_format} format. '
+                             f'{cl_args.reader} reader does not return '
+                             'pregroup diagrams. '
                              'Use pickle or image format or use a different '
                              'reader/parser.')
 
@@ -378,6 +383,8 @@ class ParserModule(CLIModule):
             sentences = tokeniser.tokenise_sentences(sentences)
         if cl_args.reader is not None:
             reader = AVAILABLE_READERS[cl_args.reader.casefold()]
+            if not isinstance(reader, Reader):
+                reader = reader()
             return reader.sentences2diagrams(sentences,
                                              tokenised=cl_args.tokenise)
         elif cl_args.parser is not None:
@@ -428,8 +435,6 @@ class AnsatzModule(CLIModule):
             ansatz = ansatz_type({N: discopy.Dim(n_dim),
                                   S: discopy.Dim(s_dim)},
                                  **remaining_args)
-        else:
-            raise ValueError('Unknown ansatz '+cl_args.ansatz)
         return [ansatz(diagram) for diagram in module_input]
 
 
