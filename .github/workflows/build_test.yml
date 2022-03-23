@@ -3,7 +3,9 @@ name: Build, lint and test package
 on:
   push:
     branches:
-      - '**'
+      - 'main'
+      - 'beta'
+      - 'release'
   pull_request:
 
 env:

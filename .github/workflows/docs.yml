@@ -3,7 +3,9 @@ name: Build and deploy documentation
 on:
   push:
     branches:
-      - '**'
+      - 'main'
+      - 'beta'
+      - 'release'
   pull_request:
 
 env:
