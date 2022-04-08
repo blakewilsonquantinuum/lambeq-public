@@ -4,12 +4,10 @@ import pytest
 import unittest.mock
 from unittest.mock import patch
 
-from lambeq.ccg2discocat.web_parser import WebParser
-from lambeq.ccg2discocat.bobcat_parser import BobcatParser
+from lambeq import BobcatParser, VerbosityLevel, WebParser
 from lambeq import cli
 from lambeq.cli import ArgumentList
 from lambeq.cli import main
-from lambeq.core.globals import VerbosityLevel
 
 
 @pytest.fixture
