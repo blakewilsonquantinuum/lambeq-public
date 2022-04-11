@@ -32,16 +32,18 @@ from typing import Any, Optional, Union
 import yaml
 
 import lambeq
-from lambeq.ccg2discocat import DepCCGParser
-from lambeq.ccg2discocat.ccg_parser import CCGParser
-from lambeq.ccg2discocat.bobcat_parser import BobcatParser
 from lambeq.ansatz import BaseAnsatz
 from lambeq.ansatz.circuit import IQPAnsatz, CircuitAnsatz
 from lambeq.ansatz.tensor import TensorAnsatz, SpiderAnsatz, MPSAnsatz
 from lambeq.pregroups import text_printer
 from lambeq.pregroups.utils import is_pregroup_diagram
-from lambeq.reader import (Reader, TreeReader, spiders_reader,
-                           stairs_reader, cups_reader)
+from lambeq.text2diagram.ccg_parser import CCGParser
+from lambeq.text2diagram.bobcat_parser import BobcatParser
+from lambeq.text2diagram.depccg_parser import DepCCGParser
+from lambeq.text2diagram.base import Reader
+from lambeq.text2diagram.linear_reader import (cups_reader, spiders_reader,
+                                               stairs_reader)
+from lambeq.text2diagram.tree_reader import TreeReader
 from lambeq.tokeniser import SpacyTokeniser
 
 import discopy

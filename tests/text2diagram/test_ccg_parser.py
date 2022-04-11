@@ -3,7 +3,6 @@ from unittest.mock import Mock
 
 from lambeq import CCGParser
 
-
 class BadParser(CCGParser):
     def __init__(self):
         pass

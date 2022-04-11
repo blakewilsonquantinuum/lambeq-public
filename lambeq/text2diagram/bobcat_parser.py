@@ -32,17 +32,17 @@ from transformers import AutoTokenizer
 from tqdm import TqdmWarning
 from tqdm.auto import tqdm
 
-from lambeq.ccg2discocat.bobcat import (BertForChartClassification, Category,
-                                        ChartParser, Grammar, ParseTree,
-                                        Sentence, Supertag, Tagger)
-from lambeq.ccg2discocat.ccg_parser import CCGParser
-from lambeq.ccg2discocat.ccg_rule import CCGRule
-from lambeq.ccg2discocat.ccg_tree import CCGTree
-from lambeq.ccg2discocat.ccg_types import CCGAtomicType
+from lambeq.bobcat import (BertForChartClassification, Category,
+                           ChartParser, Grammar, ParseTree,
+                           Sentence, Supertag, Tagger)
 from lambeq.core.utils import (SentenceBatchType,
                                tokenised_batch_type_check,
                                untokenised_batch_type_check)
 from lambeq.core.globals import VerbosityLevel
+from lambeq.text2diagram.ccg_parser import CCGParser
+from lambeq.text2diagram.ccg_rule import CCGRule
+from lambeq.text2diagram.ccg_tree import CCGTree
+from lambeq.text2diagram.ccg_types import CCGAtomicType
 
 StrPathT = Union[str, 'os.PathLike[str]']
 
@@ -249,8 +249,8 @@ class BobcatParser(CCGParser):
     def sentences2trees(
             self,
             sentences: SentenceBatchType,
-            suppress_exceptions: bool = False,
             tokenised: bool = False,
+            suppress_exceptions: bool = False,
             verbose: Optional[str] = None
             ) -> list[Optional[CCGTree]]:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.

@@ -79,7 +79,7 @@ jobs:
       run: python -c 'import tarfile, urllib;from depccg.instance_models import MODEL_DIRECTORY;tarfile.open(urllib.request.urlretrieve("https://qnlp.cambridgequantum.com/models/tri_headfirst.tar.gz")[0]).extractall(MODEL_DIRECTORY)'
     - name: Locate bobcat pre-trained model cache
       id: loc-bobcat-cache
-      run: echo "::set-output name=dir::$(python -c 'from lambeq.ccg2discocat.bobcat_parser import get_model_dir; print(get_model_dir("bert"))')"
+      run: echo "::set-output name=dir::$(python -c 'from lambeq.text2diagram.bobcat_parser import get_model_dir; print(get_model_dir("bert"))')"
     - name: Restore bobcat pre-trained model from cache
       id: bobcat-cache
       uses: actions/cache@v2
@@ -89,7 +89,7 @@ jobs:
     - name: Test with pytest
       run:
         # run test of depccg parser separately because it keeps breaking
-        coverage run --source=${{ env.SRC_DIR }} -m pytest --doctest-modules --ignore=${{ env.SRC_DIR }}/ccg2discocat/bobcat --ignore=tests/ccg2discocat/test_depccg_parser.py --ignore=docs/extract_code_cells.py
+        coverage run --source=${{ env.SRC_DIR }} -m pytest --doctest-modules --ignore=${{ env.SRC_DIR }}/bobcat --ignore=tests/text2diagram/test_depccg_parser.py --ignore=docs/extract_code_cells.py
     - name: Test DepCCGParser
       continue-on-error: true
       run:

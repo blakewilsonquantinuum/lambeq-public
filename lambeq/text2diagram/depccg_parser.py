@@ -23,14 +23,14 @@ from typing import Any, Optional, TYPE_CHECKING
 from discopy import Diagram
 from discopy.biclosed import Ty
 
-from lambeq.ccg2discocat.ccg_parser import CCGParser
-from lambeq.ccg2discocat.ccg_rule import CCGRule
-from lambeq.ccg2discocat.ccg_tree import CCGTree
-from lambeq.ccg2discocat.ccg_types import CCGAtomicType
 from lambeq.core.utils import SentenceBatchType, SentenceType,\
         tokenised_batch_type_check, untokenised_batch_type_check,\
         tokenised_sentence_type_check
 from lambeq.core.globals import VerbosityLevel
+from lambeq.text2diagram.ccg_parser import CCGParser
+from lambeq.text2diagram.ccg_rule import CCGRule
+from lambeq.text2diagram.ccg_tree import CCGTree
+from lambeq.text2diagram.ccg_types import CCGAtomicType
 
 if TYPE_CHECKING:
     import depccg
@@ -148,8 +148,8 @@ class DepCCGParser(CCGParser):
     def sentences2trees(
             self,
             sentences: SentenceBatchType,
-            suppress_exceptions: bool = False,
             tokenised: bool = False,
+            suppress_exceptions: bool = False,
             verbose: Optional[str] = None
             ) -> list[Optional[CCGTree]]:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
@@ -232,8 +232,8 @@ class DepCCGParser(CCGParser):
 
     def sentence2tree(self,
                       sentence: SentenceType,
-                      suppress_exceptions: bool = False,
-                      tokenised: bool = False) -> Optional[CCGTree]:
+                      tokenised: bool = False,
+                      suppress_exceptions: bool = False) -> Optional[CCGTree]:
         """Parse a sentence into a :py:class:`.CCGTree`.
 
         Parameters
@@ -283,9 +283,9 @@ class DepCCGParser(CCGParser):
     def sentence2diagram(
             self,
             sentence: SentenceType,
+            tokenised: bool = False,
             planar: bool = False,
-            suppress_exceptions: bool = False,
-            tokenised: bool = False) -> Optional[Diagram]:
+            suppress_exceptions: bool = False) -> Optional[Diagram]:
         """Parse a sentence into a DisCoPy diagram.
 
         Parameters
