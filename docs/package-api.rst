@@ -39,9 +39,15 @@ The code for :term:`Bobcat` parser, a state-of-the-art :term:`CCG <Combinatory C
 .. rubric:: Classes:
 
 .. inheritance-diagram::
-    lambeq.bobcat.ChartParser
-    lambeq.bobcat.Tagger
-    lambeq.bobcat.Rules
+    lambeq.bobcat.grammar.Grammar
+    lambeq.bobcat.lexicon.Category
+    lambeq.bobcat.parser.ChartParser
+    lambeq.bobcat.parser.Sentence
+    lambeq.bobcat.parser.Supertag
+    lambeq.bobcat.rules.Rule
+    lambeq.bobcat.tagger.Tagger
+    lambeq.bobcat.tagger.BertForChartClassification
+    lambeq.bobcat.tree.ParseTree
    :parts: 1
 
 |

@@ -22,7 +22,7 @@ lambeq.ansatz
 .. _uml_bobcat:
 
 lambeq.bobcat
-~~~~~~~~~~~~~
+-------------
 
 .. image:: _static/images/classes_bobcat.png
    :width: 100%
