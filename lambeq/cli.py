@@ -244,6 +244,12 @@ def prepare_parser() -> argparse.ArgumentParser:
             default=None,
             choices=AVAILABLE_READERS.keys(),
             help='Choice of a reader. Mutually exclusive with using a parser.')
+    parser_group.add_argument(
+            '-c',
+            '--root_categories',
+            nargs='*',
+            metavar='ROOT_CATS',
+            help='A list of acceptable categories at the root of the diagram.')
 
     rewrite_group = parser.add_argument_group(
                            title='Rewriter',
@@ -390,9 +396,11 @@ class ParserModule(CLIModule):
             return reader.sentences2diagrams(sentences,
                                              tokenised=cl_args.tokenise)
         elif cl_args.parser is not None:
-            parser = AVAILABLE_PARSERS[cl_args.parser]()
+            parser = AVAILABLE_PARSERS[cl_args.parser](
+                    root_cats=cl_args.root_categories)
         else:
-            parser = AVAILABLE_PARSERS['bobcat']()
+            parser = AVAILABLE_PARSERS['bobcat'](
+                    root_cats=cl_args.root_categories)
         return parser.sentences2diagrams(sentences, tokenised=cl_args.tokenise)
 
 

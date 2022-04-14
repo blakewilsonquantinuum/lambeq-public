@@ -18,7 +18,7 @@ __all__ = ['DepCCGParser', 'DepCCGParseError']
 
 import functools
 import logging
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Iterable, Optional, TYPE_CHECKING
 
 from discopy import Diagram
 from discopy.biclosed import Ty
@@ -80,7 +80,8 @@ class DepCCGParser(CCGParser):
                  use_model_unary_rules: bool = False,
                  annotator: Optional[str] = None,
                  device: int = -1,
-                 root_cats: str = 'S[dcl]|S[wq]|S[q]|S[qem]|NP',
+                 root_cats: Iterable[str] = [
+                     'S[dcl]', 'S[wq]', 'S[q]', 'S[qem]', 'NP'],
                  verbose: str = VerbosityLevel.PROGRESS.value,
                  **kwargs: Any) -> None:
         """Instantiate a parser based on `depccg`.
@@ -102,9 +103,9 @@ class DepCCGParser(CCGParser):
             supports 'candc' and 'spacy'.
         device : int, optional
             The ID of the GPU to use. By default, uses the CPU.
-        root_cats : str, default: 'S[dcl]|S[wq]|S[q]|S[qem]|NP'
-            A bar-separated list of categories allowed at the root of
-            the parse.
+        root_cats : iterable of str, default: ['S[dcl]', 'S[wq]', 'S[q]',
+            'S[qem]', 'NP'], a list of categories allowed
+            at the root of the parse.
         verbose : str, default: 'progress',
             Controls the command-line output of the parser. Only
             'progress' option is available for this parser.
@@ -139,7 +140,7 @@ class DepCCGParser(CCGParser):
                     unary_rules=self._unary_rules
             )
 
-        self.root_categories = [*map(Category.parse, root_cats.split('|'))]
+        self.root_categories = [*map(Category.parse, root_cats)]
         self.categories: Optional[list[Category]] = None
         self.kwargs = kwargs
 
