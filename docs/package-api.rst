@@ -90,6 +90,7 @@ Contains implementations of :term:`rewrite rules <rewrite rule>` for the transfo
 
 .. inheritance-diagram::
     lambeq.rewrite.CoordinationRewriteRule
+    lambeq.rewrite.CurryRewriteRule
     lambeq.rewrite.RewriteRule
     lambeq.rewrite.Rewriter
     lambeq.rewrite.SimpleRewriteRule

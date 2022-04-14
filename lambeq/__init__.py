@@ -69,6 +69,7 @@ __all__ = [
 
         'RewriteRule',
         'CoordinationRewriteRule',
+        'CurryRewriteRule',
         'SimpleRewriteRule',
         'Rewriter',
 
@@ -106,7 +107,7 @@ from lambeq.pregroups import (diagram2str,
                               create_pregroup_diagram, is_pregroup_diagram,
                               remove_cups)
 from lambeq.rewrite import (RewriteRule, CoordinationRewriteRule,
-                            SimpleRewriteRule, Rewriter)
+                            CurryRewriteRule, SimpleRewriteRule, Rewriter)
 from lambeq.text2diagram import (
         CCGAtomicType, CCGRule, CCGRuleUseError, CCGTree,
         CCGParser,
