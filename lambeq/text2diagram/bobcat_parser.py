@@ -132,16 +132,16 @@ def download_model(
     else:
         model_file, headers = urlretrieve(url)
 
-    # Download version
-    ver_url = get_model_url(model_name) + '/' + VERSION_FNAME
-    ver_file, headers = urlretrieve(ver_url)
-    shutil.copy(ver_file, model_dir / VERSION_FNAME)  # type: ignore
-
     # Extract model
     if verbose != VerbosityLevel.SUPPRESS.value:
         print('Extracting model...')
     with tarfile.open(model_file) as tar:
         tar.extractall(model_dir)
+
+    # Download version
+    ver_url = get_model_url(model_name) + '/' + VERSION_FNAME
+    ver_file, headers = urlretrieve(ver_url)
+    shutil.copy(ver_file, model_dir / VERSION_FNAME)  # type: ignore
 
 
 class BobcatParseError(Exception):
