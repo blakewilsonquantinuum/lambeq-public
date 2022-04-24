@@ -10,7 +10,7 @@ Release notes
 
 - Add support for Python 3.10.
 
-- Unify class hierarchies for parsers and readers: :py:class:`~lambeq.CCGParser` is now a subclass of :py:class:`~lambeq.Reader` and placed in the common package :py:mod:`.text2diagram`. The old packages :py:mod:`.reader` and :py:mod:`.ccg2discocat` are no longer available. Compatibility problems with previous versions should be mininal, since from Release :ref:`rel-0.2.0` and onwards all ``lambeq`` classes can be imported from the global namespace.
+- Unify class hierarchies for parsers and readers: :py:class:`~lambeq.CCGParser` is now a subclass of :py:class:`~lambeq.Reader` and placed in the common package :py:mod:`.text2diagram`. The old packages :py:mod:`.reader` and :py:mod:`.ccg2discocat` are no longer available. Compatibility problems with previous versions should be minimal, since from Release :ref:`rel-0.2.0` and onwards all ``lambeq`` classes can be imported from the global namespace.
 
 - Add :py:class:`.CurryRewriteRule`, which uses map-state duality in order to remove adjoint types from the boxes of a diagram. When used in conjunction with :py:meth:`~discopy.rigid.Diagram.normal_form`, this removes cups from the diagram, eliminating post-selection.
 
