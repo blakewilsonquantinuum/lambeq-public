@@ -68,7 +68,7 @@ class TketModel(QuantumModel):
         return measured.lambdify(*self.symbols)
 
     def _randint(self, low=-1 << 63, high=(1 << 63)-1):
-        return np.random.randint(low, high)
+        return np.random.randint(low, high, dtype=np.int64)
 
     def get_diagram_output(self, diagrams: list[Diagram]) -> np.ndarray:
         """Return the prediction for each diagram using t|ket>.
