@@ -106,9 +106,9 @@ class TketModel(QuantumModel):
         # discopy evals a single diagram into a single result
         # and not a list of results
         if len(diagrams) == 1:
-            result = self._normalise(tensors.array)
+            result = self._normalise_vector(tensors.array)
             return result.reshape(1, *result.shape)
-        return np.array([self._normalise(t.array) for t in tensors])
+        return np.array([self._normalise_vector(t.array) for t in tensors])
 
     def forward(self, x: list[Diagram]) -> np.ndarray:
         """Perform default forward pass of a lambeq quantum model.
