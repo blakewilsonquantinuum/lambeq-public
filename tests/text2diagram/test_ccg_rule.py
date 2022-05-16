@@ -309,6 +309,12 @@ class TestUnknown(CCGRuleTester):
         assert CCGRule('missing') == CCGRule.UNKNOWN
 
 
+def test_symbol():
+    assert CCGRule.UNARY.symbol == '<U>'
+    with pytest.raises(CCGRuleUseError):
+        CCGRule.UNKNOWN.symbol
+
+
 def test_check_match():
     with pytest.raises(CCGRuleUseError):
         CCGRule.UNKNOWN.check_match(i, n)
