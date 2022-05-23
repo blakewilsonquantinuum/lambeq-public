@@ -10,12 +10,12 @@ from lambeq.text2diagram.ccg_tree import PlanarBX, PlanarFX, PlanarGBX, PlanarGF
 
 
 N = AtomicType.NOUN
-P = AtomicType.PREPOSITION
+P = AtomicType.PREPOSITIONAL_PHRASE
 S = AtomicType.SENTENCE
 
 i = biclosed.Ty()
 n = CCGAtomicType.NOUN
-p = CCGAtomicType.PREPOSITION
+p = CCGAtomicType.PREPOSITIONAL_PHRASE
 punc = CCGAtomicType.PUNCTUATION
 s = CCGAtomicType.SENTENCE
 
