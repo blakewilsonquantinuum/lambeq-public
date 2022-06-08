@@ -68,6 +68,7 @@ jobs:
           build_and_test-${{ runner.os }}-pip-${{ matrix.python-version }}-
           build_and_test-${{ runner.os }}-pip-
     - name: Install DisCoPy from GitHub
+      if: github.ref_name != 'release' && github.ref_name != 'beta'
       run: pip install git+https://github.com/oxford-quantum-group/discopy
     - name: Install base package
       run: pip install .
