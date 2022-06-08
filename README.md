@@ -97,13 +97,13 @@ the docs will be under `docs/_build`.
 When using lambeq on a Windows machine, the instantiation of the BobcatParser
 might trigger an SSL certificate error. We are currently investigating the
 issue. In the meantime, you can download the model through this
-[link](https://qnlp.cambridgequantum.com/models/bert.tar.gz), extract the
-archive, and provide the path to the BobcatParser using the `model` parameter:
+[link](https://qnlp.cambridgequantum.com/models/bert/latest/model.tar.gz),
+extract the archive, and provide the path to the BobcatParser:
 
 ```python
 from lambeq import BobcatParser
 
-parser = BobcatParser(model='path/to/model_dir')
+parser = BobcatParser('path/to/model_dir')
 ```
 
 ## License
