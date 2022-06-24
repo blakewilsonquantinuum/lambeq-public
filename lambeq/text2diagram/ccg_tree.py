@@ -33,6 +33,31 @@ from lambeq.text2diagram.ccg_types import (CCGAtomicType, replace_cat_result,
 _JSONDictT = Dict[str, Any]
 
 
+class UnarySwap(Box):
+    """Unary Swap box, for unary rules that change the type direction.
+
+    For example, the unary rule `S/NP -> NP\\NP` is handled by
+    `UnarySwap(n >> n)`, which becomes `Swap(n @ n.r)` in a rigid
+    diagram.
+
+    """
+
+    def __init__(self, cod: Ty) -> None:
+        if isinstance(cod, Over):
+            # This defines a swap from Y.l @ X to X @ Y.l
+            # since:
+            #           Ty() << Y        -> Y.l
+            #  Ty() << (Ty() << Y)       -> Y.l.l
+            # (Ty() << (Ty() << Y)) >> X -> Y.l.l.r @ X = Y.l @ X
+            dom = (Ty() << (Ty() << cod.left)) >> cod.right
+        elif isinstance(cod, Under):
+            # Similarly, this defines a swap from Y @ X.r to X.r @ Y
+            dom = cod.left << ((cod.right >> Ty()) >> Ty())
+        else:
+            raise ValueError(f'Invalid type for unary swap: {cod}')
+        super().__init__(f'Swap({dom} -> {cod})', dom, cod)
+
+
 class PlanarBX(Box):
     """Planar Backward Crossed Composition Box."""
     def __init__(self, dom: Ty, diagram: Diagram) -> None:
@@ -384,9 +409,21 @@ class CCGTree:
             word = Box(self.text, Ty(), biclosed_type)
             return word, Id(biclosed_type)
 
-        child_types = [child.biclosed_type for child in self.children]
-
-        this_layer = self.rule(Ty.tensor(*child_types), biclosed_type)
+        if (self.rule == CCGRule.UNARY
+                and not planar
+                and {type(biclosed_type),
+                     type(self.children[0].biclosed_type)} == {Over, Under}):
+            this_layer = UnarySwap(biclosed_type)
+        elif (self.rule == CCGRule.FORWARD_COMPOSITION
+                and self.children[0].rule == CCGRule.FORWARD_TYPE_RAISING):
+            left = biclosed_type.left
+            right = biclosed_type.right
+            mid = (self.children[0].biclosed_type.right.left) >> left
+            this_layer = self.rule((left << mid) @ (mid << right),
+                                   biclosed_type)
+        else:
+            child_types = [child.biclosed_type for child in self.children]
+            this_layer = self.rule(Ty.tensor(*child_types), biclosed_type)
 
         children = [child._to_biclosed_diagram(planar,
                                                this_layer.dom[i:i+1])
@@ -447,6 +484,10 @@ class CCGTree:
                         left @= to_rigid_diagram(cat.left).r
                         cat = cat.right
                 return left, to_rigid_diagram(cat), right
+
+            if isinstance(box, UnarySwap):
+                cod = ob_func(box.cod)
+                return rigid.Swap(cod[1:], cod[:1])
 
             if isinstance(box, PlanarBX):
                 join = to_rigid_diagram(box.dom.left)
