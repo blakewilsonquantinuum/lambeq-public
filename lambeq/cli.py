@@ -47,6 +47,7 @@ from lambeq.text2diagram.linear_reader import (cups_reader,
 from lambeq.text2diagram.spiders_reader import spiders_reader
 from lambeq.text2diagram.tree_reader import TreeReader
 from lambeq.tokeniser import SpacyTokeniser
+from lambeq.version import version
 
 import discopy
 
@@ -154,6 +155,10 @@ def prepare_parser() -> argparse.ArgumentParser:
                         nargs='?',
                         default='',
                         help='Sentence to parse.')
+    
+    parser.add_argument('-v', '--version', 
+                        action='version', version=f'%(prog)s ({version})')
+
     parser.add_argument(
             '-m',
             '--mode',
@@ -162,6 +167,7 @@ def prepare_parser() -> argparse.ArgumentParser:
             default=DEFAULT_ARG_VALUES['mode'],
             help='Mode used for the output. Default value: '
                  f'{DEFAULT_ARG_VALUES["mode"]}')
+    
     parser.add_argument('-i', '--input_file', type=str, help='File to parse.')
 
     output_group = parser.add_argument_group(
