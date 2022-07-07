@@ -1,4 +1,4 @@
-# Copyright 2021, 2022 Cambridge Quantum Computing Ltd.
+# Copyright 2021-2022 Cambridge Quantum Computing Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -289,7 +289,7 @@ class CCGRule(str, Enum):
                 # check generalised crossed rules after everything else
                 if (cod, rl) == replace_cat_result(left, rl, rr, '<|'):
                     return CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION
-            if (left == ll << lr and
-                    (cod, lr) == replace_cat_result(right, lr, ll, '>|')):
+            if (left == ll << lr
+                    and (cod, lr) == replace_cat_result(right, lr, ll, '>|')):
                 return CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION
         return CCGRule.UNKNOWN

@@ -1,4 +1,4 @@
-# Copyright 2021, 2022 Cambridge Quantum Computing Ltd.
+# Copyright 2021-2022 Cambridge Quantum Computing Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@ based on a PennyLane and PyTorch backend.
 
 """
 from __future__ import annotations
-import os
-import pickle
-from typing import Any, Union
 
+import os
+from typing import Union
+
+import discopy
+from discopy import Circuit, Diagram
 from sympy import default_sort_key
 import torch
 
-import discopy
-from discopy import Diagram, Circuit
 from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.pytorch_model import PytorchModel
 
@@ -54,8 +54,9 @@ class PennyLaneModel(PytorchModel):
     def from_checkpoint(cls,
                         checkpoint_path: Union[str, os.PathLike],
                         **kwargs) -> PennyLaneModel:
-        """Load the model's weights, symbols, and circuits from a training
-        checkpoint.
+        """Load the weights and symbols from a training checkpoint.
+
+        Also loads the circuits.
 
         Parameters
         ----------
@@ -110,7 +111,8 @@ class PennyLaneModel(PytorchModel):
         Parameters
         ----------
         diagrams : list of :py:class:`~discopy.tensor.Diagram`
-            The :py:class:`Diagrams <discopy.tensor.Diagram>` to be evaluated.
+            The :py:class:`Diagrams <discopy.tensor.Diagram>` to be
+            evaluated.
 
         Raises
         ------
@@ -129,16 +131,16 @@ class PennyLaneModel(PytorchModel):
         return torch.stack(circuit_evals)
 
     def forward(self, x: list[Diagram]) -> torch.Tensor:
-        """Perform default forward pass of a lambeq model by
-        running circuits.
+        """Perform default forward pass by running circuits.
 
-        In case of a different datapoint (e.g. list of tuple) or additional
-        computational steps, please override this method.
+        In case of a different datapoint (e.g. list of tuple) or
+        additional computational steps, please override this method.
 
         Parameters
         ----------
         x : list of :py:class:`~discopy.quantum.Circuit`
-            The :py:class:`Circuits <discopy.quantum.Circuit>` to be evaluated.
+            The :py:class:`Circuits <discopy.quantum.Circuit>` to be
+            evaluated.
 
         Returns
         -------
@@ -165,8 +167,8 @@ class PennyLaneModel(PytorchModel):
 
         """
         if not all(isinstance(x, Circuit) for x in diagrams):
-            raise ValueError("All diagrams must be of type"
-                             "`discopy.quantum.Circuit`.")
+            raise ValueError('All diagrams must be of type'
+                             '`discopy.quantum.Circuit`.')
 
         model = cls(**kwargs)
         model.symbols = sorted(

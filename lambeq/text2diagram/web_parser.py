@@ -1,4 +1,4 @@
-# Copyright 2021, 2022 Cambridge Quantum Computing Ltd.
+# Copyright 2021-2022 Cambridge Quantum Computing Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,19 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Web parser
+==========
+A parser that retrieves parses from a web server, thus forgoes the need
+to have a parser installed locally.
+
+"""
+
 from __future__ import annotations
 
 __all__ = ['WebParser', 'WebParseError']
 
-import requests
 import sys
 from typing import Optional
 
+import requests
 from tqdm.auto import tqdm
 
-from lambeq.core.utils import SentenceBatchType, tokenised_batch_type_check,\
-        untokenised_batch_type_check
 from lambeq.core.globals import VerbosityLevel
+from lambeq.core.utils import (SentenceBatchType, tokenised_batch_type_check,
+                               untokenised_batch_type_check)
 from lambeq.text2diagram.ccg_parser import CCGParser
 from lambeq.text2diagram.ccg_tree import CCGTree
 
@@ -42,7 +50,7 @@ class WebParseError(OSError):
 
 
 class WebParser(CCGParser):
-    """Wrapper that allows passing parser queries to an online interface."""
+    """Wrapper that allows passing parser queries to an online service."""
 
     def __init__(
             self,
@@ -52,7 +60,7 @@ class WebParser(CCGParser):
 
         Parameters
         ----------
-        service_url : str, default: 'https://cqc.pythonanywhere.com/tree/json'
+        service_url : str, optional
             The URL to the parser. By default, use CQC's CCG tree
             parser.
         verbose : str, default: 'suppress',
@@ -83,7 +91,8 @@ class WebParser(CCGParser):
             its return entry is :py:obj:`None`.
         verbose : str, optional
             See :py:class:`VerbosityLevel` for options. If set, it takes
-            priority over the :py:attr:`verbose` attribute of the parser.
+            priority over the :py:attr:`verbose` attribute of the
+            parser.
 
         Returns
         -------
@@ -96,8 +105,8 @@ class WebParser(CCGParser):
         URLError
             If the service URL is not well formed.
         ValueError
-            If a sentence is blank or type of the sentence does not match
-            `tokenised` flag.
+            If a sentence is blank or type of the sentence does not
+            match `tokenised` flag.
         WebParseError
             If the parser fails to obtain a parse tree from the server.
 

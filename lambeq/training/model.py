@@ -1,4 +1,4 @@
-# Copyright 2021, 2022 Cambridge Quantum Computing Ltd.
+# Copyright 2021-2022 Cambridge Quantum Computing Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ class Model(ABC):
     Attributes
     ----------
     symbols : list of symbols
-        A sorted list of all :py:class:`Symbols <.Symbol>` occuring in the data.
+        A sorted list of all :py:class:`Symbols <.Symbol>` occuring in
+        the data.
     weights : SizedIterable
         A data structure containing the numeric values of
         the model's parameters.
@@ -67,7 +68,7 @@ class Model(ABC):
     def from_checkpoint(cls,
                         checkpoint_path: Union[str, PathLike],
                         **kwargs) -> Model:
-        """Load the model weights and symbols from a training checkpoint.
+        """Load the weights and symbols from a training checkpoint.
 
         Parameters
         ----------

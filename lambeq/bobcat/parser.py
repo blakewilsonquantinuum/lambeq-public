@@ -1,4 +1,4 @@
-# Copyright 2021, 2022 Cambridge Quantum Computing Ltd.
+# Copyright 2021-2022 Cambridge Quantum Computing Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 import math
-from typing import Optional, Tuple, Union, overload
+from typing import Optional, Tuple, Union
+from typing import overload
 
 from lambeq.bobcat.grammar import Grammar
-from lambeq.bobcat.lexicon import Atom, Category, CATEGORIES
+from lambeq.bobcat.lexicon import Atom, Category
+from lambeq.bobcat.lexicon import CATEGORIES
 from lambeq.bobcat.rules import Rules
 from lambeq.bobcat.tree import Lexical, ParseTree
 
@@ -76,7 +78,7 @@ class Chart:
         return self.chart[index]
 
     def min_score(self, start: int, end: int) -> float:
-        """Get the minimum score needed to add a tree to the given cell."""
+        """Get the lowest score needed to add a tree to the given cell."""
         try:
             return self.min_scores[start, end]
         except KeyError:
@@ -223,9 +225,9 @@ class ParseResult:
             if max_tree:
                 break
 
-        return (self.skim_deps(start, result_start - 1) +
-                self._deps(max_tree) +
-                self.skim_deps(result_end + 1, end))
+        return (self.skim_deps(start, result_start - 1)
+                + self._deps(max_tree)
+                + self.skim_deps(result_end + 1, end))
 
 
 class ChartParser:
