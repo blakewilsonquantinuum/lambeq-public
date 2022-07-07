@@ -124,6 +124,10 @@ class Checkpoint(Mapping):
             Path to the checkpoint file.
 
         """
-        with open(path, 'wb') as ckp:
-            pickle.dump(self.entries, ckp)
+        try:
+            with open(path, 'wb+') as ckp:
+                pickle.dump(self.entries, ckp)
+        except FileNotFoundError:
+            raise FileNotFoundError('The directory does not exist. Check path '
+                                    f'{path}')
         self.entries = {}

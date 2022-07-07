@@ -120,6 +120,6 @@ from lambeq.text2diagram import (
         stairs_reader, word_sequence_reader)
 from lambeq.tokeniser import Tokeniser, SpacyTokeniser
 from lambeq.training import (Checkpoint, Dataset, Optimizer, SPSAOptimizer,
-                             Model, NumpyModel, PytorchModel, QuantumModel,
-                             TketModel, Trainer, PytorchTrainer,
+                             Model, NumpyModel, PennyLaneModel, PytorchModel,
+                             QuantumModel, TketModel, Trainer, PytorchTrainer,
                              QuantumTrainer)
