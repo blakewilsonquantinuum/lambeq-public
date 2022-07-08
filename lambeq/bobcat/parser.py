@@ -281,12 +281,21 @@ class ChartParser:
             self.result_cats[label, res_cats] = cat_id
             cat_id += 1
 
-        try:
-            self.root_cats = (None if root_cats is None
-                              else [CATEGORIES[s, 0] for s in root_cats])
-        except KeyError as e:
-            s = e.args[0]
-            raise ValueError(f'Grammar does not contain the root cat: {s!r}')
+        self.set_root_cats(root_cats)
+
+    def set_root_cats(
+            self,
+            root_cats: Optional[Iterable[Union[Category, str]]]) -> None:
+        if root_cats is None:
+            self.root_cats = None
+        else:
+            try:
+                self.root_cats = [(cat if isinstance(cat, Category)
+                                   else CATEGORIES[cat, 0])
+                                  for cat in root_cats]
+            except KeyError as e:
+                raise ValueError('Grammar does not contain root category: '
+                                 f'{repr(e.args[0])}')
 
     def filter_root(self, trees: list[ParseTree]) -> list[ParseTree]:
         if self.root_cats is None:

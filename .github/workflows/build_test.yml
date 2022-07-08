@@ -114,6 +114,7 @@ jobs:
         coverage run --source=${{ env.SRC_DIR }}
         --module pytest ${{ env.SRC_DIR }} ${{ env.TEST_DIR }}
         --doctest-modules
+        --durations=50
         --ignore=${{ env.TEST_DIR }}/text2diagram/test_depccg_parser.py
         --ignore=docs/extract_code_cells.py
     - name: Test DepCCGParser
