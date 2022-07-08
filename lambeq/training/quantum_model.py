@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 import os
-from typing import Union
+from typing import Any, Union
 
 from discopy import Tensor
 from discopy.tensor import Diagram
@@ -30,6 +30,8 @@ import numpy as np
 
 from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.model import Model
+
+_StrPathT = Union[str, 'os.PathLike[str]']
 
 
 class QuantumModel(Model):
@@ -85,8 +87,8 @@ class QuantumModel(Model):
 
     @classmethod
     def from_checkpoint(cls,
-                        checkpoint_path: Union[str, os.PathLike],
-                        **kwargs) -> QuantumModel:
+                        checkpoint_path: _StrPathT,
+                        **kwargs: Any) -> QuantumModel:
         """Load the weights and symbols from a training checkpoint.
 
         Parameters

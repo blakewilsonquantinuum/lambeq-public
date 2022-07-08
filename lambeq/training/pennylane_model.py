@@ -22,7 +22,7 @@ based on a PennyLane and PyTorch backend.
 from __future__ import annotations
 
 import os
-from typing import Union
+from typing import Any, Union
 
 import discopy
 from discopy import Circuit, Diagram
@@ -31,6 +31,8 @@ import torch
 
 from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.pytorch_model import PytorchModel
+
+_StrPathT = Union[str, 'os.PathLike[str]']
 
 
 class PennyLaneModel(PytorchModel):
@@ -52,8 +54,8 @@ class PennyLaneModel(PytorchModel):
 
     @classmethod
     def from_checkpoint(cls,
-                        checkpoint_path: Union[str, os.PathLike],
-                        **kwargs) -> PennyLaneModel:
+                        checkpoint_path: _StrPathT,
+                        **kwargs: Any) -> PennyLaneModel:
         """Load the weights and symbols from a training checkpoint.
 
         Also loads the circuits.
@@ -80,8 +82,7 @@ class PennyLaneModel(PytorchModel):
         except KeyError as e:
             raise e
 
-    def make_checkpoint(self,
-                        checkpoint_path: Union[str, os.PathLike]) -> None:
+    def make_checkpoint(self, checkpoint_path: _StrPathT) -> None:
         """Make a checkpoint file for the model.
 
         Parameters

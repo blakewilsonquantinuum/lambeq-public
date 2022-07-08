@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import os
 import pickle
-from typing import Union
+from typing import Any, Union
 
 from discopy import Tensor
 from discopy.tensor import Diagram
@@ -32,6 +32,8 @@ import torch
 from lambeq.ansatz.base import Symbol
 from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.model import Model
+
+_StrPathT = Union[str, 'os.PathLike[str]']
 
 
 class PytorchModel(Model, torch.nn.Module):
@@ -63,8 +65,8 @@ class PytorchModel(Model, torch.nn.Module):
 
     @classmethod
     def from_checkpoint(cls,
-                        checkpoint_path: Union[str, os.PathLike],
-                        **kwargs) -> PytorchModel:
+                        checkpoint_path: _StrPathT,
+                        **kwargs: Any) -> PytorchModel:
         """Load the weights and symbols from a training checkpoint.
 
         Parameters
@@ -87,6 +89,28 @@ class PytorchModel(Model, torch.nn.Module):
             return model
         except KeyError as e:
             raise e
+
+    def make_checkpoint(self, checkpoint_path: _StrPathT) -> None:
+        """Save the model weights and symbols to a training checkpoint.
+
+        Parameters
+        ----------
+        checkpoint_path : str or `os.PathLike`
+            Path that points to the checkpoint file. If
+            the file does not exist, it will be created.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the directory in which the checkpoint file is to be
+            saved does not exist.
+
+        """
+        checkpoint = Checkpoint()
+        checkpoint.add_many({'model_symbols': self.symbols,
+                             'model_weights': self.weights,
+                             'model_state_dict': self.state_dict()})
+        checkpoint.to_file(checkpoint_path)
 
     def get_diagram_output(self, diagrams: list[Diagram]) -> torch.Tensor:
         """Contract diagrams using tensornetwork.
