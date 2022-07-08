@@ -35,7 +35,9 @@ from lambeq.core.utils import (SentenceBatchType, tokenised_batch_type_check,
 from lambeq.text2diagram.ccg_parser import CCGParser
 from lambeq.text2diagram.ccg_tree import CCGTree
 
-SERVICE_URL = 'https://cqc.pythonanywhere.com/tree/json'
+SERVICE_URLS = {
+    'depccg': 'https://cqc.pythonanywhere.com/tree/json'
+}
 
 
 class WebParseError(OSError):
@@ -43,10 +45,7 @@ class WebParseError(OSError):
         self.sentence = sentence
 
     def __str__(self) -> str:
-        return (f'Web parser could not parse {repr(self.sentence)}.'
-                'Check that you are using the correct URL. '
-                'If the URL is correct, this means the parser could not parse '
-                'your sentence.')
+        return (f'Web parser could not parse {repr(self.sentence)}')
 
 
 class WebParser(CCGParser):
@@ -54,20 +53,22 @@ class WebParser(CCGParser):
 
     def __init__(
             self,
-            service_url: str = SERVICE_URL,
+            parser: str = 'depccg',
             verbose: str = VerbosityLevel.SUPPRESS.value) -> None:
         """Initialise a web parser.
 
         Parameters
         ----------
-        service_url : str, optional
-            The URL to the parser. By default, use CQC's CCG tree
-            parser.
+        parser : str, optional
+            The web parser to use. By default, this is depccg parser.
         verbose : str, default: 'suppress',
             See :py:class:`VerbosityLevel` for options.
 
         """
-        self.service_url = service_url
+        if parser.lower() not in SERVICE_URLS:
+            raise ValueError(f'Unknown web parser: {parser}')
+
+        self.service_url = SERVICE_URLS[parser]
         if not VerbosityLevel.has_value(verbose):
             raise ValueError(f'`{verbose}` is not a valid verbose value for '
                              'WebParser.')
