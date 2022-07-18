@@ -8,9 +8,10 @@ import torch
 from torch import Size
 from torch.nn import Parameter
 
-from discopy import Cup,  Word
-from discopy.quantum.circuit import Id
-from lambeq import AtomicType, Dataset, IQPAnsatz, PennyLaneModel, PytorchTrainer
+from discopy import Cup, Diagram, Ob, Ty, Word
+from discopy.quantum.circuit import Id, Measure
+from lambeq import (AtomicType, Dataset, IQPAnsatz, PennyLaneModel,
+                    PytorchTrainer)
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -20,7 +21,8 @@ def test_init():
     ansatz = IQPAnsatz({AtomicType.NOUN: 1, AtomicType.SENTENCE: 1},
                        n_layers=1, n_single_qubit_params=1)
     diagrams = [
-        ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
+        ansatz((Word("Alice", N) @ Word("runs", N >> S)
+                >> Cup(N, N.r) @ Id(S)))
     ]
 
     model = PennyLaneModel.from_diagrams(diagrams)
@@ -34,13 +36,52 @@ def test_forward():
     ansatz = IQPAnsatz({AtomicType.NOUN: 1, AtomicType.SENTENCE: 1},
                        n_layers=1, n_single_qubit_params=3)
     diagrams = [
-        ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
+        ansatz((Word("Alice", N) @ Word("runs", N >> S)
+                >> Cup(N, N.r) @ Id(S)))
     ]
-    print(type(diagrams[0]))
     instance = PennyLaneModel.from_diagrams(diagrams)
     instance.initialise_weights()
     pred = instance.forward(diagrams)
     assert pred.size() == Size([len(diagrams), s_dim])
+
+
+def test_normalize():
+    ansatz = IQPAnsatz({AtomicType.NOUN: 1, AtomicType.SENTENCE: 1},
+                       n_layers=1, n_single_qubit_params=3)
+    diagrams = [
+        ansatz((Word("Alice", N) @ Word("runs", N >> S)
+                >> Cup(N, N.r) @ Id(S))),
+        ansatz(Diagram(dom=Ty(), cod=Ty('s'),
+                       boxes=[Word('Alice', Ty('n')),
+                              Word('cooks', Ty(Ob('n', z=1), 's',
+                                               Ob('n', z=-1))),
+                              Word('food', Ty('n')),
+                              Cup(Ty(Ob('n', z=-1)), Ty('n')),
+                              Cup(Ty('n'), Ty(Ob('n', z=1)))],
+                       offsets=[0, 1, 4, 3, 0]))
+    ]
+
+    for i in range(len(diagrams)):
+        for b in [True, False]:
+            instance = PennyLaneModel.from_diagrams(diagrams,
+                                                    probabilities=b,
+                                                    normalize=False)
+            instance.initialise_weights()
+
+            p_pred = instance.forward(diagrams)[i]
+            d = (diagrams[i] >> Measure()) if b else diagrams[i]
+            d_pred = (d.lambdify(*instance.symbols)
+                    (*[x.item() for x in instance.weights]).eval().array)
+
+            assert np.allclose(p_pred.detach().numpy(), d_pred, atol=1e-5)
+
+            instance._normalize = True
+            p_pred = instance.forward(diagrams)[i]
+            d_norm = (np.sum(np.abs(d_pred)) if b else
+                      np.sum(np.square(np.abs(d_pred))))
+            d_pred = d_pred / d_norm
+
+            assert np.allclose(p_pred.detach().numpy(), d_pred, atol=1e-5)
 
 
 def test_initialise_weights_error():
@@ -54,7 +95,8 @@ def test_get_diagram_output_error():
     S = AtomicType.SENTENCE
     ansatz = IQPAnsatz({AtomicType.NOUN: 1, AtomicType.SENTENCE: 1},
                        n_layers=1, n_single_qubit_params=3)
-    diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
+    diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S)
+                      >> Cup(N, N.r) @ Id(S)))
     with pytest.raises(KeyError):
         model = PennyLaneModel()
         model.get_diagram_output([diagram])
@@ -65,7 +107,8 @@ def test_checkpoint_loading():
     S = AtomicType.SENTENCE
     ansatz = IQPAnsatz({AtomicType.NOUN: 1, AtomicType.SENTENCE: 1},
                        n_layers=1, n_single_qubit_params=3)
-    diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S) >> Cup(N, N.r) @ Id(S)))
+    diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S)
+                      >> Cup(N, N.r) @ Id(S)))
     model = PennyLaneModel.from_diagrams([diagram])
     model.initialise_weights()
 

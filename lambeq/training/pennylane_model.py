@@ -43,14 +43,23 @@ class PennyLaneModel(PytorchModel):
 
     """
 
-    def __init__(self) -> None:
-        """Initialises a :py:class:`PennyLaneModel` instance with
+    def __init__(self, probabilities=True, normalize=True) -> None:
+        """Initialise a :py:class:`PennyLaneModel` instance with
         an empty `circuit_map` dictionary.
+
+        Parameters
+        ----------
+        probabilities : bool, default: True
+            Whether to use probabilities or states for the output.
+        normalize : bool, default: True
+            Whether to normalize the output after post-selection.
 
         """
         PytorchModel.__init__(self)
         self.circuit_map: dict[Circuit,
                                discopy.quantum.pennylane.PennyLaneCircuit] = {}
+        self._probabilities = probabilities
+        self._normalize = normalize
 
     @classmethod
     def from_checkpoint(cls,
@@ -128,6 +137,12 @@ class PennyLaneModel(PytorchModel):
         """
         circuit_evals = [self.circuit_map[d].eval(self.symbols, self.weights)
                          for d in diagrams]
+        if self._normalize:
+            if self._probabilities:
+                circuit_evals = [c / torch.sum(c) for c in circuit_evals]
+            else:
+                circuit_evals = [c / torch.sum(torch.square(torch.abs(c)))
+                                 for c in circuit_evals]
 
         return torch.stack(circuit_evals)
 
@@ -154,6 +169,7 @@ class PennyLaneModel(PytorchModel):
     @classmethod
     def from_diagrams(cls, diagrams: list[Diagram],
                       probabilities=True,
+                      normalize=True,
                       **kwargs) -> PennyLaneModel:
         """Build model from a list of
         :py:class:`Circuits <discopy.quantum.Circuit>`.
@@ -165,17 +181,23 @@ class PennyLaneModel(PytorchModel):
         probabilities : bool, default: True
             Whether the circuits return normalized probabilities or
             unnormalized states in the computational basis.
+        normalize : bool, default: True
+            Whether to normalize the outputs of the circuits.
+            For probabilities, this means the sum of the output tensor
+            is 1, while for states it means the sum of the squares of
+            the absolute values of the tensor is 1.
 
         """
         if not all(isinstance(x, Circuit) for x in diagrams):
             raise ValueError('All diagrams must be of type'
                              '`discopy.quantum.Circuit`.')
 
-        model = cls(**kwargs)
+        model = cls(probabilities=probabilities, normalize=normalize, **kwargs)
         model.symbols = sorted(
             {sym for circ in diagrams for sym in circ.free_symbols},
             key=default_sort_key)
         model.circuit_map = {circ:
                              circ.to_pennylane(probabilities=probabilities)
                              for circ in diagrams}
+
         return model
