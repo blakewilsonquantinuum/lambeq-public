@@ -192,3 +192,18 @@ class NumpyModel(QuantumModel):
 
         """
         return self.get_diagram_output(x)
+
+    def _normalise_vector(self, predictions: numpy.ndarray) -> numpy.ndarray:
+        """Apply smoothing to predictions.
+
+        Does not normalise scalar values; instead, returns the absolute
+        value of scalars.
+
+        """
+        backend = Tensor.get_backend()
+        if not predictions.shape:
+            return backend.abs(predictions)
+        else:
+            predictions = (backend.square(backend.abs(predictions))
+                           + self.SMOOTHING)
+            return predictions / predictions.sum()

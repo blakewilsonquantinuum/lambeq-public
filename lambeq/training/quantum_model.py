@@ -24,7 +24,6 @@ from abc import abstractmethod
 import os
 from typing import Any, Union
 
-from discopy import Tensor
 from discopy.tensor import Diagram
 import numpy as np
 
@@ -56,19 +55,10 @@ class QuantumModel(Model):
         """Initialise a :py:class:`QuantumModel`."""
         super().__init__()
 
+    @abstractmethod
     def _normalise_vector(self, predictions: np.ndarray) -> np.ndarray:
-        """Apply smoothing to predictions.
-
-        Does not normalise scalar values; instead, returns the absolute
-        value of scalars.
-
-        """
-        backend = Tensor.get_backend()
-        if not predictions.shape:
-            return backend.abs(predictions)
-        else:
-            predictions = backend.abs(predictions) + self.SMOOTHING
-            return predictions / predictions.sum()
+        """Normalise diagram output."""
+        pass
 
     def initialise_weights(self) -> None:
         """Initialise the weights of the model.
