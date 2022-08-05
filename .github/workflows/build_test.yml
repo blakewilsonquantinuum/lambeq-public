@@ -27,7 +27,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install linter
-      run: python -m pip install flake8==4.0.1 flake8-broken-line flake8-bugbear flake8-copyright flake8-import-order flake8-quotes
+      run: python -m pip install flake8 flake8-broken-line flake8-bugbear flake8-copyright flake8-import-order flake8-quotes
     - name: Check for errors
       id: error-check
       run:
