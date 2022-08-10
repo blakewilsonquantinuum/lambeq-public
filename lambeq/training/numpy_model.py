@@ -173,7 +173,7 @@ class NumpyModel(QuantumModel):
                 self._normalise_vector(tn.contractors.auto(*d.to_tn()).tensor)
                 for d in diagrams])
 
-    def forward(self, x: list[Diagram]) -> numpy.ndarray:
+    def forward(self, x: list[Diagram]) -> Any:
         """Perform default forward pass of a lambeq model.
 
         In case of a different datapoint (e.g. list of tuple) or

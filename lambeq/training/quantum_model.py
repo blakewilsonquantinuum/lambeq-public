@@ -55,6 +55,17 @@ class QuantumModel(Model):
         """Initialise a :py:class:`QuantumModel`."""
         super().__init__()
 
+        self._training = False
+        self._train_predictions : list[Any] = []
+
+    def _log_prediction(self, y: Any) -> None:
+        """Log a prediction of the model."""
+        self._train_predictions.append(y)
+
+    def _clear_predictions(self) -> None:
+        """Clear the logged predictions of the model."""
+        self._train_predictions = []
+
     @abstractmethod
     def _normalise_vector(self, predictions: np.ndarray) -> np.ndarray:
         """Normalise diagram output."""
@@ -125,6 +136,15 @@ class QuantumModel(Model):
 
         """
 
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        out = self.forward(*args, **kwargs)
+        if self._training:
+            self._log_prediction(out)
+        return out
+
     @abstractmethod
-    def forward(self, x: list[Diagram]) -> np.ndarray:
-        """The forward pass of the model."""
+    def forward(self, x: list[Diagram]) -> Any:
+        """Compute the forward pass of the model using
+        `get_model_output`
+
+        """
