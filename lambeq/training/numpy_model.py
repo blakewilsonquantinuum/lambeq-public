@@ -104,6 +104,9 @@ class NumpyModel(QuantumModel):
             with Tensor.backend('jax'), tn.DefaultBackend('jax'):
                 sub_circuit = self._fast_subs([diagram], x)[0]
                 result = tn.contractors.auto(*sub_circuit.to_tn()).tensor
+                # square amplitudes to get probabilties for pure circuits
+                if not sub_circuit.is_mixed:
+                    result = Tensor.get_backend().abs(result) ** 2
                 return self._normalise_vector(result)
 
         self.lambdas[diagram] = jit(diagram_output)
@@ -169,9 +172,14 @@ class NumpyModel(QuantumModel):
 
         diagrams = self._fast_subs(diagrams, self.weights)
         with Tensor.backend('numpy'):
-            return numpy.array([
-                self._normalise_vector(tn.contractors.auto(*d.to_tn()).tensor)
-                for d in diagrams])
+            results = []
+            for d in diagrams:
+                result = tn.contractors.auto(*d.to_tn()).tensor
+                # square amplitudes to get probabilties for pure circuits
+                if not d.is_mixed:
+                    result = numpy.abs(result) ** 2
+                results.append(self._normalise_vector(result))
+            return numpy.array(results)
 
     def forward(self, x: list[Diagram]) -> Any:
         """Perform default forward pass of a lambeq model.
@@ -192,18 +200,3 @@ class NumpyModel(QuantumModel):
 
         """
         return self.get_diagram_output(x)
-
-    def _normalise_vector(self, predictions: numpy.ndarray) -> numpy.ndarray:
-        """Apply smoothing to predictions.
-
-        Does not normalise scalar values; instead, returns the absolute
-        value of scalars.
-
-        """
-        backend = Tensor.get_backend()
-        if not predictions.shape:
-            return backend.abs(predictions)
-        else:
-            predictions = (backend.square(backend.abs(predictions))
-                           + self.SMOOTHING)
-            return predictions / predictions.sum()

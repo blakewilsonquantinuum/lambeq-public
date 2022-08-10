@@ -24,7 +24,7 @@ from abc import abstractmethod
 import os
 from typing import Any, Union
 
-from discopy.tensor import Diagram
+from discopy.tensor import Diagram, Tensor
 import numpy as np
 
 from lambeq.training.checkpoint import Checkpoint
@@ -66,10 +66,17 @@ class QuantumModel(Model):
         """Clear the logged predictions of the model."""
         self._train_predictions = []
 
-    @abstractmethod
     def _normalise_vector(self, predictions: np.ndarray) -> np.ndarray:
-        """Normalise diagram output."""
-        pass
+        """Normalise the vector input.
+        Does not normalise scalar values; instead, returns the absolute
+        value of scalars.
+        """
+        backend = Tensor.get_backend()
+        if not predictions.shape:
+            return backend.abs(predictions)
+        else:
+            predictions = backend.abs(predictions) + self.SMOOTHING
+            return predictions / predictions.sum()
 
     def initialise_weights(self) -> None:
         """Initialise the weights of the model.
