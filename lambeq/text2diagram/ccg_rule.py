@@ -257,9 +257,15 @@ class CCGRule(str, Enum):
         elif len(dom) == 2:
             left, right = dom[:1], dom[1:]
             if left == CCGAtomicType.PUNCTUATION:
-                return CCGRule.REMOVE_PUNCTUATION_LEFT
+                if cod == right >> right:
+                    return CCGRule.CONJUNCTION
+                else:
+                    return CCGRule.REMOVE_PUNCTUATION_LEFT
             if right == CCGAtomicType.PUNCTUATION:
-                return CCGRule.REMOVE_PUNCTUATION_RIGHT
+                if cod == left << left:
+                    return CCGRule.CONJUNCTION
+                else:
+                    return CCGRule.REMOVE_PUNCTUATION_RIGHT
             if left == cod << right:
                 return CCGRule.FORWARD_APPLICATION
             if right == left >> cod:
