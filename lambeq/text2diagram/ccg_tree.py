@@ -23,7 +23,7 @@ from typing import Any, Dict, Optional, Union
 from typing import overload
 
 from discopy import rigid, Word
-from discopy.biclosed import biclosed2rigid_ob
+from discopy.biclosed import biclosed2rigid_ob, unaryBoxConstructor
 from discopy.biclosed import Box, Diagram, Functor, Id, Over, Ty, Under
 
 from lambeq.text2diagram.ccg_rule import CCGRule, GBC, GBX, GFC, GFX
@@ -35,7 +35,7 @@ from lambeq.text2diagram.ccg_types import CCGAtomicType
 _JSONDictT = Dict[str, Any]
 
 
-class UnarySwap(Box):
+class UnarySwap(unaryBoxConstructor('cod'), Box):  # type: ignore[misc]
     """Unary Swap box, for unary rules that change the type direction.
 
     For example, the unary rule `S/NP -> NP\\NP` is handled by
