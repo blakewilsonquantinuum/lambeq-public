@@ -105,12 +105,12 @@ def test_suppress_exceptions(sentence):
     bad_parser = WebParser()
     bad_parser.service_url = '..bad..url'
 
-    bad_reader = TreeReader(bad_parser, suppress_exceptions=True)
-    assert bad_reader.sentence2diagram(sentence) is None
+    bad_reader = TreeReader(bad_parser)
+    assert bad_reader.sentence2diagram(sentence, suppress_exceptions=True) is None
 
-    bad_reader = TreeReader(bad_parser, suppress_exceptions=False)
+    bad_reader = TreeReader(bad_parser)
     with pytest.raises(MissingSchema):
-        bad_reader.sentence2diagram(sentence)
+        bad_reader.sentence2diagram(sentence, suppress_exceptions=False)
 
 
 def test_other_readers(sentence):
