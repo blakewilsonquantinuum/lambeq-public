@@ -23,6 +23,7 @@ The following sections demonstrate the usage of the :py:mod:`.training` package 
 
    ../tutorials/trainer_classical.ipynb
    ../tutorials/trainer_quantum.ipynb
+   ../tutorials/pennylane.ipynb
 
 .. rubric:: See also:
 
