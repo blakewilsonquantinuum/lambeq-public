@@ -20,7 +20,7 @@ from typing import Callable, Optional, Union
 __all__ = ['TreeReader', 'TreeReaderMode']
 
 from discopy import Word
-from discopy.rigid import Box, Diagram, Ty
+from discopy.rigid import Box, Diagram, Id, Ty
 
 from lambeq.core.types import AtomicType
 from lambeq.core.utils import SentenceType
@@ -53,10 +53,17 @@ class TreeReaderMode(Enum):
             forward application rule :py:obj:`FA(N << N)`, the rule box
             will be named :py:obj:`FA(N << N)`.
 
+        HEIGHT
+            The 'height' mode names every rule box based on the
+            tree height of its subtree. For example, a rule
+            box directly combining two words will be named
+            :py:obj:`layer_1`.
+
     """
     NO_TYPE = 0
     RULE_ONLY = 1
     RULE_TYPE = 2
+    HEIGHT = 3
 
 
 class TreeReader(Reader):
@@ -150,6 +157,8 @@ class TreeReader(Reader):
             cod = word_type ** len(box.cod)
             if mode == TreeReaderMode.NO_TYPE:
                 name = 'UNIBOX'
+            elif mode == TreeReaderMode.HEIGHT:
+                name = 'layer_?'
             elif mode == TreeReaderMode.RULE_ONLY:
                 name = box.name.split('(')[0]
             else:
@@ -163,6 +172,15 @@ class TreeReader(Reader):
             boxes=tree_words + tree_boxes,
             offsets=(ccg_words >> ccg_parse).offsets
         )
+
+        # augment tree diagram with height labels
+        if mode == TreeReaderMode.HEIGHT:
+            fols = diagram.foliation().boxes
+            diagram = fols[0]
+            for i, fol in enumerate(fols[1:]):
+                for left, box, right in fol.layers:
+                    new_box = Box(f'layer_{i + 1}', box.dom, box.cod)
+                    diagram >>= Id(left) @ new_box @ Id(right)
 
         return diagram
 
