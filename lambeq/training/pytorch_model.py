@@ -60,8 +60,8 @@ class PytorchModel(Model, torch.nn.Module):
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`PytorchModel.from_diagrams()`.')
         self.weights = torch.nn.ParameterList(
-            [torch.nn.Parameter(torch.rand(w.size, requires_grad=True))
-                for w in self.symbols])
+            [torch.nn.Parameter(torch.nn.init.xavier_uniform_(
+                torch.empty(w.size, 1))) for w in self.symbols])
 
     @classmethod
     def from_checkpoint(cls,
