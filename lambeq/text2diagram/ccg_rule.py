@@ -19,7 +19,7 @@ __all__ = ['CCGRule', 'CCGRuleUseError']
 from enum import Enum
 from typing import Any
 
-from discopy.biclosed import Box, Diagram, Id, Ty
+from discopy.biclosed import Box, Diagram, Id, Over, Ty, Under
 from discopy.monoidal import BinaryBoxConstructor
 
 from lambeq.text2diagram.ccg_types import CCGAtomicType, replace_cat_result
@@ -273,29 +273,37 @@ class CCGRule(str, Enum):
             if CCGAtomicType.CONJUNCTION in (left, right):
                 return CCGRule.CONJUNCTION
 
-            ll = left.left or Ty()
-            lr = left.right or Ty()
-            rl = right.left or Ty()
-            rr = right.right or Ty()
-            if left == ll << lr:
-                if right == lr << rr and cod == ll << rr:
+            if isinstance(left, Over):
+                if (isinstance(right, Over)
+                        and left.right == right.left
+                        and cod == left.left << right.right):
                     return CCGRule.FORWARD_COMPOSITION
-                if right == rl >> lr and cod == rl >> ll:
+                if (isinstance(right, Under)
+                        and left.right == right.right
+                        and cod == right.left >> left.left):
                     return CCGRule.FORWARD_CROSSED_COMPOSITION
-                if (cod, lr) == replace_cat_result(right, lr, ll, '<'):
+                if (replace_cat_result(right, left.right, left.left, '<')
+                        == (cod, left.right)):
                     return CCGRule.GENERALIZED_FORWARD_COMPOSITION
-            if right == rl >> rr:
-                if left == ll >> rl and cod == ll >> rr:
+            if isinstance(right, Under):
+                if (isinstance(left, Under)
+                        and left.right == right.left
+                        and cod == left.left >> right.right):
                     return CCGRule.BACKWARD_COMPOSITION
-                if left == rl << lr and cod == rr << lr:
+                if (isinstance(left, Over)
+                        and left.left == right.left
+                        and cod == right.right << left.right):
                     return CCGRule.BACKWARD_CROSSED_COMPOSITION
-                if (cod, rl) == replace_cat_result(left, rl, rr, '>'):
+                if (replace_cat_result(left, right.left, right.right, '>')
+                        == (cod, right.left)):
                     return CCGRule.GENERALIZED_BACKWARD_COMPOSITION
 
                 # check generalised crossed rules after everything else
-                if (cod, rl) == replace_cat_result(left, rl, rr, '<|'):
+                if (replace_cat_result(left, right.left, right.right, '<|')
+                        == (cod, right.left)):
                     return CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION
-            if (left == ll << lr
-                    and (cod, lr) == replace_cat_result(right, lr, ll, '>|')):
+            if (isinstance(left, Over)
+                    and (replace_cat_result(right, left.right, left.left, '>|')
+                         == (cod, left.right))):
                 return CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION
         return CCGRule.UNKNOWN
