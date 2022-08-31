@@ -69,8 +69,8 @@ class Optimizer(ABC):
 
         Returns
         -------
-        Tuple of np.Array and float
-            The model predictions and the calculated loss.
+        float
+            The calculated loss.
 
         """
 

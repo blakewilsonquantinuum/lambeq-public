@@ -21,9 +21,6 @@ based on a PennyLane and PyTorch backend.
 """
 from __future__ import annotations
 
-import os
-from typing import Any, Union
-
 import discopy
 from discopy import Circuit, Diagram
 from sympy import default_sort_key
@@ -31,8 +28,6 @@ import torch
 
 from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.pytorch_model import PytorchModel
-
-_StrPathT = Union[str, 'os.PathLike[str]']
 
 
 class PennyLaneModel(PytorchModel):
@@ -61,59 +56,41 @@ class PennyLaneModel(PytorchModel):
         self._probabilities = probabilities
         self._normalize = normalize
 
-    @classmethod
-    def from_checkpoint(cls,
-                        checkpoint_path: _StrPathT,
-                        **kwargs: Any) -> PennyLaneModel:
-        """Load the weights and symbols from a training checkpoint.
-
-        Also loads the circuits.
+    def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
+        """Load the model weights and symbols from a lambeq
+        :py:class:`.Checkpoint`.
 
         Parameters
         ----------
-        checkpoint_path : str or `os.PathLike`
-            Path that points to the checkpoint file.
-
-        Raises
-        ------
-        FileNotFoundError
-            If checkpoint file does not exist.
+        checkpoint : :py:class:`.Checkpoint`
+            Checkpoint containing the model weights,
+            symbols and additional information.
 
         """
-        model = cls(**kwargs)
-        checkpoint = Checkpoint.from_file(checkpoint_path)
-        try:
-            model.symbols = checkpoint['model_symbols']
-            model.weights = checkpoint['model_weights']
-            model.circuit_map = checkpoint['model_circuits']
-            model.load_state_dict(checkpoint['model_state_dict'])
-            return model
-        except KeyError as e:
-            raise e
 
-    def make_checkpoint(self, checkpoint_path: _StrPathT) -> None:
-        """Make a checkpoint file for the model.
+        self.symbols = checkpoint['model_symbols']
+        self.weights = checkpoint['model_weights']
+        self.circuit_map = checkpoint['model_circuits']
+        self.load_state_dict(checkpoint['model_state_dict'])
 
-        Parameters
-        ----------
-        checkpoint_path : str or `os.PathLike`
-            Path that points to the checkpoint file. If
-            the file does not exist, it will be created.
+    def _make_checkpoint(self) -> Checkpoint:
+        """Create checkpoint that contains the model weights and symbols.
 
-        Raises
-        ------
-        FileNotFoundError
-            If the directory in which the checkpoint file is to be
-            saved does not exist.
+        Returns
+        -------
+        :py:class:`.Checkpoint`
+            Checkpoint containing the model weights, symbols and
+            additional information.
 
         """
+
         checkpoint = Checkpoint()
         checkpoint.add_many({'model_weights': self.weights,
                              'model_symbols': self.symbols,
                              'model_circuits': self.circuit_map,
                              'model_state_dict': self.state_dict()})
 
-        checkpoint.to_file(checkpoint_path)
+        return checkpoint
 
     def get_diagram_output(self, diagrams: list[Diagram]) -> torch.Tensor:
         """Evaluate outputs of circuits using PennyLane.

@@ -84,10 +84,14 @@ def test_normalize():
             assert np.allclose(p_pred.detach().numpy(), d_pred, atol=1e-5)
 
 
-def test_initialise_weights_error():
+def test_initialise_errors():
     with pytest.raises(ValueError):
         model = PennyLaneModel()
         model.initialise_weights()
+
+    diag = Word("Alice", N) @ Word("runs", N.r @ S) >> Cup(N, N.r) @ Id(S)
+    with pytest.raises(ValueError):
+        model = PennyLaneModel.from_diagrams([diag])
 
 
 def test_get_diagram_output_error():

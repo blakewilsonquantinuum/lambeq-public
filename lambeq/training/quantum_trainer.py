@@ -27,6 +27,7 @@ from typing import Any, Optional, Union
 import numpy as np
 
 from lambeq.core.globals import VerbosityLevel
+from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.dataset import Dataset
 from lambeq.training.optimizer import Optimizer
 from lambeq.training.quantum_model import QuantumModel
@@ -103,27 +104,29 @@ class QuantumTrainer(Trainer):
                                    optim_hyperparams,
                                    self.loss_function)
 
-    def _add_extra_chkpoint_info(self) -> Mapping[str, Any]:
+    def _add_extra_checkpoint_info(self, checkpoint: Checkpoint) -> None:
         """Add any additional information to the training checkpoint.
 
         These might include model-specific information like the random
         state of the backend or the state of the optimizer.
 
-        Returns
-        -------
-        mapping of str to any
-            Mapping containing the extra information to save.
+        Use `checkpoint.add_many()` to add multiple items.
+
+        Parameters
+        ----------
+        checkpoint : :py:class:`.Checkpoint`
+            The checkpoint to add information to.
 
         """
-        return {'numpy_random_state': np.random.get_state(),
-                'optimizer_state_dict': self.optimizer.state_dict()}
+        checkpoint.add_many(
+            {'numpy_random_state': np.random.get_state(),
+             'optimizer_state_dict': self.optimizer.state_dict()})
 
-    def _load_extra_chkpoint_info(self,
-                                  checkpoint: Mapping[str, Any]) -> None:
+    def _load_extra_checkpoint_info(self, checkpoint: Checkpoint) -> None:
         """Load additional checkpoint information.
 
         This includes data previously added by
-        `_add_extra_chkpoint_info()`.
+        `_add_extra_checkpoint_info()`.
 
         Parameters
         ----------
@@ -132,8 +135,7 @@ class QuantumTrainer(Trainer):
 
         """
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        if self.seed is not None:
-            np.random.set_state(checkpoint['numpy_random_state'])
+        np.random.set_state(checkpoint['numpy_random_state'])
 
     def training_step(
             self,

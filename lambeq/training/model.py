@@ -68,7 +68,6 @@ class Model(ABC):
         """Initialise the weights of the model."""
 
     @classmethod
-    @abstractmethod
     def from_checkpoint(cls,
                         checkpoint_path: _StrPathT,
                         **kwargs: Any) -> Model:
@@ -88,26 +87,67 @@ class Model(ABC):
 
         """
 
-    def make_checkpoint(self, checkpoint_path: _StrPathT) -> None:
-        """Save the model weights and symbols to a training checkpoint.
+        model = cls(**kwargs)
+        checkpoint = Checkpoint.from_file(checkpoint_path)
+        model._load_checkpoint(checkpoint)
+        return model
+
+    @abstractmethod
+    def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
+        """Load the model weights and symbols from a lambeq
+        :py:class:`.Checkpoint`.
 
         Parameters
         ----------
-        checkpoint_path : str or `os.PathLike`
-            Path that points to the checkpoint file. If
-            the file does not exist, it will be created.
-
-        Raises
-        ------
-        FileNotFoundError
-            If the directory in which the checkpoint file is to be
-            saved does not exist.
+        checkpoint : Checkpoint
+            :py:class:`.Checkpoint` containing the model weights,
+            symbols and additional information.
 
         """
-        checkpoint = Checkpoint()
-        checkpoint.add_many({'model_symbols': self.symbols,
-                             'model_weights': self.weights})
+
+    @abstractmethod
+    def _make_checkpoint(self) -> Checkpoint:
+        """Create checkpoint that contains the model weights and symbols.
+
+        Returns
+        -------
+        Checkpoint
+            :py:class:`.Checkpoint` containing the model weights,
+            symbols and additional information.
+
+        """
+
+    def save(self, checkpoint_path: _StrPathT) -> None:
+        """Create a lambeq :py:class:`.Checkpoint` and save to a path.
+
+        Example:
+        >>> from lambeq import PytorchModel
+        >>> model = PytorchModel()
+        >>> model.save('my_checkpoint.lt')
+
+        Parameters
+        ----------
+        checkpoint_path : str or PathLike
+            Path that points to the checkpoint file.
+
+        """
+        checkpoint = self._make_checkpoint()
         checkpoint.to_file(checkpoint_path)
+
+    def load(self, checkpoint_path: _StrPathT) -> None:
+        """Load model data from a path pointing to a lambeq checkpoint.
+
+        Checkpoints that are created by a lambeq :py:class:`Trainer`
+        usually have the extension `.lt`.
+
+        Parameters
+        ----------
+        checkpoint_path : str or PathLike
+            Path that points to the checkpoint file.
+
+        """
+        checkpoint = Checkpoint.from_file(checkpoint_path)
+        self._load_checkpoint(checkpoint)
 
     @abstractmethod
     def get_diagram_output(self, diagrams: list[Diagram]) -> Any:

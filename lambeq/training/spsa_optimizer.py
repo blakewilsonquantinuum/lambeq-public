@@ -116,8 +116,8 @@ class SPSAOptimizer(Optimizer):
 
         Returns
         -------
-        tuple of np.ndarray and float
-            The model predictions and the calculated loss.
+        float
+            The calculated loss.
 
         """
         diagrams, targets = batch

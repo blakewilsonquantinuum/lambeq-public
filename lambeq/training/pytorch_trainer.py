@@ -27,6 +27,7 @@ from typing import Any, Optional, Union
 import torch
 
 from lambeq.core.globals import VerbosityLevel
+from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.pytorch_model import PytorchModel
 from lambeq.training.trainer import Trainer
 
@@ -108,44 +109,44 @@ class PytorchTrainer(Trainer):
         self.learning_rate = learning_rate
         self.device = torch.device('cpu' if device < 0 else f'cuda:{device}')
         if device >= 0:
-            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+            torch.set_default_tensor_type(  # pragma: no cover
+                'torch.cuda.FloatTensor')
         self.optimizer = optimizer(self.model.parameters(),  # type: ignore
                                    lr=self.learning_rate)   # type: ignore
         self.model.to(self.device)
 
-    def _add_extra_chkpoint_info(self) -> Mapping[str, Any]:
+    def _add_extra_checkpoint_info(self, checkpoint: Checkpoint) -> None:
         """Add any additional information to the training checkpoint.
 
         These might include model-specific information like the random
         state of the backend or the state of the optimizer.
 
-        Returns
-        -------
-        Mapping of str to any
-            Mapping containing the extra information to save.
-
-        """
-        return {'model_state_dict': self.model.state_dict(),
-                'torch_random_state': torch.get_rng_state(),
-                'optimizer_state_dict': self.optimizer.state_dict()}
-
-    def _load_extra_chkpoint_info(self,
-                                  checkpoint: Mapping[str, Any]) -> None:
-        """Load additional checkpoint information.
-
-        This includes data previously added by
-        `_add_extra_chkpoint_info()`.
+        Use `checkpoint.add_many()` to add multiple items.
 
         Parameters
         ----------
-        checkpoint : Mapping of str to any
+        checkpoint : :py:class:`.Checkpoint`
+            The checkpoint to add information to.
+
+        """
+        checkpoint.add_many(
+            {'torch_random_state': torch.get_rng_state(),
+             'optimizer_state_dict': self.optimizer.state_dict()})
+
+    def _load_extra_checkpoint_info(self, checkpoint: Checkpoint) -> None:
+        """Load additional checkpoint information.
+
+        This includes data previously added by
+        `_add_extra_checkpoint_info()`.
+
+        Parameters
+        ----------
+        checkpoint : :py:class:`.Checkpoint`
             Mapping containing the checkpoint information.
 
         """
-        self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        if self.seed is not None:
-            torch.set_rng_state(checkpoint['torch_random_state'])
+        torch.set_rng_state(checkpoint['torch_random_state'])
 
     def validation_step(
             self,
@@ -183,8 +184,8 @@ class PytorchTrainer(Trainer):
 
         Returns
         -------
-        float
-            The calculated loss.
+        Tuple of torch.Tensor and float
+            The model predictions and the calculated loss.
 
         """
         x, y = batch
