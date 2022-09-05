@@ -21,13 +21,24 @@ based on a PennyLane and PyTorch backend.
 """
 from __future__ import annotations
 
-import discopy
+import copy
+from typing import Any, Optional, TYPE_CHECKING
+
 from discopy import Circuit, Diagram
 from sympy import default_sort_key
 import torch
 
 from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.pytorch_model import PytorchModel
+
+if TYPE_CHECKING:
+    import pennylane as qml
+    from discopy.quantum.pennylane import PennyLaneCircuit
+
+
+def _import_pennylane():
+    global qml
+    import pennylane as qml
 
 
 class PennyLaneModel(PytorchModel):
@@ -38,7 +49,8 @@ class PennyLaneModel(PytorchModel):
 
     """
 
-    def __init__(self, probabilities=True, normalize=True) -> None:
+    def __init__(self,
+                 backend_config: Optional[dict[str, Any]] = None) -> None:
         """Initialise a :py:class:`PennyLaneModel` instance with
         an empty `circuit_map` dictionary.
 
@@ -46,15 +58,39 @@ class PennyLaneModel(PytorchModel):
         ----------
         probabilities : bool, default: True
             Whether to use probabilities or states for the output.
-        normalize : bool, default: True
-            Whether to normalize the output after post-selection.
+        provider_config : dict, optional
+            Configuration for hardware or simulator to be used. Defaults
+            to using the `default.qubit` PennyLane simulator analytically,
+            with normalized probability outputs. Keys that can be used
+            include 'provider', 'backend', 'probabilities', 'normalize',
+            'shots', and 'noise_model'.
 
         """
-        PytorchModel.__init__(self)
-        self.circuit_map: dict[Circuit,
-                               discopy.quantum.pennylane.PennyLaneCircuit] = {}
-        self._probabilities = probabilities
-        self._normalize = normalize
+        super().__init__()
+        _import_pennylane()
+        self.circuit_map: dict[Circuit, PennyLaneCircuit] = {}
+
+        if backend_config is None:
+            backend_config = {'backend': 'default.qubit'}
+
+        backend_config = {'probabilities': True,
+                          'normalize': True,
+                          **backend_config}
+
+        self._backend = backend_config.pop('backend')
+
+        if self._backend == 'honeywell.hqs':
+            try:
+                backend_config['machine'] = backend_config.pop('device')
+            except KeyError:
+                raise ValueError('When using the honeywell.hqs provider, '
+                                 'a device must be specified.')
+        elif 'device' in backend_config:
+            backend_config['backend'] = backend_config.pop('device')
+
+        self._probabilities = backend_config.pop('probabilities')
+        self._normalize = backend_config.pop('normalize')
+        self._backend_config = backend_config
 
     def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
         """Load the model weights and symbols from a lambeq
@@ -67,11 +103,19 @@ class PennyLaneModel(PytorchModel):
             symbols and additional information.
 
         """
-
         self.symbols = checkpoint['model_symbols']
         self.weights = checkpoint['model_weights']
+        self._probabilities = checkpoint['model_probabilities']
+        self._normalize = checkpoint['model_normalize']
+        self._backend = checkpoint['model_backend']
+        self._backend_config = checkpoint['model_backend_config']
         self.circuit_map = checkpoint['model_circuits']
         self.load_state_dict(checkpoint['model_state_dict'])
+
+        for p_circ in self.circuit_map.values():
+            p_circ.device = qml.device(self._backend,
+                                       wires=p_circ.n_qubits,
+                                       **self._backend_config)
 
     def _make_checkpoint(self) -> Checkpoint:
         """Create checkpoint that contains the model weights and symbols.
@@ -85,9 +129,17 @@ class PennyLaneModel(PytorchModel):
         """
 
         checkpoint = Checkpoint()
+        circuit_map = {k: copy.copy(v) for k, v in self.circuit_map.items()}
+        for c in circuit_map.values():
+            c.device = None
+
         checkpoint.add_many({'model_weights': self.weights,
                              'model_symbols': self.symbols,
-                             'model_circuits': self.circuit_map,
+                             'model_probabilities': self._probabilities,
+                             'model_normalize': self._normalize,
+                             'model_backend': self._backend,
+                             'model_backend_config': self._backend_config,
+                             'model_circuits': circuit_map,
                              'model_state_dict': self.state_dict()})
 
         return checkpoint
@@ -144,10 +196,10 @@ class PennyLaneModel(PytorchModel):
         return self.get_diagram_output(x)
 
     @classmethod
-    def from_diagrams(cls, diagrams: list[Diagram],
-                      probabilities=True,
-                      normalize=True,
-                      **kwargs) -> PennyLaneModel:
+    def from_diagrams(cls,
+                      diagrams: list[Diagram],
+                      backend_config: Optional[dict[str, Any]] = None,
+                      **kwargs: Any) -> PennyLaneModel:
         """Build model from a list of
         :py:class:`Circuits <discopy.quantum.Circuit>`.
 
@@ -155,26 +207,29 @@ class PennyLaneModel(PytorchModel):
         ----------
         diagrams : list of :py:class:`~discopy.quantum.Circuit`
             The circuit diagrams to be evaluated.
-        probabilities : bool, default: True
-            Whether the circuits return normalized probabilities or
-            unnormalized states in the computational basis.
-        normalize : bool, default: True
-            Whether to normalize the outputs of the circuits.
-            For probabilities, this means the sum of the output tensor
-            is 1, while for states it means the sum of the squares of
-            the absolute values of the tensor is 1.
+        provider_config : dict, optional
+            Configuration for hardware or simulator to be used. Defaults
+            to using the `default.qubit` PennyLane simulator analytically,
+            with normalized probability outputs. Keys that can be used
+            include 'provider', 'backend', 'probabilities', 'normalize',
+            'shots', and 'noise_model'.
 
         """
         if not all(isinstance(x, Circuit) for x in diagrams):
             raise ValueError('All diagrams must be of type'
                              '`discopy.quantum.Circuit`.')
 
-        model = cls(probabilities=probabilities, normalize=normalize, **kwargs)
+        model = cls(backend_config=backend_config, **kwargs)
+
         model.symbols = sorted(
             {sym for circ in diagrams for sym in circ.free_symbols},
             key=default_sort_key)
-        model.circuit_map = {circ:
-                             circ.to_pennylane(probabilities=probabilities)
-                             for circ in diagrams}
+        for circ in diagrams:
+            p_circ = circ.to_pennylane(probabilities=model._probabilities)
+            p_circ.device = qml.device(model._backend,
+                                       wires=p_circ.n_qubits,
+                                       **model._backend_config)
+
+            model.circuit_map[circ] = p_circ
 
         return model

@@ -4,6 +4,7 @@ from copy import deepcopy
 from unittest.mock import mock_open, patch
 
 import numpy as np
+from qiskit.providers.ibmq.exceptions import IBMQAccountError
 import torch
 from torch import Size
 from torch.nn import Parameter
@@ -63,9 +64,10 @@ def test_normalize():
 
     for i in range(len(diagrams)):
         for b in [True, False]:
-            instance = PennyLaneModel.from_diagrams(diagrams,
-                                                    probabilities=b,
-                                                    normalize=False)
+            backend_config = {'backend': 'default.qubit',
+                              'probabilities': b,
+                              'normalize': False}
+            instance = PennyLaneModel.from_diagrams(diagrams, backend_config)
             instance.initialise_weights()
 
             p_pred = instance.forward(diagrams)[i]
@@ -118,6 +120,10 @@ def test_checkpoint_loading():
 
     checkpoint = {'model_weights': model.weights,
                   'model_symbols': model.symbols,
+                  'model_probabilities': model._probabilities,
+                  'model_normalize': model._normalize,
+                  'model_backend': model._backend,
+                  'model_backend_config': model._backend_config,
                   'model_circuits': model.circuit_map,
                   'model_state_dict': model.state_dict()}
     with patch('lambeq.training.checkpoint.open', mock_open(read_data=pickle.dumps(checkpoint))) as m, \
@@ -195,3 +201,52 @@ def test_with_pytorch_trainer(tmp_path):
 
     assert len(trainer.train_costs) == EPOCHS
     assert len(trainer.val_results["acc"]) == EPOCHS
+
+
+def test_backends():
+    # Tests that the devices are well-formed, mainly checking to see
+    # if there are errors thrown rather than assertions that fail.
+
+    N = AtomicType.NOUN
+    S = AtomicType.SENTENCE
+    ansatz = IQPAnsatz({AtomicType.NOUN: 1, AtomicType.SENTENCE: 1},
+                       n_layers=1, n_single_qubit_params=3)
+    diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S)
+                      >> Cup(N, N.r) @ Id(S)))
+    diagrams = [diagram]
+
+    model = PennyLaneModel.from_diagrams(diagrams)
+    assert model._backend == 'default.qubit'
+    assert model._probabilities
+    assert model._normalize
+    assert model._backend_config == {}
+
+    from qiskit.providers.aer.noise import NoiseModel
+
+    noise_model = NoiseModel()
+    backend_config = {'backend': 'qiskit.aer',
+                      'noise_model': noise_model,
+                      'shots': 2048}
+    model = PennyLaneModel.from_diagrams(diagrams,
+                                         backend_config=backend_config)
+    assert model._backend == 'qiskit.aer'
+    assert model._backend_config == {'noise_model': noise_model,
+                                      'shots': 2048}
+
+    backend_config = {'backend': 'qiskit.ibmq',
+                       'device': 'ibmq_manila'}
+    with pytest.raises(IBMQAccountError):
+        _ = PennyLaneModel.from_diagrams(diagrams,
+                                            backend_config=backend_config)
+
+    backend_config = {'backend': 'honeywell.hqs',
+                      'device': 'H1-1E'}
+    model = PennyLaneModel.from_diagrams(diagrams,
+                                         backend_config=backend_config)
+    assert model._backend == 'honeywell.hqs'
+    assert model._backend_config == {'machine': 'H1-1E'}
+
+    backend_config = {'backend': 'honeywell.hqs'}
+    with pytest.raises(ValueError):
+        _ = PennyLaneModel.from_diagrams(diagrams,
+                                         backend_config=backend_config)
