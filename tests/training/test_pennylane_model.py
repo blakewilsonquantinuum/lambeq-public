@@ -42,7 +42,7 @@ def test_forward():
     ]
     instance = PennyLaneModel.from_diagrams(diagrams)
     instance.initialise_weights()
-    pred = instance.forward(diagrams)
+    pred = instance(diagrams)
     assert pred.size() == Size([len(diagrams), s_dim])
 
 
@@ -247,6 +247,34 @@ def test_backends():
     assert model._backend_config == {'machine': 'H1-1E'}
 
     backend_config = {'backend': 'honeywell.hqs'}
+    with pytest.raises(ValueError):
+        _ = PennyLaneModel.from_diagrams(diagrams,
+                                         backend_config=backend_config)
+
+
+def test_initialization_error():
+    N = AtomicType.NOUN
+    S = AtomicType.SENTENCE
+    ansatz = IQPAnsatz({AtomicType.NOUN: 1, AtomicType.SENTENCE: 1},
+                       n_layers=1, n_single_qubit_params=3)
+    diagram = ansatz((Word("Alice", N) @ Word("runs", N >> S)
+                      >> Cup(N, N.r) @ Id(S)))
+    diagrams = [diagram]
+
+    backend_config = {'backend': 'honeywell.hqs'}
+    with pytest.raises(ValueError):
+        _ = PennyLaneModel.from_diagrams(diagrams,
+                                         backend_config=backend_config)
+
+    backend_config = {'backend': 'qiskit.ibmq',
+                      'probabilities': False}
+    with pytest.raises(ValueError):
+        _ = PennyLaneModel.from_diagrams(diagrams,
+                                         backend_config=backend_config)
+
+    backend_config = {'backend': 'qiskit.aer',
+                      'device': 'aer_simulator',
+                      'probabilities': False}
     with pytest.raises(ValueError):
         _ = PennyLaneModel.from_diagrams(diagrams,
                                          backend_config=backend_config)

@@ -41,6 +41,10 @@ def _import_pennylane():
     import pennylane as qml
 
 
+STATE_BACKENDS = ['default.qubit', 'lightning.qubit', 'qiskit.aer']
+STATE_DEVICES = ['aer_simulator_statevector', 'statevector_simulator']
+
+
 class PennyLaneModel(PytorchModel):
     """ A lambeq model for the quantum and hybrid quantum/classical
     pipeline using PennyLane circuits. This model inherits from the
@@ -58,11 +62,11 @@ class PennyLaneModel(PytorchModel):
         ----------
         probabilities : bool, default: True
             Whether to use probabilities or states for the output.
-        provider_config : dict, optional
+        backend_config : dict, optional
             Configuration for hardware or simulator to be used. Defaults
             to using the `default.qubit` PennyLane simulator analytically,
             with normalized probability outputs. Keys that can be used
-            include 'provider', 'backend', 'probabilities', 'normalize',
+            include 'backend', 'device', 'probabilities', 'normalize',
             'shots', and 'noise_model'.
 
         """
@@ -91,6 +95,16 @@ class PennyLaneModel(PytorchModel):
         self._probabilities = backend_config.pop('probabilities')
         self._normalize = backend_config.pop('normalize')
         self._backend_config = backend_config
+
+        if not self._probabilities:
+            if self._backend not in STATE_BACKENDS:
+                raise ValueError(f'The {self._backend} backend is not '
+                                 'compatible with state outputs.')
+            elif ('backend' in self._backend_config
+                  and self._backend_config['backend'] not in STATE_DEVICES):
+                raise ValueError(f'The {self._backend_config["backend"]} '
+                                 'device is not compatible with state '
+                                 'outputs.')
 
     def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
         """Load the model weights and symbols from a lambeq
@@ -173,7 +187,8 @@ class PennyLaneModel(PytorchModel):
                 circuit_evals = [c / torch.sum(torch.square(torch.abs(c)))
                                  for c in circuit_evals]
 
-        return torch.stack(circuit_evals)
+        stacked = torch.stack(circuit_evals)
+        return stacked.squeeze(-1)
 
     def forward(self, x: list[Diagram]) -> torch.Tensor:
         """Perform default forward pass by running circuits.
@@ -207,11 +222,11 @@ class PennyLaneModel(PytorchModel):
         ----------
         diagrams : list of :py:class:`~discopy.quantum.Circuit`
             The circuit diagrams to be evaluated.
-        provider_config : dict, optional
+        backend_config : dict, optional
             Configuration for hardware or simulator to be used. Defaults
             to using the `default.qubit` PennyLane simulator analytically,
             with normalized probability outputs. Keys that can be used
-            include 'provider', 'backend', 'probabilities', 'normalize',
+            include 'backend', 'device', 'probabilities', 'normalize',
             'shots', and 'noise_model'.
 
         """
