@@ -180,6 +180,9 @@ class Model(ABC):
             Dictionary containing the backend configuration for the
             :py:class:`TketModel`. Must include the fields `'backend'`,
             `'compilation'` and `'shots'`.
+        use_jit : bool, default: False
+            Whether to use JAX's Just-In-Time compilation in
+            :py:class:`NumpyModel`.
 
         """
         model = cls(**kwargs)

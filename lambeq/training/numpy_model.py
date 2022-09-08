@@ -32,7 +32,7 @@ from typing import Any, Callable
 from discopy import Tensor
 from discopy.tensor import Diagram
 import numpy
-from sympy import default_sort_key, lambdify
+from sympy import lambdify
 import tensornetwork as tn
 
 from lambeq.training.model import SizedIterable
@@ -55,34 +55,6 @@ class NumpyModel(QuantumModel):
         super().__init__()
         self.use_jit = use_jit
         self.lambdas: dict[Diagram, Callable] = {}
-
-    @classmethod
-    def from_diagrams(cls,
-                      diagrams: list[Diagram],
-                      use_jit: bool = False,
-                      **kwargs) -> NumpyModel:
-        """Build model from a list of
-        :py:class:`Diagrams <discopy.tensor.Diagram>`
-
-        Parameters
-        ----------
-        diagrams : list of :py:class:`~discopy.tensor.Diagram`
-            The :py:class:`Circuits <discopy.quantum.circuit.Circuit>`
-            to be evaluated.
-        use_jit : bool, default: False
-            Whether to use JAX's Just-In-Time compilation.
-
-        Returns
-        -------
-        NumpyModel
-            The NumPy model initialised from the diagrams.
-
-        """
-        model = cls(use_jit=use_jit, **kwargs)
-        model.symbols = sorted(
-            {sym for circ in diagrams for sym in circ.free_symbols},
-            key=default_sort_key)
-        return model
 
     def _get_lambda(self, diagram: Diagram) -> Callable[[Any], Any]:
         """Get lambda function that evaluates the provided diagram.
