@@ -43,6 +43,7 @@ from transformers import AutoTokenizer
 from lambeq.bobcat import (BertForChartClassification, Category,
                            ChartParser, Grammar, ParseTree,
                            Sentence, Supertag, Tagger)
+from lambeq.bobcat.tagger import TaggerOutputSentence
 from lambeq.core.globals import VerbosityLevel
 from lambeq.core.utils import (SentenceBatchType,
                                tokenised_batch_type_check,
@@ -290,6 +291,16 @@ class BobcatParser(CCGParser):
                                   root_cats,
                                   **config['parser'])
 
+    @staticmethod
+    def _prepare_sentence(sent: TaggerOutputSentence,
+                          tags: list[str]) -> Sentence:
+        """Turn JSON input into a Sentence for parsing."""
+        sent_tags = [[Supertag(tags[id], prob) for id, prob in supertags]
+                     for supertags in sent.tags]
+        spans = {(start, end): {id: score for id, score in scores}
+                 for start, end, scores in sent.spans}
+        return Sentence(sent.words, sent_tags, spans)
+
     def sentences2trees(
             self,
             sentences: SentenceBatchType,
@@ -363,21 +374,16 @@ class BobcatParser(CCGParser):
                     desc='Parsing tagged sentences',
                     leave=False,
                     disable=verbose != VerbosityLevel.PROGRESS.value):
-                words = sent.words
-                sent_tags = [[Supertag(tags[id], prob)
-                              for id, prob in supertags]
-                             for supertags in sent.tags]
-                spans = {(start, end): {id: score for id, score in scores}
-                         for start, end, scores in sent.spans}
 
                 try:
-                    result = self.parser(Sentence(words, sent_tags, spans))
+                    sentence_input = self._prepare_sentence(sent, tags)
+                    result = self.parser(sentence_input)
                     trees.append(self._build_ccgtree(result[0]))
                 except Exception:
                     if suppress_exceptions:
                         trees.append(None)
                     else:
-                        raise BobcatParseError(' '.join(words))
+                        raise BobcatParseError(' '.join(sent.words))
 
         for i in empty_indices:
             trees.insert(i, None)
