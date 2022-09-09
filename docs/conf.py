@@ -89,6 +89,10 @@ html_static_path = ['_static']
 html_logo = '_static/images/lambeq_logo.png'
 html_favicon = '_static/images/favicon.ico'
 
+# CSS for allowing text wrapping within table cells
+html_css_files = [
+    'css/table-wrap.css',
+]
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     if name == 'Symbol':
