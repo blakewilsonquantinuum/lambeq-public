@@ -1,6 +1,6 @@
 .. _sec-usecases:
 
-Lambeq use cases
+lambeq use cases
 ================
 
 ``lambeq`` covers a wide range of experiment use cases (:numref:`fig-usecases`) in three broad categories:
@@ -74,7 +74,7 @@ Computation with :term:`NISQ` devices is slow, noisy and limited, so it is still
    - As a faithful approximation of an actual quantum run
    - When the available actual quantum machines are still small for the kind of experiment you have in mind
 
-When a faithful approximation of a quantum run is needed, one should use a proper shot-based simulation, optionally including a noise model that is appropriate for the specific kind of quantum hardware. In fact, a noisy shot-based simulation is as close as we could get to an actual quantum run. For example, in order to run an architecture-aware simulation on an IBM machine, we could use a :py:class:`.TketModel` initialised with a :term:`qiskit` noise model:
+When a faithful approximation of a quantum run is needed, one should use a proper shot-based simulation, optionally including a noise model that is appropriate for the specific kind of quantum hardware. In fact, a noisy shot-based simulation is as close as we could get to an actual quantum run. For example, in order to run an architecture-aware simulation on an IBM machine, we could use a :py:class:`.TketModel` initialised with a :term:`Qiskit` noise model:
 
 .. code-block:: python
 
@@ -150,23 +150,23 @@ As soon as you are satisfied with the results of the simulations, it's time for 
 
 .. note::
 
-   While providers usually offer free plans which allow some limited access to their resources, depending on your experimental needs a paid subscription might be required. :numref:`tbl-quantumservices` summarises some popular quantum platforms that are currently available to the public:
+   While providers usually offer free plans which allow some limited access to their resources, depending on your experimental needs a paid subscription might be required. :numref:`tbl-quantumservices` summarises some popular quantum platforms that are currently available to the public.
 
 .. _tbl-quantumservices:
 .. csv-table:: Quantum platforms.
-   :header: "Platform", "URL", "Technology"
-   :widths: 30, 30, 30
+   :header: "Platform", "Technology"
+   :widths: 30, 60
    :align: center
 
-   "Alpine Quantum Technologies", "`AQT <https://www.aqt.eu/qc-systems/>`_", "`Trapped Ions <https://en.wikipedia.org/wiki/Trapped_ion_quantum_computer>`_"
-   "Amazon Braket", "`Amazon Braket <https://aws.amazon.com/braket/>`_", "`Annealing <https://en.wikipedia.org/wiki/Quantum_annealing>`_, Trapped Ions, `Superconducting qubits <https://en.wikipedia.org/wiki/Superconducting_quantum_computing>`_, `Photonics <https://pennylane.ai/qml/demos/tutorial_photonics.html>`_"
-   "Google Quantum AI", "`Quantum Computing Service <https://quantumai.google/quantum-computing-service>`_", "Superconducting qubits"
-   "IBM Quantum", "`IBM Quantum <https://quantum-computing.ibm.com>`_", "Superconducting qubits"
-   "IonQ", "`IonQ Cloud access <https://ionq.com/get-started/#cloud-access>`_", "Trapped Ions"
-   "IQM", "`IQM <https://www.meetiqm.com/>`_", "Superconducting qubits"
-   "Microsoft Azure Quantum", "`Microsoft Azure <https://azure.microsoft.com/en-us/services/quantum/>`_", "Trapped Ions, Superconducting qubits, `Neutral Atoms <https://pennylane.ai/qml/demos/tutorial_pasqal.html>`_"
-   "Quantinuum", "`Honeywell Quantum Solutions <https://www.honeywell.com/us/en/company/quantum>`_", "Trapped Ions"
-   "Rigetti Quantum Cloud Services", "`Rigetti QCS <https://qcs.rigetti.com/sign-in>`_", "Superconducting qubits"
+   "`Alpine Quantum Technologies <https://www.aqt.eu/qc-systems/>`_", "`Trapped ions <https://en.wikipedia.org/wiki/Trapped_ion_quantum_computer>`_"
+   "`Amazon Braket <https://aws.amazon.com/braket/>`_", "`Annealing <https://en.wikipedia.org/wiki/Quantum_annealing>`_, trapped ions, `superconducting qubits <https://en.wikipedia.org/wiki/Superconducting_quantum_computing>`_, `photonics <https://pennylane.ai/qml/demos/tutorial_photonics.html>`_"
+   "`Google Quantum AI <https://quantumai.google/quantum-computing-service>`_", "Superconducting qubits"
+   "`IBM Quantum <https://quantum-computing.ibm.com>`_", "Superconducting qubits"
+   "`IonQ Cloud access <https://ionq.com/get-started/#cloud-access>`_", "Trapped ions"
+   "`IQM <https://www.meetiqm.com/>`_", "Superconducting qubits"
+   "`Microsoft Azure Quantum <https://azure.microsoft.com/en-us/services/quantum/>`_", "Trapped ions, superconducting qubits, `neutral atoms <https://pennylane.ai/qml/demos/tutorial_pasqal.html>`_"
+   "`Quantinuum <https://www.honeywell.com/us/en/company/quantum>`_", "Trapped ions"
+   "`Rigetti Quantum Cloud Services <https://qcs.rigetti.com/sign-in>`_", "Superconducting qubits"
 
 .. rubric:: See also:
 

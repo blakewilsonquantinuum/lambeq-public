@@ -72,23 +72,19 @@ Glossary
         The use of computational methods for solving language-related problems.
 
     NISQ
-        Noisy Intermediate-Scale Quantum.
+        Noisy Intermediate-Scale Quantum. A term for characterising the current state of quantum hardware, where quantum processors still contain a small number of qubits, and are not advanced enough to reach fault-tolerance nor large enough to profit substantially from quantum supremacy.
 
     noise
-        Undesired artefacts that cause the measurement outcome of a :term:`quantum circuit`
-        to deviate from the ideal distribution.
+        Undesired artefacts that cause the measurement outcome of a :term:`quantum circuit` to deviate from the ideal distribution.
 
     parser
         A statistical tool that converts a sentence into a hierarchical representation that reflects the syntactic relationships between the words (a :term:`syntax tree`) based on a specific grammar formalism.
 
     PennyLane
-        A Python library for differentiable programming of quantum computers, which enables
-        quantum machine learning.
+        A Python library for differentiable programming of quantum computers, developed by Xanadu, enabling quantum machine learning.
 
     post-selection
-        The act of conditioning the probability space on a particular event. In practice,
-        this involves disregarding measurement outcomes where a particular qubit does not match
-        the post-selected value.
+        The act of conditioning the probability space on a particular event. In practice, this involves disregarding measurement outcomes where a particular qubit does not match the post-selected value.
 
     pregroup grammar
         A grammar formalism developed by Joachim Lambek in 1999 [Lam1999]_ based on the notion of a *pregroup*. Pregroup grammars are closely related to categorial grammars (such as :term:`CCG <Combinatory Categorial Grammar (CCG)>`). In category-theoretic terms, a pregroup grammar forms a :term:`rigid category`, sometimes also referred to as a non-symmetric :term:`compact closed category`.
@@ -99,7 +95,7 @@ Glossary
     PyTorch
         An open source machine learning framework primarily developed by Meta AI.
 
-    qiskit
+    Qiskit
         An open-source SDK developed by IBM Research for working with quantum computers at the level of circuits, pulses, and algorithms.
 
     quantum circuit

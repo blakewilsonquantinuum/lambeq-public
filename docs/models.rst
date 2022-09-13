@@ -1,6 +1,6 @@
 .. _sec-models:
 
-Choosing a Model
+Choosing a model
 ================
 
 The following sections provide more information on the various models.
@@ -43,8 +43,9 @@ To use the :py:class:`.NumpyModel` with ``jit`` mode, you need to install ``lamb
 
 :py:class:`.NumpyModel` should be used with the :py:class:`.QuantumTrainer`.
 
-| See also the following use case:
-| :ref:`uc1`.
+.. rubric:: See also the following use cases:
+
+- :ref:`uc1`
 
 .. _sec-pennylanemodel:
 
@@ -84,8 +85,8 @@ By using different backend configurations, :py:class:`.PennyLaneModel` can be us
    :header: "Use case", "Configurations"
    :widths: 25, 50
 
-   "Exact non-shot based simulation with state outputs", "``{'backend': 'default.qubit', 'probabilities'=False}``"
-   "Exact non-shot based simulation with probability outputs", "``{'backend': 'default.qubit', 'probabilities'=True}``"
+   "Exact non :term:`shot-based <shots>` simulation with state outputs", "``{'backend': 'default.qubit', 'probabilities'=False}``"
+   "Exact non shot-based simulation with probability outputs", "``{'backend': 'default.qubit', 'probabilities'=True}``"
    "Noiseless shot-based simulation", "``{'backend': 'default.qubit', 'shots'=1000, 'probabilities'=True}``"
    "Noisy shot-based simulation on local hardware", "``{'backend': 'qiskit.aer', noise_model=my_noise_model, 'shots'=1000, 'probabilities'=True}``, where ``my_noise_model`` is an AER :py:class:`NoiseModel`."
    "Noisy shot-based simulation on cloud-based emulators", "| ``{'backend': 'qiskit.ibmq', 'device'='ibmq_qasm_simulator', 'shots'=1000, 'probabilities'=True}``
@@ -95,11 +96,12 @@ By using different backend configurations, :py:class:`.PennyLaneModel` can be us
 
 All of these backends are compatible with hybrid quantum-classical models. Note that using quantum hardware or cloud-based emulators are much slower than local simulations.
 
-| See also the following use cases:
-| :ref:`uc1`
-| :ref:`uc2`
-| :ref:`uc3`
-| :ref:`uc5`
+.. rubric:: See also the following use cases:
+
+- :ref:`uc1`
+- :ref:`uc2`
+- :ref:`uc3`
+- :ref:`uc5`
 
 .. _sec-pytorchmodel:
 
@@ -152,8 +154,9 @@ To simplify training, the :py:class:`.PytorchModel` can be used with the :py:cla
 
    The loss function and the accuracy metric in the tutorial are defined for two-dimensional binary labels: ``[[1,0], [0,1], ...]``. If your data has a different structure, you must implement your custom loss function and evaluation metrics.
 
-| See also the following use case:
-| :ref:`uc4`.
+.. rubric:: See also the following use cases:
+
+- :ref:`uc4`
 
 .. _sec-tketmodel:
 
@@ -189,6 +192,7 @@ For initial experiments we recommend using a :py:class:`.NumpyModel`, as it perf
 
 :py:class:`.TketModel` should be used with the :py:class:`.QuantumTrainer`.
 
-| See also the following use cases:
-| :ref:`uc2`
-| :ref:`uc3`.
+.. rubric:: See also the following use cases:
+
+- :ref:`uc2`
+- :ref:`uc3`
