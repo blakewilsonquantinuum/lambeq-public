@@ -39,7 +39,7 @@ _ArMapT = Callable[[Box], Circuit]
 class CircuitAnsatz(BaseAnsatz):
     """Base class for circuit ansatz."""
 
-    def __init__(self, ob_map: Mapping[Ty, int], **kwargs: Any) -> None:
+    def __init__(self, ob_map: Mapping[Ty, int]) -> None:
         """Instantiate a circuit ansatz.
 
         Parameters
@@ -47,8 +47,6 @@ class CircuitAnsatz(BaseAnsatz):
         ob_map : dict
             A mapping from :py:class:`discopy.rigid.Ty` to the number of
             qubits it uses in a circuit.
-        **kwargs : dict
-            Extra parameters for ansatz configuration.
 
         """
         self.ob_map = ob_map
@@ -101,8 +99,7 @@ class IQPAnsatz(CircuitAnsatz):
             class.
 
         """
-        super().__init__(ob_map=ob_map, n_layers=n_layers,
-                         n_single_qubit_params=n_single_qubit_params)
+        super().__init__(ob_map)
 
         if special_cases is None:
             special_cases = self._special_cases

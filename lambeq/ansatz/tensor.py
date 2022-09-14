@@ -24,7 +24,6 @@ __all__ = ['TensorAnsatz', 'MPSAnsatz', 'SpiderAnsatz']
 
 from collections.abc import Mapping
 import math
-from typing import Any
 
 from discopy import rigid, tensor, Ty, Word
 from discopy.rigid import Cup, Spider
@@ -36,7 +35,7 @@ from lambeq.ansatz import BaseAnsatz, Symbol
 class TensorAnsatz(BaseAnsatz):
     """Base class for tensor network ansatz."""
 
-    def __init__(self, ob_map: Mapping[Ty, Dim], **kwargs: Any) -> None:
+    def __init__(self, ob_map: Mapping[Ty, Dim]) -> None:
         """Instantiate a tensor network ansatz.
 
         Parameters
@@ -44,8 +43,6 @@ class TensorAnsatz(BaseAnsatz):
         ob_map : dict
             A mapping from :py:class:`discopy.rigid.Ty` to the dimension
             space it uses in a tensor network.
-        **kwargs : dict
-            Extra parameters for ansatz configuration.
 
         """
         self.ob_map = ob_map

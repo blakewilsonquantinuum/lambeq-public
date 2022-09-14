@@ -74,9 +74,7 @@ class BaseAnsatz(ABC):
     """Base class for ansatz."""
 
     @abstractmethod
-    def __init__(self,
-                 ob_map: Mapping[rigid.Ty, monoidal.Ty],
-                 **kwargs: Any) -> None:
+    def __init__(self, ob_map: Mapping[rigid.Ty, monoidal.Ty]) -> None:
         """Instantiate an ansatz.
 
         Parameters
@@ -86,8 +84,6 @@ class BaseAnsatz(ABC):
             category. In the category of quantum circuits, this type is
             the number of qubits; in the category of vector spaces, this
             type is a vector space.
-        **kwargs : dict
-            Extra parameters for ansatz configuration.
 
         """
 
