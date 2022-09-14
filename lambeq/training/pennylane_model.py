@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from discopy.quantum.pennylane import PennyLaneCircuit
 
 
-def _import_pennylane():
+def _import_pennylane() -> None:
     global qml
     import pennylane as qml
 

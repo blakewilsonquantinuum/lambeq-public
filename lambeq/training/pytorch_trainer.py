@@ -20,9 +20,9 @@ A trainer that wraps the training loop of a :py:class:`ClassicalModel`.
 """
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 import os
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import torch
 
@@ -30,6 +30,9 @@ from lambeq.core.globals import VerbosityLevel
 from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.pytorch_model import PytorchModel
 from lambeq.training.trainer import Trainer
+
+_StrPathT = Union[str, 'os.PathLike[str]']
+_EvalFuncT = Callable[[Any, Any], Any]
 
 
 class PytorchTrainer(Trainer):
@@ -40,15 +43,15 @@ class PytorchTrainer(Trainer):
     def __init__(
             self,
             model: PytorchModel,
-            loss_function: Callable,
+            loss_function: Callable[..., torch.Tensor],
             epochs: int,
             optimizer: type[torch.optim.Optimizer] = torch.optim.AdamW,
             learning_rate: float = 1e-3,
             device: int = -1,
-            evaluate_functions: Optional[Mapping[str, Callable]] = None,
+            evaluate_functions: Optional[Mapping[str, _EvalFuncT]] = None,
             evaluate_on_train: bool = True,
             use_tensorboard: bool = False,
-            log_dir: Optional[Union[str, os.PathLike]] = None,
+            log_dir: Optional[_StrPathT] = None,
             from_checkpoint: bool = False,
             verbose: str = VerbosityLevel.TEXT.value,
             seed: Optional[int] = None) -> None:
@@ -64,7 +67,7 @@ class PytorchTrainer(Trainer):
         optimizer : torch.optim.Optimizer, default: torch.optim.AdamW
             A PyTorch optimizer from `torch.optim`.
         learning_rate : float, default: 1e-3
-            The learning rate for training.
+            The learning rate provided to the optimizer for training.
         epochs : int
             Number of training epochs.
         device : int, default: -1
@@ -106,13 +109,14 @@ class PytorchTrainer(Trainer):
                          seed)
 
         self.backend = 'pytorch'
-        self.learning_rate = learning_rate
         self.device = torch.device('cpu' if device < 0 else f'cuda:{device}')
         if device >= 0:
             torch.set_default_tensor_type(  # pragma: no cover
-                'torch.cuda.FloatTensor')
-        self.optimizer = optimizer(self.model.parameters(),  # type: ignore
-                                   lr=self.learning_rate)   # type: ignore
+                    'torch.cuda.FloatTensor')
+        optimizer_args: dict[str, Any] = {}
+        if learning_rate is not None:
+            optimizer_args['lr'] = learning_rate
+        self.optimizer = optimizer(self.model.parameters(), **optimizer_args)
         self.model.to(self.device)
 
     def _add_extra_checkpoint_info(self, checkpoint: Checkpoint) -> None:

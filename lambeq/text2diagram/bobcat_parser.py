@@ -101,7 +101,7 @@ def model_is_stale(model: str, model_dir: str) -> bool:
     except Exception:
         local_version = None
 
-    return remote_version != local_version
+    return bool(remote_version != local_version)
 
 
 def download_model(

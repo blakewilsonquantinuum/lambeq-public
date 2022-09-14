@@ -38,13 +38,14 @@ class QuantumModel(Model):
     symbols : list of symbols
         A sorted list of all :py:class:`Symbols <.Symbol>` occurring in
         the data.
-    weights : SizedIterable
+    weights : array
         A data structure containing the numeric values of the model
         parameters
     SMOOTHING : float
         A smoothing constant
 
     """
+    weights: np.ndarray
 
     SMOOTHING = 1e-9
 
@@ -69,11 +70,13 @@ class QuantumModel(Model):
         value of scalars.
         """
         backend = Tensor.get_backend()
+        ret: np.ndarray
         if not predictions.shape:
-            return backend.abs(predictions)
+            ret = backend.abs(predictions)
         else:
-            predictions = backend.abs(predictions) + self.SMOOTHING
-            return predictions / predictions.sum()
+            smoothed_predictions = backend.abs(predictions) + self.SMOOTHING
+            ret = smoothed_predictions / smoothed_predictions.sum()
+        return ret
 
     def initialise_weights(self) -> None:
         """Initialise the weights of the model.

@@ -24,7 +24,7 @@ __all__ = ['BaseAnsatz', 'Symbol']
 
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Literal
 
 from discopy import monoidal, rigid
 import sympy
@@ -39,6 +39,7 @@ class Symbol(sympy.Symbol):
         The size of the tensor that this symbol represents.
 
     """
+    size: int
 
     def __new__(cls, name: str, size: int = 1, **assumptions: bool) -> Symbol:
         """Initialise a symbol.
@@ -51,22 +52,22 @@ class Symbol(sympy.Symbol):
         """
         cls._sanitize(assumptions, cls)
 
-        obj = sympy.Symbol.__xnew__(cls, name, **assumptions)
+        obj: Symbol = sympy.Symbol.__xnew__(cls, name, **assumptions)
         obj.size = size
         return obj
 
-    def __getnewargs_ex__(self):  # type: ignore[no-untyped-def]
-        return ((self.name, self.size), self.assumptions0)
+    def __getnewargs_ex__(self) -> tuple[tuple[str, int], dict[str, bool]]:
+        return (self.name, self.size), self.assumptions0
 
     @sympy.cacheit
-    def sort_key(self, order=None):  # type: ignore[no-untyped-def]
+    def sort_key(self, order: Literal[None] = None) -> tuple[Any, ...]:
         return (self.class_key(),
                 (2, (self.name, self.size)),
                 sympy.S.One.sort_key(),
                 sympy.S.One)
 
-    def _hashable_content(self):  # type: ignore[no-untyped-def]
-        return super()._hashable_content() + (self.size,)
+    def _hashable_content(self) -> tuple[Any, ...]:
+        return (*super()._hashable_content(), self.size)
 
 
 class BaseAnsatz(ABC):

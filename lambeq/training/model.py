@@ -21,24 +21,17 @@ Module containing the base class for a lambeq model.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Collection
 import os
-from typing import Any, Protocol, Union
+from typing import Any, Union
 
 from discopy.tensor import Diagram
 from sympy import default_sort_key
 
+from lambeq.ansatz.base import Symbol
 from lambeq.training.checkpoint import Checkpoint
 
 _StrPathT = Union[str, 'os.PathLike[str]']
-
-
-class SizedIterable(Protocol):
-    """Custom type for a data that has a length and is iterable."""
-    def __len__(self):
-        pass    # pragma: no cover
-
-    def __iter__(self):
-        pass    # pragma: no cover
 
 
 class Model(ABC):
@@ -49,7 +42,7 @@ class Model(ABC):
     symbols : list of symbols
         A sorted list of all :py:class:`Symbols <.Symbol>` occuring in
         the data.
-    weights : SizedIterable
+    weights : Collection
         A data structure containing the numeric values of
         the model's parameters.
 
@@ -57,8 +50,8 @@ class Model(ABC):
 
     def __init__(self) -> None:
         """Initialise an instance of :py:class:`Model` base class."""
-        self.symbols: list = []
-        self.weights: SizedIterable = []
+        self.symbols: list[Symbol] = []
+        self.weights: Collection = []
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         return self.forward(*args, **kwds)
@@ -165,7 +158,7 @@ class Model(ABC):
         """The forward pass of the model."""
 
     @classmethod
-    def from_diagrams(cls, diagrams: list[Diagram], **kwargs) -> Model:
+    def from_diagrams(cls, diagrams: list[Diagram], **kwargs: Any) -> Model:
         """Build model from a list of
         :py:class:`Diagrams <discopy.tensor.Diagram>`.
 

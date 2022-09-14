@@ -26,16 +26,17 @@ calculations are exact i.e. noiseless and not shot-based.
 """
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 import pickle
-from typing import Any, Callable
+from typing import Any
 
 from discopy import Tensor
 from discopy.tensor import Diagram
 import numpy
+from numpy.typing import ArrayLike
 from sympy import lambdify
 import tensornetwork as tn
 
-from lambeq.training.model import SizedIterable
 from lambeq.training.quantum_model import QuantumModel
 
 
@@ -43,7 +44,7 @@ class NumpyModel(QuantumModel):
     """A lambeq model for an exact classical simulation of a
     quantum pipeline."""
 
-    def __init__(self, use_jit: bool = False, **kwargs) -> None:
+    def __init__(self, use_jit: bool = False) -> None:
         """Initialise an NumpyModel.
 
         Parameters
@@ -54,7 +55,7 @@ class NumpyModel(QuantumModel):
         """
         super().__init__()
         self.use_jit = use_jit
-        self.lambdas: dict[Diagram, Callable] = {}
+        self.lambdas: dict[Diagram, Callable[..., Any]] = {}
 
     def _get_lambda(self, diagram: Diagram) -> Callable[[Any], Any]:
         """Get lambda function that evaluates the provided diagram.
@@ -72,7 +73,7 @@ class NumpyModel(QuantumModel):
         if diagram in self.lambdas:
             return self.lambdas[diagram]
 
-        def diagram_output(*x):
+        def diagram_output(*x: ArrayLike) -> ArrayLike:
             with Tensor.backend('jax'), tn.DefaultBackend('jax'):
                 sub_circuit = self._fast_subs([diagram], x)[0]
                 result = tn.contractors.auto(*sub_circuit.to_tn()).tensor
@@ -86,7 +87,7 @@ class NumpyModel(QuantumModel):
 
     def _fast_subs(self,
                    diagrams: list[Diagram],
-                   weights: SizedIterable) -> list[Diagram]:
+                   weights: Iterable[ArrayLike]) -> list[Diagram]:
         """Substitute weights into a list of parameterised circuit."""
         parameters = {k: v for k, v in zip(self.symbols, weights)}
         diagrams = pickle.loads(pickle.dumps(diagrams))  # does fast deepcopy

@@ -35,7 +35,9 @@ from lambeq.training.model import Model
 class PytorchModel(Model, torch.nn.Module):
     """A lambeq model for the classical pipeline using PyTorch."""
 
-    def __init__(self, **kwargs) -> None:
+    weights: torch.nn.ParameterList  # type: ignore[assignment]
+
+    def __init__(self) -> None:
         """Initialise a PytorchModel."""
         Model.__init__(self)
         torch.nn.Module.__init__(self)
@@ -50,8 +52,10 @@ class PytorchModel(Model, torch.nn.Module):
 
         """
         for module in self.modules():
-            if hasattr(module, 'reset_parameters'):
-                module.reset_parameters()  # type: ignore
+            try:
+                module.reset_parameters()  # type: ignore[operator]
+            except (AttributeError, TypeError):
+                pass
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`PytorchModel.from_diagrams()`.')

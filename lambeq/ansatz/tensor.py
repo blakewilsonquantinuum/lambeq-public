@@ -23,7 +23,7 @@ from __future__ import annotations
 __all__ = ['TensorAnsatz', 'MPSAnsatz', 'SpiderAnsatz']
 
 from collections.abc import Mapping
-from functools import reduce
+import math
 from typing import Any
 
 from discopy import rigid, tensor, Ty, Word
@@ -60,7 +60,7 @@ class TensorAnsatz(BaseAnsatz):
         name = self._summarise_box(box)
         dom = self._ob(box.dom)
         cod = self._ob(box.cod)
-        n_params = reduce(lambda x, y: x * y, dom @ cod, 1)
+        n_params = math.prod(dom) * math.prod(cod)
         syms = Symbol(name, size=n_params)
         return tensor.Box(box.name, dom, cod, syms)
 

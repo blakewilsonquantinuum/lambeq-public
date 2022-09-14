@@ -126,7 +126,7 @@ class CCGRule(str, Enum):
     @property
     def symbol(self) -> str:
         """The standard CCG symbol for the rule."""
-        if self == self.UNKNOWN:
+        if self == CCGRule.UNKNOWN:
             raise CCGRuleUseError(self, 'unknown CCG rule')
         else:
             return self._symbol
@@ -166,56 +166,56 @@ class CCGRule(str, Enum):
 
         """
 
-        if self == self.LEXICAL:
+        if self == CCGRule.LEXICAL:
             raise CCGRuleUseError(self, 'lexical rules are not applicable')
-        elif self == self.UNARY:
+        elif self == CCGRule.UNARY:
             return Id(cod)
-        elif self == self.FORWARD_APPLICATION:
+        elif self == CCGRule.FORWARD_APPLICATION:
             return Diagram.fa(cod, dom[1:])
-        elif self == self.BACKWARD_APPLICATION:
+        elif self == CCGRule.BACKWARD_APPLICATION:
             return Diagram.ba(dom[:1], cod)
-        elif self == self.FORWARD_COMPOSITION:
+        elif self == CCGRule.FORWARD_COMPOSITION:
             self.check_match(dom[0].right, dom[1].left)
             l, m, r = cod.left, dom[0].right, cod.right
             return Diagram.fc(l, m, r)
-        elif self == self.BACKWARD_COMPOSITION:
+        elif self == CCGRule.BACKWARD_COMPOSITION:
             self.check_match(dom[0].right, dom[1].left)
             l, m, r = cod.left, dom[0].right, cod.right
             return Diagram.bc(l, m, r)
-        elif self == self.FORWARD_CROSSED_COMPOSITION:
+        elif self == CCGRule.FORWARD_CROSSED_COMPOSITION:
             self.check_match(dom[0].right, dom[1].right)
             l, m, r = cod.right, dom[0].right, cod.left
             return Diagram.fx(l, m, r)
-        elif self == self.BACKWARD_CROSSED_COMPOSITION:
+        elif self == CCGRule.BACKWARD_CROSSED_COMPOSITION:
             self.check_match(dom[0].left, dom[1].left)
             l, m, r = cod.right, dom[0].left, cod.left
             return Diagram.bx(l, m, r)
-        elif self == self.GENERALIZED_FORWARD_COMPOSITION:
+        elif self == CCGRule.GENERALIZED_FORWARD_COMPOSITION:
             ll, lr = dom[0].left, dom[0].right
             right, left = replace_cat_result(cod, ll, lr, '<')
             return GFC(left << lr, right)
-        elif self == self.GENERALIZED_BACKWARD_COMPOSITION:
+        elif self == CCGRule.GENERALIZED_BACKWARD_COMPOSITION:
             rl, rr = dom[1].left, dom[1].right
             left, right = replace_cat_result(cod, rr, rl, '>')
             return GBC(left, rl >> right)
-        elif self == self.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
+        elif self == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
             ll, lr = dom[0].left, dom[0].right
             right, left = replace_cat_result(cod, ll, lr, '>|')
             return GFX(left << lr, right)
-        elif self == self.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
+        elif self == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
             rl, rr = dom[1].left, dom[1].right
             left, right = replace_cat_result(cod, rr, rl, '<|')
             return GBX(left, rl >> right)
-        elif self == self.REMOVE_PUNCTUATION_LEFT:
+        elif self == CCGRule.REMOVE_PUNCTUATION_LEFT:
             return RPL(dom[:1], cod)
-        elif self == self.REMOVE_PUNCTUATION_RIGHT:
+        elif self == CCGRule.REMOVE_PUNCTUATION_RIGHT:
             return RPR(cod, dom[1:])
-        elif self == self.FORWARD_TYPE_RAISING:
+        elif self == CCGRule.FORWARD_TYPE_RAISING:
             return Diagram.curry(Diagram.ba(cod.right.left, cod.left))
-        elif self == self.BACKWARD_TYPE_RAISING:
+        elif self == CCGRule.BACKWARD_TYPE_RAISING:
             return Diagram.curry(Diagram.fa(cod.right, cod.left.right),
                                  left=True)
-        elif self == self.CONJUNCTION:
+        elif self == CCGRule.CONJUNCTION:
             left, right = dom[:1], dom[1:]
             if CCGAtomicType.conjoinable(left):
                 return Diagram.fa(cod, right)

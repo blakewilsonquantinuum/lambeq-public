@@ -24,21 +24,22 @@ Subclass :py:class:`Lambeq` to define a custom trainer.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from datetime import datetime
 from math import ceil
 import os
 import random
 import socket
 import sys
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 from typing import TYPE_CHECKING
 
 from discopy import Tensor
 from tqdm.auto import tqdm, trange
 
 if TYPE_CHECKING:
-    from torch.utils.tensorboard import SummaryWriter
+    from torch.utils.tensorboard.writer import SummaryWriter
+
 
 from lambeq.core.globals import VerbosityLevel
 from lambeq.training.checkpoint import Checkpoint
@@ -49,12 +50,13 @@ from lambeq.training.model import Model
 def _import_tensorboard_writer() -> None:
     global SummaryWriter
     try:
-        from torch.utils.tensorboard import SummaryWriter
+        from torch.utils.tensorboard.writer import SummaryWriter
     except ImportError:  # pragma: no cover
         raise ImportError('tensorboard not found. Please install it using '
                           '`pip install tensorboard`.')
 
 
+_EvalFuncT = Callable[[Any, Any], Any]
 _StrPathT = Union[str, 'os.PathLike[str]']
 
 
@@ -63,12 +65,12 @@ class Trainer(ABC):
 
     def __init__(self,
                  model: Model,
-                 loss_function: Callable,
+                 loss_function: Callable[..., Any],
                  epochs: int,
-                 evaluate_functions: Optional[Mapping[str, Callable]] = None,
+                 evaluate_functions: Optional[Mapping[str, _EvalFuncT]] = None,
                  evaluate_on_train: bool = True,
                  use_tensorboard: bool = False,
-                 log_dir: Optional[Union[str, os.PathLike]] = None,
+                 log_dir: Optional[_StrPathT] = None,
                  from_checkpoint: bool = False,
                  verbose: str = VerbosityLevel.TEXT.value,
                  seed: Optional[int] = None) -> None:
@@ -231,7 +233,7 @@ class Trainer(ABC):
 
     def save_checkpoint(self,
                         save_dict: Mapping[str, Any],
-                        log_dir: Union[str, os.PathLike]) -> None:
+                        log_dir: _StrPathT) -> None:
         """Save checkpoint.
 
         Parameters

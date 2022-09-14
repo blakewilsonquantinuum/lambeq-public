@@ -26,7 +26,8 @@ from lambeq.core.types import AtomicType
 from lambeq.core.utils import SentenceType
 from lambeq.text2diagram.base import Reader
 from lambeq.text2diagram.bobcat_parser import BobcatParser
-from lambeq.text2diagram.ccg_parser import CCGParser, CCGTree
+from lambeq.text2diagram.ccg_parser import CCGParser
+from lambeq.text2diagram.ccg_tree import CCGTree
 
 S = AtomicType.SENTENCE
 

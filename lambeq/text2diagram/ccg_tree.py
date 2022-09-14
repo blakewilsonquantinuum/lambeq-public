@@ -240,7 +240,7 @@ class CCGTree:
     def to_json(self) -> _JSONDictT:
         """Convert tree into JSON form."""
         if self is None:  # Allows doing CCGTree.to_json(X) for optional X
-            return None
+            return None  # type: ignore[unreachable]
 
         data: _JSONDictT = {'type': biclosed2str(self.biclosed_type)}
         if self.rule != CCGRule.UNKNOWN:

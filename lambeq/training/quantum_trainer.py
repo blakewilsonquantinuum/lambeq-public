@@ -20,9 +20,9 @@ A trainer that wraps the training loop of a :py:class:`QuantumModel`
 """
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 import os
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 
@@ -33,6 +33,9 @@ from lambeq.training.optimizer import Optimizer
 from lambeq.training.quantum_model import QuantumModel
 from lambeq.training.trainer import Trainer
 
+_StrPathT = Union[str, 'os.PathLike[str]']
+_EvalFuncT = Callable[[Any, Any], Any]
+
 
 class QuantumTrainer(Trainer):
     """A Trainer for the quantum pipeline."""
@@ -42,14 +45,14 @@ class QuantumTrainer(Trainer):
     def __init__(
             self,
             model: QuantumModel,
-            loss_function: Callable,
+            loss_function: Callable[..., float],
             epochs: int,
             optimizer: type[Optimizer],
             optim_hyperparams: dict[str, float],
-            evaluate_functions: Optional[Mapping[str, Callable]] = None,
+            evaluate_functions: Optional[Mapping[str, _EvalFuncT]] = None,
             evaluate_on_train: bool = True,
             use_tensorboard: bool = False,
-            log_dir: Optional[Union[str, os.PathLike]] = None,
+            log_dir: Optional[_StrPathT] = None,
             from_checkpoint: bool = False,
             verbose: str = VerbosityLevel.TEXT.value,
             seed: Optional[int] = None) -> None:

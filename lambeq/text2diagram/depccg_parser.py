@@ -413,13 +413,15 @@ class DepCCGParser(CCGParser):
         doc, score_result = depccg.parsing.apply_category_filters(
                 doc, score_result, self.categories, self.category_dict)
 
-        return depccg.parsing.run(doc,  # type: ignore[no-any-return]
-                                  score_result,
-                                  self.categories,
-                                  self.root_categories,
-                                  self.apply_binary_rules,
-                                  self.apply_unary_rules,
-                                  **self.kwargs)
+        ret: list[list[depccg.tree.ScoredTree]]
+        ret = depccg.parsing.run(doc,
+                                 score_result,
+                                 self.categories,
+                                 self.root_categories,
+                                 self.apply_binary_rules,
+                                 self.apply_unary_rules,
+                                 **self.kwargs)
+        return ret
 
     @staticmethod
     def _to_biclosed(cat: Category) -> Ty:
