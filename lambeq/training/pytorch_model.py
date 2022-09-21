@@ -24,7 +24,6 @@ import pickle
 
 from discopy import Tensor
 from discopy.tensor import Diagram
-import tensornetwork as tn
 import torch
 
 from lambeq.ansatz.base import Symbol
@@ -119,6 +118,8 @@ class PytorchModel(Model, torch.nn.Module):
             Resulting tensor.
 
         """
+        import tensornetwork as tn
+
         parameters = {k: v for k, v in zip(self.symbols, self.weights)}
         diagrams = pickle.loads(pickle.dumps(diagrams))  # deepcopy, but faster
         for diagram in diagrams:

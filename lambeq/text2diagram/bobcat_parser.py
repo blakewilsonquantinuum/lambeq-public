@@ -34,7 +34,6 @@ from typing import Any, Optional, Union
 import warnings
 
 from discopy.biclosed import Ty
-import requests
 import torch
 from tqdm import TqdmWarning
 from tqdm.auto import tqdm
@@ -85,6 +84,7 @@ def get_model_dir(model: str,
 
 
 def model_is_stale(model: str, model_dir: str) -> bool:
+    import requests
     try:
         url = get_model_url(model) + '/' + VERSION_FNAME
     except ValueError:
@@ -109,6 +109,7 @@ def download_model(
         model_dir: Optional[StrPathT] = None,
         verbose: str = VerbosityLevel.PROGRESS.value
         ) -> None:  # pragma: no cover
+    import requests
     url = get_model_url(model_name) + '/model.tar.gz'
 
     if model_dir is None:

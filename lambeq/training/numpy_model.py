@@ -35,7 +35,6 @@ from discopy.tensor import Diagram
 import numpy
 from numpy.typing import ArrayLike
 from sympy import lambdify
-import tensornetwork as tn
 
 from lambeq.training.quantum_model import QuantumModel
 
@@ -67,6 +66,8 @@ class NumpyModel(QuantumModel):
 
         """
         from jax import jit
+        import tensornetwork as tn
+
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`NumpyModel.from_diagrams()`.')
@@ -131,6 +132,8 @@ class NumpyModel(QuantumModel):
             Resulting array.
 
         """
+        import tensornetwork as tn
+
         if len(self.weights) == 0 or not self.symbols:
             raise ValueError('Weights and/or symbols not initialised. '
                              'Instantiate through '
