@@ -49,6 +49,8 @@ class QuantumTrainer(Trainer):
             epochs: int,
             optimizer: type[Optimizer],
             optim_hyperparams: dict[str, float],
+            *,
+            optimizer_args: Optional[dict[str, Any]] = None,
             evaluate_functions: Optional[Mapping[str, _EvalFuncT]] = None,
             evaluate_on_train: bool = True,
             use_tensorboard: bool = False,
@@ -68,6 +70,10 @@ class QuantumTrainer(Trainer):
             Number of training epochs
         optimizer : Optimizer
             An optimizer of type :py:class:`lambeq.training.Optimizer`.
+        optim_hyperparams : dict of str to float
+            The hyperparameters to be used by the optimizer.
+        optimizer_args : dict of str to Any, optional
+            Any extra arguments to pass to the optimizer.
         evaluate_functions : mapping of str to callable, optional
             Mapping of evaluation metric functions from their names.
             Structure [{"metric": func}].
@@ -105,7 +111,8 @@ class QuantumTrainer(Trainer):
 
         self.optimizer = optimizer(self.model,
                                    optim_hyperparams,
-                                   self.loss_function)
+                                   self.loss_function,
+                                   **(optimizer_args or {}))
 
     def _add_extra_checkpoint_info(self, checkpoint: Checkpoint) -> None:
         """Add any additional information to the training checkpoint.

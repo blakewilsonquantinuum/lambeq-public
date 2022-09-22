@@ -48,6 +48,8 @@ class PytorchTrainer(Trainer):
             optimizer: type[torch.optim.Optimizer] = torch.optim.AdamW,
             learning_rate: float = 1e-3,
             device: int = -1,
+            *,
+            optimizer_args: Optional[dict[str, Any]] = None,
             evaluate_functions: Optional[Mapping[str, _EvalFuncT]] = None,
             evaluate_on_train: bool = True,
             use_tensorboard: bool = False,
@@ -64,15 +66,17 @@ class PytorchTrainer(Trainer):
             A lambeq Model using PyTorch for tensor computation.
         loss_function : callable
             A PyTorch loss function from `torch.nn`.
+        epochs : int
+            Number of training epochs.
         optimizer : torch.optim.Optimizer, default: torch.optim.AdamW
             A PyTorch optimizer from `torch.optim`.
         learning_rate : float, default: 1e-3
             The learning rate provided to the optimizer for training.
-        epochs : int
-            Number of training epochs.
         device : int, default: -1
             CUDA device ID used for tensor operation speed-up.
             A negative value uses the CPU.
+        optimizer_args : dict of str to Any, optional
+            Any extra arguments to pass to the optimizer.
         evaluate_functions : mapping of str to callable, optional
             Mapping of evaluation metric functions from their names.
             Structure [{"metric": func}].
@@ -113,7 +117,8 @@ class PytorchTrainer(Trainer):
         if device >= 0:
             torch.set_default_tensor_type(  # pragma: no cover
                     'torch.cuda.FloatTensor')
-        optimizer_args: dict[str, Any] = {}
+
+        optimizer_args = dict(optimizer_args or {})
         if learning_rate is not None:
             optimizer_args['lr'] = learning_rate
         self.optimizer = optimizer(self.model.parameters(), **optimizer_args)
