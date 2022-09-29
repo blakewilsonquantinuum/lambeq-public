@@ -42,6 +42,14 @@ class PytorchModel(Model, torch.nn.Module):
         Model.__init__(self)
         torch.nn.Module.__init__(self)
 
+    def _reinitialise_modules(self) -> None:
+        """Reinitialise all modules in the model."""
+        for module in self.modules():
+            try:
+                module.reset_parameters()  # type: ignore[operator]
+            except (AttributeError, TypeError):
+                pass
+
     def initialise_weights(self) -> None:
         """Initialise the weights of the model.
 
@@ -51,17 +59,13 @@ class PytorchModel(Model, torch.nn.Module):
             If `model.symbols` are not initialised.
 
         """
-        for module in self.modules():
-            try:
-                module.reset_parameters()  # type: ignore[operator]
-            except (AttributeError, TypeError):
-                pass
+        self._reinitialise_modules()
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`PytorchModel.from_diagrams()`.')
         self.weights = torch.nn.ParameterList(
-            [torch.nn.Parameter(torch.nn.init.xavier_uniform_(
-                torch.empty(w.size, 1))) for w in self.symbols])
+            [torch.nn.init.xavier_uniform_(torch.empty(w.size, 1)).squeeze(1)
+             for w in self.symbols])
 
     def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
         """Load the model weights and symbols from a lambeq

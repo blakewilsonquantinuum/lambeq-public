@@ -158,6 +158,22 @@ class PennyLaneModel(PytorchModel):
 
         return checkpoint
 
+    def initialise_weights(self) -> None:
+        """Initialise the weights of the model.
+
+        Raises
+        ------
+        ValueError
+            If `model.symbols` are not initialised.
+
+        """
+        self._reinitialise_modules()
+        if not self.symbols:
+            raise ValueError('Symbols not initialised. Instantiate through '
+                             '`PytorchModel.from_diagrams()`.')
+        self.weights = torch.nn.ParameterList([torch.rand(w.size)
+                                               for w in self.symbols])
+
     def get_diagram_output(self, diagrams: list[Diagram]) -> torch.Tensor:
         """Evaluate outputs of circuits using PennyLane.
 
@@ -187,8 +203,11 @@ class PennyLaneModel(PytorchModel):
                 circuit_evals = [c / torch.sum(torch.square(torch.abs(c)))
                                  for c in circuit_evals]
 
-        stacked = torch.stack(circuit_evals)
-        return stacked.squeeze(-1)
+        stacked = torch.stack(circuit_evals).squeeze(-1)
+        if self._probabilities:
+            return stacked.to(self.weights[0].dtype)
+        else:
+            return stacked
 
     def forward(self, x: list[Diagram]) -> torch.Tensor:
         """Perform default forward pass by running circuits.
