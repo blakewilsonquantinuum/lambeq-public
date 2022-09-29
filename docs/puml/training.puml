@@ -33,7 +33,7 @@ abstract class Trainer {
     fit()
 }
 
-abstract class Optimiser {
+abstract class Optimizer {
     model
     {abstract} backward()
     {abstract} step()
@@ -64,17 +64,23 @@ class NumpyModel {
     lambdas
 }
 class TketModel {}
-class QuantumModel {}
+class QuantumModel {
+    {static} SMOOTHING
+}
 
 class QuantumTrainer {
-    optimiser
+    optimizer
 }
 
 class PytorchTrainer {
-    optimiser
+    optimizer
 }
 
-class SPSAOptimiser {}
+class SPSAOptimizer {
+    hyperparams
+    loss_fn
+    bounds
+}
 
 Model <|-- PytorchModel
 PytorchModel <|-- PennyLaneModel
@@ -84,7 +90,7 @@ QuantumModel <|-- NumpyModel
 Trainer <|-- PytorchTrainer
 Trainer <|-- QuantumTrainer
 
-Optimiser <|-- SPSAOptimiser
+Optimizer <|-- SPSAOptimizer
 
 PennyLaneModel -- pennylane
 PytorchModel -- pytorch
@@ -95,14 +101,13 @@ QuantumTrainer -- tket
 Trainer *-- CheckPoint
 CheckPoint --* Model
 Trainer::model *- Model
-Model *-u- Dataset
-Model -* Optimiser::model
-Optimiser -- Trainer
+Trainer *-u- Dataset
+Model -* Optimizer::model
+Optimizer -* QuantumTrainer::optimizer
 
 PennyLaneModel -- PytorchTrainer: usedWith
 PytorchModel -- PytorchTrainer: usedWith
 NumpyModel -- QuantumTrainer: usedWith
 TketModel -- QuantumTrainer: usedWith
-SPSAOptimiser -- QuantumModel: usedWith
 
 @enduml
