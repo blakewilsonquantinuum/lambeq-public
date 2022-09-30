@@ -23,7 +23,7 @@ from __future__ import annotations
 __all__ = ['CircuitAnsatz', 'IQPAnsatz']
 
 from collections.abc import Mapping
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from discopy.quantum.circuit import (Circuit, Discard, Functor, Id,
                                      IQPansatz as IQP, qubit)
@@ -60,10 +60,6 @@ class CircuitAnsatz(BaseAnsatz):
         """Calculate the number of qubits used for a given type."""
         return sum(self.ob_map[Ty(factor.name)] for factor in pg_type)
 
-    def _special_cases(self, ar_map: _ArMapT) -> _ArMapT:
-        """Convert a DisCoPy box into a tket Circuit element"""
-        return ar_map
-
 
 class IQPAnsatz(CircuitAnsatz):
     """Instantaneous Quantum Polynomial ansatz.
@@ -78,8 +74,7 @@ class IQPAnsatz(CircuitAnsatz):
                  ob_map: Mapping[Ty, int],
                  n_layers: int,
                  n_single_qubit_params: int = 3,
-                 discard: bool = False,
-                 special_cases: Optional[Callable[[_ArMapT], _ArMapT]] = None):
+                 discard: bool = False) -> None:
         """Instantiate an IQP ansatz.
 
         Parameters
@@ -93,22 +88,14 @@ class IQPAnsatz(CircuitAnsatz):
             The number of single qubit rotations used by the ansatz.
         discard : bool, default: False
             Discard open wires instead of post-selecting.
-        special_cases : callable, optional
-            A function that transforms an arrow map into one specifying
-            special cases that should not be converted by the Ansatz
-            class.
 
         """
         super().__init__(ob_map)
 
-        if special_cases is None:
-            special_cases = self._special_cases
-
         self.n_layers = n_layers
         self.n_single_qubit_params = n_single_qubit_params
         self.discard = discard
-        self.functor = Functor(ob=self.ob_map,
-                               ar=special_cases(self._ar))
+        self.functor = Functor(ob=self.ob_map, ar=self._ar)
 
     def _ar(self, box: Box) -> Circuit:
         label = self._summarise_box(box)
