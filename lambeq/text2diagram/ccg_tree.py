@@ -167,12 +167,38 @@ class CCGTree:
         if text and not children:
             self.rule = CCGRule.LEXICAL
 
+        self.is_leaf = len(self.children) == 0
+        self.is_unary = len(self.children) == 1
+        self.is_binary = len(self.children) == 2
+
     @property
     def text(self) -> str:
         """The word or phrase associated to the tree."""
         if self._text is None:
             self._text = ' '.join(child.text for child in self.children)
         return self._text
+
+    @property
+    def child(self) -> CCGTree:
+        """Get the child of a unary tree."""
+        if not self.is_unary:
+            raise ValueError('Cannot get the child of a non-unary tree.')
+        return self.children[0]
+
+    @property
+    def left(self) -> CCGTree:
+        """Get the left child of a binary tree."""
+        if not self.is_binary:
+            raise ValueError('Cannot get the left child of a non-binary tree.')
+        return self.children[0]
+
+    @property
+    def right(self) -> CCGTree:
+        """Get the right child of a binary tree."""
+        if not self.is_binary:
+            raise ValueError(
+                    'Cannot get the right child of a non-binary tree.')
+        return self.children[1]
 
     @overload
     @classmethod
