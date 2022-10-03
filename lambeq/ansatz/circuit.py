@@ -27,7 +27,7 @@ from typing import Any, Callable
 
 from discopy.quantum.circuit import (Circuit, Discard, Functor, Id,
                                      IQPansatz as IQP, qubit)
-from discopy.quantum.gates import Bra, Ket, Rx, Rz
+from discopy.quantum.gates import Bra, H, Ket, Rx, Rz
 from discopy.rigid import Box, Diagram, Ty
 import numpy as np
 
@@ -125,5 +125,6 @@ class IQPAnsatz(CircuitAnsatz):
         elif self.discard:
             circuit >>= Id(cod) @ Discard(dom - cod)
         else:
+            circuit >>= Id(cod) @ Id().tensor(*[H] * (dom - cod))
             circuit >>= Id(cod) @ Bra(*[0]*(dom - cod))
         return circuit
