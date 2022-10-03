@@ -21,10 +21,7 @@ The process of training a :term:`model` involves the following steps:
 
    ``lambeq`` covers a wide range of training use cases, which are described in detail under :ref:`sec-usecases`. Depending on your specific use case (e.g., classical or (simulated) quantum machine learning, etc.), you can choose from a variety of models and their according trainers. Refer to Section :ref:`sec-models` for a detailed overview of the available models and trainers.
 
-Examples
---------
-
-The following sections demonstrate the usage of the :py:mod:`.training` package for classical and quantum training scenarios.
+The following examples demonstrate the usage of the :py:mod:`.training` package for classical and quantum training scenarios.
 
 .. toctree::
 
