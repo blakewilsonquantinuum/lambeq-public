@@ -22,24 +22,36 @@ from __future__ import annotations
 
 __all__ = ['CircuitAnsatz', 'IQPAnsatz']
 
+from abc import abstractmethod
 from collections.abc import Mapping
-from typing import Any, Callable
+from itertools import cycle
+from typing import Callable, Optional
 
 from discopy.quantum.circuit import (Circuit, Discard, Functor, Id,
-                                     IQPansatz as IQP, qubit)
+                                     IQPansatz as IQP, qubit,
+                                     Sim14ansatz as Sim14,
+                                     Sim15ansatz as Sim15)
 from discopy.quantum.gates import Bra, H, Ket, Rx, Rz
 from discopy.rigid import Box, Diagram, Ty
 import numpy as np
+from sympy import symbols
 
 from lambeq.ansatz import BaseAnsatz, Symbol
 
-_ArMapT = Callable[[Box], Circuit]
+computational_basis = Id(qubit)
 
 
 class CircuitAnsatz(BaseAnsatz):
     """Base class for circuit ansatz."""
 
-    def __init__(self, ob_map: Mapping[Ty, int]) -> None:
+    def __init__(self,
+                 ob_map: Mapping[Ty, int],
+                 n_layers: int,
+                 n_single_qubit_params: int,
+                 circuit: Callable[[int, np.ndarray], Circuit],
+                 discard: bool = False,
+                 single_qubit_rotations: Optional[list[Circuit]] = None,
+                 postselection_basis: Circuit = computational_basis) -> None:
         """Instantiate a circuit ansatz.
 
         Parameters
@@ -47,18 +59,75 @@ class CircuitAnsatz(BaseAnsatz):
         ob_map : dict
             A mapping from :py:class:`discopy.rigid.Ty` to the number of
             qubits it uses in a circuit.
+        n_layers : int
+            The number of layers used by the ansatz.
+        n_single_qubit_params : int
+            The number of single qubit rotations used by the ansatz.
+        circuit : callable
+            Circuit generator used by the ansatz. This is a function
+            (or a class constructor) that takes a number of qubits and
+            a numpy array of parameters, and returns the ansatz of that
+            size, with parameterised boxes.
+        discard : bool, default: False
+            Discard open wires instead of post-selecting.
+        postselection_basis: Circuit, default: Id(qubit)
+            Basis to post-select in, by default the computational basis.
+        single_qubit_rotations: list of Circuit, optional
+            The rotations to be used for a single qubit. When only a
+            single qubit is present, the ansatz defaults to applying a
+            series of rotations in a cycle, determined by this parameter
+            and `n_single_qubit_params`.
 
         """
         self.ob_map = ob_map
-        self.functor = Functor({}, {})
+        self.n_layers = n_layers
+        self.n_single_qubit_params = n_single_qubit_params
+        self.circuit = circuit
+        self.discard = discard
+        self.postselection_basis = postselection_basis
+        self.single_qubit_rotations = single_qubit_rotations or []
+
+        self.functor = Functor(ob=ob_map, ar=self._ar)
 
     def __call__(self, diagram: Diagram) -> Circuit:
         """Convert a DisCoPy diagram into a DisCoPy circuit."""
         return self.functor(diagram)
 
-    def _ob(self, pg_type: Ty) -> int:
+    def ob_size(self, pg_type: Ty) -> int:
         """Calculate the number of qubits used for a given type."""
         return sum(self.ob_map[Ty(factor.name)] for factor in pg_type)
+
+    @abstractmethod
+    def params_shape(self, n_qubits: int) -> tuple[int, ...]:
+        """Calculate the shape of the parameters required."""
+
+    def _ar(self, box: Box) -> Circuit:
+        label = self._summarise_box(box)
+        dom, cod = self.ob_size(box.dom), self.ob_size(box.cod)
+
+        n_qubits = max(dom, cod)
+        if n_qubits == 0:
+            circuit = Id()
+        elif n_qubits == 1:
+            syms = symbols(f'{label}_0:{self.n_single_qubit_params}',
+                           cls=Symbol)
+            circuit = Id(qubit)
+            for rot, sym in zip(cycle(self.single_qubit_rotations), syms):
+                circuit >>= rot(sym)
+        else:
+            params_shape = self.params_shape(n_qubits)
+            syms = symbols(f'{label}_0:{np.prod(params_shape)}', cls=Symbol)
+            params: np.ndarray = np.array(syms).reshape(params_shape)
+            circuit = self.circuit(n_qubits, params)
+
+        if cod > dom:
+            circuit <<= Id(dom) @ Ket(*[0]*(cod - dom))
+        elif self.discard:
+            circuit >>= Id(cod) @ Discard(dom - cod)
+        else:
+            circuit >>= Id(cod).tensor(*[self.postselection_basis] * (dom-cod))
+            circuit >>= Id(cod) @ Bra(*[0]*(dom - cod))
+        return circuit
 
 
 class IQPAnsatz(CircuitAnsatz):
@@ -83,48 +152,96 @@ class IQPAnsatz(CircuitAnsatz):
             A mapping from :py:class:`discopy.rigid.Ty` to the number of
             qubits it uses in a circuit.
         n_layers : int
-            The number of IQP layers used by the ansatz.
+            The number of layers used by the ansatz.
         n_single_qubit_params : int, default: 3
             The number of single qubit rotations used by the ansatz.
         discard : bool, default: False
             Discard open wires instead of post-selecting.
 
         """
-        super().__init__(ob_map)
+        super().__init__(ob_map,
+                         n_layers,
+                         n_single_qubit_params,
+                         IQP,
+                         discard,
+                         [Rx, Rz],
+                         H)
 
-        self.n_layers = n_layers
-        self.n_single_qubit_params = n_single_qubit_params
-        self.discard = discard
-        self.functor = Functor(ob=self.ob_map, ar=self._ar)
+    def params_shape(self, n_qubits: int) -> tuple[int, ...]:
+        return (self.n_layers, n_qubits - 1)
 
-    def _ar(self, box: Box) -> Circuit:
-        label = self._summarise_box(box)
-        dom, cod = self._ob(box.dom), self._ob(box.cod)
 
-        n_qubits = max(dom, cod)
-        n_layers = self.n_layers
-        n_1qubit_params = self.n_single_qubit_params
+class Sim14Ansatz(CircuitAnsatz):
+    """Circuit 14 from Sim et al.
 
-        if n_qubits == 0:
-            circuit = Id()
-        elif n_qubits == 1:
-            syms = [Symbol(f'{label}_{i}') for i in range(n_1qubit_params)]
-            rots = [Rx, Rz]
-            circuit = Id(qubit)
-            for i, sym in enumerate(syms):
-                circuit >>= rots[i % 2](sym)
-        else:
-            n_params = n_layers * (n_qubits-1)
-            syms = [Symbol(f'{label}_{i}') for i in range(n_params)]
-            params: np.ndarray[Any, np.dtype[Any]] = np.array(syms).reshape(
-                    (n_layers, n_qubits-1))
-            circuit = IQP(n_qubits, params)
+    Paper at: https://arxiv.org/pdf/1905.10876.pdf
 
-        if cod > dom:
-            circuit <<= Id(dom) @ Ket(*[0]*(cod - dom))
-        elif self.discard:
-            circuit >>= Id(cod) @ Discard(dom - cod)
-        else:
-            circuit >>= Id(cod) @ Id().tensor(*[H] * (dom - cod))
-            circuit >>= Id(cod) @ Bra(*[0]*(dom - cod))
-        return circuit
+    """
+
+    def __init__(self,
+                 ob_map: Mapping[Ty, int],
+                 n_layers: int,
+                 n_single_qubit_params: int = 3,
+                 discard: bool = False) -> None:
+        """Instantiate a Sim 14 ansatz.
+
+        Parameters
+        ----------
+        ob_map : dict
+            A mapping from :py:class:`discopy.rigid.Ty` to the number of
+            qubits it uses in a circuit.
+        n_layers : int
+            The number of layers used by the ansatz.
+        n_single_qubit_params : int, default: 3
+            The number of single qubit rotations used by the ansatz.
+        discard : bool, default: False
+            Discard open wires instead of post-selecting.
+
+        """
+        super().__init__(ob_map,
+                         n_layers,
+                         n_single_qubit_params,
+                         Sim14,
+                         discard,
+                         [Rx, Rz])
+
+    def params_shape(self, n_qubits: int) -> tuple[int, ...]:
+        return (self.n_layers, 4 * n_qubits)
+
+
+class Sim15Ansatz(CircuitAnsatz):
+    """Circuit 15 from Sim et al.
+
+    Paper at: https://arxiv.org/pdf/1905.10876.pdf
+
+    """
+
+    def __init__(self,
+                 ob_map: Mapping[Ty, int],
+                 n_layers: int,
+                 n_single_qubit_params: int = 3,
+                 discard: bool = False) -> None:
+        """Instantiate a Sim 15 ansatz.
+
+        Parameters
+        ----------
+        ob_map : dict
+            A mapping from :py:class:`discopy.rigid.Ty` to the number of
+            qubits it uses in a circuit.
+        n_layers : int
+            The number of layers used by the ansatz.
+        n_single_qubit_params : int, default: 3
+            The number of single qubit rotations used by the ansatz.
+        discard : bool, default: False
+            Discard open wires instead of post-selecting.
+
+        """
+        super().__init__(ob_map,
+                         n_layers,
+                         n_single_qubit_params,
+                         Sim15,
+                         discard,
+                         [Rx, Rz])
+
+    def params_shape(self, n_qubits: int) -> tuple[int, ...]:
+        return (self.n_layers, 2 * n_qubits)
