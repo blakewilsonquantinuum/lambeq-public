@@ -32,6 +32,7 @@ __all__ = [
         'Sim14Ansatz',
         'Sim15Ansatz',
         'SpiderAnsatz',
+        'StronglyEntanglingAnsatz',
         'Symbol',
         'TensorAnsatz',
 
@@ -102,7 +103,7 @@ from lambeq import (ansatz, core, pregroups, rewrite,
                     text2diagram, tokeniser, training)
 from lambeq.ansatz import (BaseAnsatz, CircuitAnsatz, IQPAnsatz, MPSAnsatz,
                            Sim14Ansatz, Sim15Ansatz, SpiderAnsatz,
-                           Symbol, TensorAnsatz)
+                           StronglyEntanglingAnsatz, Symbol, TensorAnsatz)
 from lambeq.core.globals import VerbosityLevel
 from lambeq.core.types import AtomicType
 from lambeq.pregroups import (create_pregroup_diagram, diagram2str,

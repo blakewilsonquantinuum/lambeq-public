@@ -31,7 +31,7 @@ from discopy.quantum.circuit import (Circuit, Discard, Functor, Id,
                                      IQPansatz as IQP, qubit,
                                      Sim14ansatz as Sim14,
                                      Sim15ansatz as Sim15)
-from discopy.quantum.gates import Bra, H, Ket, Rx, Rz
+from discopy.quantum.gates import Bra, H, Ket, Rx, Ry, Rz
 from discopy.rigid import Box, Diagram, Ty
 import numpy as np
 from sympy import symbols
@@ -251,3 +251,76 @@ class Sim15Ansatz(CircuitAnsatz):
 
     def params_shape(self, n_qubits: int) -> tuple[int, ...]:
         return (self.n_layers, 2 * n_qubits)
+
+
+class StronglyEntanglingAnsatz(CircuitAnsatz):
+    """Strongly entangling ansatz.
+
+    Ansatz using three single qubit rotations (RzRyRz) followed by a
+    ladder of CNOT gates with different ranges per layer.
+
+    This is adapted from the PennyLane implementation of the
+    :py:class:`pennylane.StronglyEntanglingLayers`, pursuant to `Apache
+    2.0 licence <https://www.apache.org/licenses/LICENSE-2.0.html>`_.
+
+    The original paper which introduces the architecture can be found
+    `here <https://arxiv.org/abs/1804.00633>`_.
+
+    """
+
+    def __init__(self,
+                 ob_map: Mapping[Ty, int],
+                 n_layers: int,
+                 n_single_qubit_params: int = 3,
+                 ranges: Optional[list[int]] = None,
+                 discard: bool = False) -> None:
+        """Instantiate a strongly entangling ansatz.
+
+        Parameters
+        ----------
+        ob_map : dict
+            A mapping from :py:class:`discopy.rigid.Ty` to the number of
+            qubits it uses in a circuit.
+        n_layers : int
+            The number of circuit layers used by the ansatz.
+        n_single_qubit_params : int, default: 3
+            The number of single qubit rotations used by the ansatz.
+        ranges : list of int, optional
+            The range of the CNOT gate between wires in each layer. By
+            default, the range starts at one (i.e. adjacent wires) and
+            increases by one for each subsequent layer.
+        discard : bool, default: False
+            Discard open wires instead of post-selecting.
+
+        """
+        super().__init__(ob_map,
+                         n_layers,
+                         n_single_qubit_params,
+                         self.circuit,
+                         discard,
+                         [Rz, Ry])
+        self.ranges = ranges
+
+        if self.ranges is not None and len(self.ranges) != self.n_layers:
+            raise ValueError('The number of ranges must match the number of '
+                             'layers.')
+
+    def params_shape(self, n_qubits: int) -> tuple[int, ...]:
+        return (self.n_layers, 3 * n_qubits)
+
+    def circuit(self, n_qubits: int, params: np.ndarray) -> Circuit:
+        circuit = Id(qubit**n_qubits)
+        for layer in range(self.n_layers):
+            for j in range(n_qubits):
+                syms = params[layer][j*3:j*3+3]
+                circuit = circuit.Rz(syms[0], j).Ry(syms[1], j).Rz(syms[2], j)
+            if self.ranges is None:
+                step = layer % (n_qubits - 1) + 1
+            elif self.ranges[layer] >= n_qubits:
+                raise ValueError('The maximum range must be smaller '
+                                 'than the number of qubits.')
+            else:
+                step = self.ranges[layer]
+            for j in range(n_qubits):
+                circuit = circuit.CX(j, (j+step) % n_qubits)
+        return circuit

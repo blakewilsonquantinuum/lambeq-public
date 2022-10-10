@@ -46,7 +46,8 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-    'discopy': ("https://discopy.readthedocs.io/en/main/", None)
+    'discopy': ("https://discopy.readthedocs.io/en/main/", None),
+    'pennylane': ("https://pennylane.readthedocs.io/en/stable/", None),
 }
 
 autodoc_default_options = {
