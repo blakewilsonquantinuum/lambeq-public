@@ -172,7 +172,10 @@ class IQPAnsatz(CircuitAnsatz):
 
 
 class Sim14Ansatz(CircuitAnsatz):
-    """Circuit 14 from Sim et al.
+    """Modification of circuit 14 from Sim et al.
+
+    Replaces circuit-block construction with two rings of CRx gates, in
+    opposite orientation.
 
     Paper at: https://arxiv.org/pdf/1905.10876.pdf
 
@@ -210,7 +213,10 @@ class Sim14Ansatz(CircuitAnsatz):
 
 
 class Sim15Ansatz(CircuitAnsatz):
-    """Circuit 15 from Sim et al.
+    """Modification of circuit 15 from Sim et al.
+
+    Replaces circuit-block construction with two rings of CNOT gates, in
+    opposite orientation.
 
     Paper at: https://arxiv.org/pdf/1905.10876.pdf
 
