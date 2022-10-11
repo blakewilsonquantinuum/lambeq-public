@@ -22,25 +22,25 @@ Added:
 
 Changed:
 
-- Dependencies: bumped the minimum versions of `discopy` and `torch`.
+- Dependencies: bumped the minimum versions of ``discopy`` and ``torch``.
 - :py:class:`.IQPAnsatz` now post-selects in the Hadamard basis.
-- :py:class:`.PytorchModel` now initialises using `xavier_uniform`.
-- :py:meth:`.CCGTree.to_json` can now be applied to `None`, returning `None`.
+- :py:class:`.PytorchModel` now initialises using ``xavier_uniform``.
+- :py:meth:`.CCGTree.to_json` can now be applied to ``None``, returning ``None``.
 - Several slow imports have been deferred, making lambeq much faster to import for the first time.
 - In :py:meth:`.CCGRule.infer_rule`, direction checks have been made explicit.
-- :py:class:`.UnarySwap` is now specified to be a `unaryBoxConstructor`.
+- :py:class:`.UnarySwap` is now specified to be a ``unaryBoxConstructor``.
 - :py:class:`.BobcatParser` has been refactored for easier use with external evaluation tools.
 - Documentation: headings have been organised in the tutorials into subsections.
 
 Fixed:
 
-- Fixed how :py:meth:`.CCGRule.infer_rule` assigns a `punc + X` instance: if the result is `X\\X` the assigned rule is :py:attr:`.CCGRule.CONJUNCTION`, otherwise the rule is :py:attr:`.CCGRule.REMOVE_PUNCTUATION_LEFT` (similarly for punctuation on the right).
+- Fixed how :py:meth:`.CCGRule.infer_rule` assigns a ``punc + X`` instance: if the result is ``X\X`` the assigned rule is :py:attr:`.CCGRule.CONJUNCTION`, otherwise the rule is :py:attr:`.CCGRule.REMOVE_PUNCTUATION_LEFT` (similarly for punctuation on the right).
 
 Removed:
 
 - Removed unnecessary override of :py:meth:`.Model.from_diagrams` in :py:class:`.NumpyModel`.
-- Removed unnecessary `kwargs` parameters from several constructors.
-- Removed unused `special_cases` parameter and `_ob` method from :py:class:`.CircuitAnsatz`.
+- Removed unnecessary ``kwargs`` parameters from several constructors.
+- Removed unused ``special_cases`` parameter and ``_ob`` method from :py:class:`.CircuitAnsatz`.
 
 .. _rel-0.2.6:
 
