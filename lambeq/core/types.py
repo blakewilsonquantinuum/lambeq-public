@@ -32,7 +32,9 @@ class AtomicType(Ty, Enum):
     _value_: str
 
     def __new__(cls, value: str) -> Ty:
-        return object.__new__(Ty)
+        ret = object.__new__(Ty)
+        ret._value_ = value  # required for Python 3.11+
+        return ret
 
     NOUN = 'n'
     NOUN_PHRASE = 'n'

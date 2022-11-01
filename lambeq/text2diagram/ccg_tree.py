@@ -299,7 +299,8 @@ class CCGTree:
         if self.rule == CCGRule.LEXICAL:
             deriv = f' {output_type} {chr_set["SUCH_THAT"]} {repr(self.text)}'
         else:
-            deriv = (f'{self.rule}: {output_type} {chr_set["LEFT_ARROW"]} '
+            deriv = (f'{self.rule.value}: {output_type} '
+                     f'{chr_set["LEFT_ARROW"]} '
                      + ' + '.join(biclosed2str(child.biclosed_type,
                                                not use_slashes)
                                   for child in self.children))
