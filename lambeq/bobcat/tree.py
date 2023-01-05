@@ -243,8 +243,8 @@ class ParseTree:
     def variable(self) -> Variable:
         try:
             return self.var_map[self.cat.var]
-        except KeyError:
-            raise AttributeError('variable is not in map')
+        except KeyError as e:
+            raise AttributeError('variable is not in map') from e
 
     @property
     def coordinated_or_type_raised(self) -> bool:

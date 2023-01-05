@@ -89,9 +89,11 @@ class PennyLaneModel(Model, torch.nn.Module):
         if self._backend == 'honeywell.hqs':
             try:
                 backend_config['machine'] = backend_config.pop('device')
-            except KeyError:
-                raise ValueError('When using the honeywell.hqs provider, '
-                                 'a device must be specified.')
+            except KeyError as e:
+                raise ValueError(
+                    'When using the provider `honeywell.hqs` a device must be '
+                    'specified.'
+                ) from e
         elif 'device' in backend_config:
             backend_config['backend'] = backend_config.pop('device')
 

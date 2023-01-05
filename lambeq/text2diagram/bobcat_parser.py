@@ -77,9 +77,11 @@ def get_model_dir(model: str,
     models_dir = cache_dir / 'lambeq' / 'bobcat'
     try:
         models_dir.mkdir(parents=True, exist_ok=True)
-    except FileExistsError:
-        raise FileExistsError(f'Cache directory location (`{models_dir}`) '
-                              'already exists and is not a directory.')
+    except FileExistsError as e:
+        raise FileExistsError(
+            f'Cache directory location (`{models_dir}`) already exists and is '
+            'not a directory.'
+        ) from e
     return models_dir / model
 
 
@@ -380,11 +382,11 @@ class BobcatParser(CCGParser):
                     sentence_input = self._prepare_sentence(sent, tags)
                     result = self.parser(sentence_input)
                     trees.append(self._build_ccgtree(result[0]))
-                except Exception:
+                except Exception as e:
                     if suppress_exceptions:
                         trees.append(None)
                     else:
-                        raise BobcatParseError(' '.join(sent.words))
+                        raise BobcatParseError(' '.join(sent.words)) from e
 
         for i in empty_indices:
             trees.insert(i, None)

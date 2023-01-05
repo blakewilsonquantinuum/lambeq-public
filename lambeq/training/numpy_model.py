@@ -108,8 +108,10 @@ class NumpyModel(QuantumModel):
                         syms.append(sym)
                         try:
                             values.append(parameters[sym])
-                        except KeyError:
-                            raise KeyError(f'Unknown symbol {sym!r}.')
+                        except KeyError as e:
+                            raise KeyError(
+                                f'Unknown symbol: {repr(sym)}'
+                            ) from e
                     b._data = lambdify(syms, b._data)(*values)
                     b.drawing_name = b.name
                     b._free_symbols = set()

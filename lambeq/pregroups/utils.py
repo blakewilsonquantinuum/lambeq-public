@@ -378,8 +378,8 @@ def remove_swaps(diagram: Diagram) -> Diagram:
     if not is_pregroup_diagram(diagram):
         try:
             diagram = grammar.normal_form(diagram)
-        except ValueError:
-            raise ValueError('Not a valid pregroup diagram.')
+        except ValueError as e:
+            raise ValueError('Not a valid pregroup diagram.') from e
 
     atomic_types = [ob for b in diagram.boxes
                     for ob in b.cod if isinstance(b, Word)]

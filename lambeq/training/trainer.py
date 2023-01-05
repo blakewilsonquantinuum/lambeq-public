@@ -51,9 +51,11 @@ def _import_tensorboard_writer() -> None:
     global SummaryWriter
     try:
         from torch.utils.tensorboard.writer import SummaryWriter
-    except ImportError:  # pragma: no cover
-        raise ImportError('tensorboard not found. Please install it using '
-                          '`pip install tensorboard`.')
+    except ImportError as e:  # pragma: no cover
+        raise ImportError(
+            'tensorboard not found. Please install it using '
+            '`pip install tensorboard`.'
+        ) from e
 
 
 _EvalFuncT = Callable[[Any, Any], Any]

@@ -214,8 +214,9 @@ class CCGBankParser(CCGParser):
                         except CCGBankParseError as e:
                             if not suppress_exceptions:
                                 raise CCGBankParseError(
-                                        f'Failed to parse tree in `{file}` '
-                                        f'line {line_no}: {e.message}')
+                                    f'Failed to parse tree in `{file}` '
+                                    f'line {line_no}: {e.message}'
+                                ) from e
                         yield match['id'], tree
                     elif not suppress_exceptions:
                         raise CCGBankParseError('Failed to parse ID in '
@@ -383,7 +384,7 @@ class CCGBankParser(CCGParser):
                                             f'{repr(sentence[pos:])}')
             except Exception as e:
                 if not suppress_exceptions:
-                    raise CCGBankParseError(sentence, str(e))
+                    raise CCGBankParseError(sentence, str(e)) from e
             trees.append(tree)
         return trees
 

@@ -377,8 +377,10 @@ class Rewriter:
             else:
                 try:
                     self.rules.append(self._available_rules[rule])
-                except KeyError:
-                    raise ValueError(f'`{rule}` is not a valid rewrite rule.')
+                except KeyError as e:
+                    raise ValueError(
+                        f'`{rule}` is not a valid rewrite rule.'
+                    ) from e
 
     def __call__(self, diagram: Diagram) -> Diagram:
         """Apply the rewrite rules to the given diagram."""

@@ -128,7 +128,8 @@ class Checkpoint(Mapping):
         try:
             with open(path, 'wb+') as ckp:
                 pickle.dump(self.entries, ckp)
-        except FileNotFoundError:
-            raise FileNotFoundError('The directory does not exist. Check path '
-                                    f'{path}')
+        except FileNotFoundError as e:
+            raise FileNotFoundError(
+                'The directory does not exist. Check path `{path}`'
+            ) from e
         self.entries = {}

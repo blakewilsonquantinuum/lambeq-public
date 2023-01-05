@@ -129,8 +129,10 @@ class PytorchModel(Model, torch.nn.Module):
                     try:
                         b._data = parameters[b._data]
                         b._free_symbols = {}
-                    except KeyError:
-                        raise KeyError(f'Unknown symbol {b._data!r}.')
+                    except KeyError as e:
+                        raise KeyError(
+                            f'Unknown symbol: {repr(b._data)}'
+                        ) from e
 
         with Tensor.backend('pytorch'), tn.DefaultBackend('pytorch'):
             return torch.stack(

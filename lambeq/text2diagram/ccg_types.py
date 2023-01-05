@@ -114,7 +114,8 @@ def str2biclosed(cat: str, str2type: Callable[[str], Ty] = Ty) -> Ty:
     try:
         biclosed_type, end = _compound_str2biclosed(clean_cat, str2type, 0)
     except CCGParseError as e:
-        raise CCGParseError(cat, e.message)  # reraise with original cat string
+        # reraise with original cat string
+        raise CCGParseError(cat, e.message) from e
 
     if is_conj:
         biclosed_type = biclosed_type >> biclosed_type

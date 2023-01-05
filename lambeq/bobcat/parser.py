@@ -60,7 +60,8 @@ class Sentence:
 
     def __post_init__(self) -> None:
         if len(self.words) != len(self.input_supertags):
-            raise ValueError()
+            raise ValueError(
+                    '`words` must be the same length as `input_supertags`')
 
     def __len__(self) -> int:
         return len(self.words)
@@ -389,7 +390,7 @@ class ChartParser:
                                   for cat in root_cats]
             except KeyError as e:
                 raise ValueError('Grammar does not contain root category: '
-                                 f'{repr(e.args[0])}')
+                                 f'{repr(e.args[0])}') from e
 
     def filter_root(self, trees: list[ParseTree]) -> list[ParseTree]:
         if self.root_cats is None:
