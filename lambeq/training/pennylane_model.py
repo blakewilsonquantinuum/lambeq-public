@@ -25,11 +25,11 @@ import copy
 from typing import Any, Optional, TYPE_CHECKING
 
 from discopy import Circuit, Diagram
-from sympy import default_sort_key
+from sympy import default_sort_key, Symbol
 import torch
 
 from lambeq.training.checkpoint import Checkpoint
-from lambeq.training.pytorch_model import PytorchModel
+from lambeq.training.model import Model
 
 if TYPE_CHECKING:
     import pennylane as qml
@@ -45,13 +45,15 @@ STATE_BACKENDS = ['default.qubit', 'lightning.qubit', 'qiskit.aer']
 STATE_DEVICES = ['aer_simulator_statevector', 'statevector_simulator']
 
 
-class PennyLaneModel(PytorchModel):
+class PennyLaneModel(Model, torch.nn.Module):
     """ A lambeq model for the quantum and hybrid quantum/classical
-    pipeline using PennyLane circuits. This model inherits from the
-    PytorchModel because PennyLane interfaces with PyTorch to allow
-    backpropagation through hybrid models.
+    pipeline using PennyLane circuits. It uses PyTorch as a backend for
+    all tensor operations.
 
     """
+
+    weights: torch.nn.ParameterList  # type: ignore[assignment]
+    symbols: list[Symbol]
 
     def __init__(self,
                  backend_config: Optional[dict[str, Any]] = None) -> None:
@@ -70,7 +72,8 @@ class PennyLaneModel(PytorchModel):
             'shots', and 'noise_model'.
 
         """
-        super().__init__()
+        Model.__init__(self)
+        torch.nn.Module.__init__(self)
         _import_pennylane()
         self.circuit_map: dict[Circuit, PennyLaneCircuit] = {}
 
@@ -158,6 +161,14 @@ class PennyLaneModel(PytorchModel):
 
         return checkpoint
 
+    def _reinitialise_modules(self) -> None:
+        """Reinitialise all modules in the model."""
+        for module in self.modules():
+            try:
+                module.reset_parameters()  # type: ignore[operator]
+            except (AttributeError, TypeError):
+                pass
+
     def initialise_weights(self) -> None:
         """Initialise the weights of the model.
 
@@ -170,9 +181,9 @@ class PennyLaneModel(PytorchModel):
         self._reinitialise_modules()
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
-                             '`PytorchModel.from_diagrams()`.')
-        self.weights = torch.nn.ParameterList([torch.rand(w.size)
-                                               for w in self.symbols])
+                             '`PennyLaneModel.from_diagrams()`.')
+        self.weights = torch.nn.ParameterList([torch.rand((1,))
+                                               for _ in self.symbols])
 
     def get_diagram_output(self, diagrams: list[Diagram]) -> torch.Tensor:
         """Evaluate outputs of circuits using PennyLane.

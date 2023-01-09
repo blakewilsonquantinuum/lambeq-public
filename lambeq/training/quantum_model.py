@@ -95,7 +95,6 @@ class QuantumModel(Model):
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`from_diagrams()`.')
-        assert all(w.size == 1 for w in self.symbols)
         self.weights = np.random.rand(len(self.symbols))
 
     def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
