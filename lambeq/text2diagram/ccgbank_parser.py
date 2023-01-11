@@ -29,11 +29,9 @@ from __future__ import annotations
 __all__ = ['CCGBankParseError', 'CCGBankParser']
 
 from collections.abc import Iterator
-import os
 from pathlib import Path
 import re
 import sys
-from typing import Optional, Union
 
 from discopy.biclosed import Ty
 from discopy.rigid import Diagram
@@ -45,12 +43,13 @@ from lambeq.text2diagram.ccg_parser import CCGParser
 from lambeq.text2diagram.ccg_rule import CCGRule
 from lambeq.text2diagram.ccg_tree import CCGTree
 from lambeq.text2diagram.ccg_types import CCGAtomicType, str2biclosed
+from lambeq.typing import StrPathT
 
 
 class CCGBankParseError(Exception):
     """Error raised if parsing fails in CCGBank."""
 
-    def __init__(self, sentence: str = '', message: str = ''):
+    def __init__(self, sentence: str = '', message: str = '') -> None:
         if message:
             self.sentence = sentence
             self.message = message
@@ -95,8 +94,8 @@ class CCGBankParser(CCGParser):
     escaped_words = {'-LCB-': '{', '-RCB-': '}', '-LRB-': '(', '-RRB-': ')'}
 
     def __init__(self,
-                 root: Union[str, os.PathLike[str]],
-                 verbose: str = VerbosityLevel.SUPPRESS.value):
+                 root: StrPathT,
+                 verbose: str = VerbosityLevel.SUPPRESS.value) -> None:
         """Initialise a CCGBank parser.
 
         Parameters
@@ -114,12 +113,10 @@ class CCGBankParser(CCGParser):
         self.root = Path(root)
         self.verbose = verbose
 
-    def section2trees(
-            self,
-            section_id: int,
-            suppress_exceptions: bool = False,
-            verbose: Optional[str] = None
-            ) -> dict[str, Optional[CCGTree]]:
+    def section2trees(self,
+                      section_id: int,
+                      suppress_exceptions: bool = False,
+                      verbose: str | None = None) -> dict[str, CCGTree | None]:
         """Parse a CCGBank section into trees.
 
         Parameters
@@ -153,11 +150,11 @@ class CCGBankParser(CCGParser):
             verbose=verbose)}
 
     def section2trees_gen(
-            self,
-            section_id: int,
-            suppress_exceptions: bool = False,
-            verbose: Optional[str] = None) -> Iterator[
-                                        tuple[str, Optional[CCGTree]]]:
+        self,
+        section_id: int,
+        suppress_exceptions: bool = False,
+        verbose: str | None = None
+    ) -> Iterator[tuple[str, CCGTree | None]]:
         """Parse a CCGBank section into trees, given as a generator.
 
         The generator only reads data when it is accessed, providing the
@@ -223,12 +220,12 @@ class CCGBankParser(CCGParser):
                                                 f'`{file}` line {line_no}')
 
     def section2diagrams(
-            self,
-            section_id: int,
-            planar: bool = False,
-            suppress_exceptions: bool = False,
-            verbose: Optional[str] = None
-            ) -> dict[str, Optional[Diagram]]:
+        self,
+        section_id: int,
+        planar: bool = False,
+        suppress_exceptions: bool = False,
+        verbose: str | None = None
+    ) -> dict[str, Diagram | None]:
         """Parse a CCGBank section into diagrams.
 
         Parameters
@@ -265,12 +262,12 @@ class CCGBankParser(CCGParser):
             verbose=verbose)}
 
     def section2diagrams_gen(
-            self,
-            section_id: int,
-            planar: bool = False,
-            suppress_exceptions: bool = False,
-            verbose: Optional[str] = None) -> Iterator[
-                                        tuple[str, Optional[Diagram]]]:
+        self,
+        section_id: int,
+        planar: bool = False,
+        suppress_exceptions: bool = False,
+        verbose: str | None = None
+    ) -> Iterator[tuple[str, Diagram | None]]:
         """Parse a CCGBank section into diagrams, given as a generator.
 
         The generator only reads data when it is accessed, providing the
@@ -325,12 +322,11 @@ class CCGBankParser(CCGParser):
                 diagram = None
             yield k, diagram
 
-    def sentences2trees(
-            self,
-            sentences: SentenceBatchType,
-            tokenised: bool = False,
-            suppress_exceptions: bool = False,
-            verbose: Optional[str] = None) -> list[Optional[CCGTree]]:
+    def sentences2trees(self,
+                        sentences: SentenceBatchType,
+                        tokenised: bool = False,
+                        suppress_exceptions: bool = False,
+                        verbose: str | None = None) -> list[CCGTree | None]:
         """Parse a CCGBank sentence derivation into a CCGTree.
 
         The sentence must be in the format outlined in the CCGBank

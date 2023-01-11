@@ -16,11 +16,9 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
-import os
 from pathlib import Path
-from typing import Optional, Union
 
-StrPathT = Union[str, 'os.PathLike[str]']
+from lambeq.typing import StrPathT
 
 
 @dataclass
@@ -57,7 +55,7 @@ class Grammar:
 
     categories: dict[str, str]
     binary_rules: list[tuple[str, str]]
-    type_changing_rules: list[tuple[int, str, Optional[str], str, bool]]
+    type_changing_rules: list[tuple[int, str, str | None, str, bool]]
     type_raising_rules: list[tuple[str, str, str]]
 
     def __post_init__(self) -> None:

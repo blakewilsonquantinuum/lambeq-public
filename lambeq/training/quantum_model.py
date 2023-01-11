@@ -21,7 +21,7 @@ Module containing the base class for a quantum lambeq model.
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 from discopy.tensor import Diagram, Tensor
 import numpy as np
@@ -128,8 +128,10 @@ class QuantumModel(Model):
         return checkpoint
 
     @abstractmethod
-    def get_diagram_output(self, diagrams: list[Diagram]) -> Union[jnp.ndarray,
-                                                                   np.ndarray]:
+    def get_diagram_output(
+        self,
+        diagrams: list[Diagram]
+    ) -> jnp.ndarray | np.ndarray:
         """Return the diagram prediction.
 
         Parameters

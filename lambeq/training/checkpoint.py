@@ -23,9 +23,9 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 import os
 import pickle
-from typing import Any, Union
+from typing import Any
 
-_StrPathT = Union[str, 'os.PathLike[str]']
+from lambeq.typing import StrPathT
 
 
 class Checkpoint(Mapping):
@@ -93,7 +93,7 @@ class Checkpoint(Mapping):
             self.entries[key] = values[key]
 
     @classmethod
-    def from_file(cls, path: _StrPathT) -> Checkpoint:
+    def from_file(cls, path: StrPathT) -> Checkpoint:
         """Load the checkpoint contents from the file.
 
         Parameters
@@ -116,7 +116,7 @@ class Checkpoint(Mapping):
                                     f'{path}')
         return checkpoint
 
-    def to_file(self, path: _StrPathT) -> None:
+    def to_file(self, path: StrPathT) -> None:
         """Save entries to a file and deletes the in-memory copy.
 
         Parameters

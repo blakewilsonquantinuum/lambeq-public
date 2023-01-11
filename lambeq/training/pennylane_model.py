@@ -22,7 +22,7 @@ based on a PennyLane and PyTorch backend.
 from __future__ import annotations
 
 import copy
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from discopy import Circuit, Diagram
 from sympy import default_sort_key, Symbol
@@ -55,8 +55,7 @@ class PennyLaneModel(Model, torch.nn.Module):
     weights: torch.nn.ParameterList  # type: ignore[assignment]
     symbols: list[Symbol]
 
-    def __init__(self,
-                 backend_config: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, backend_config: dict[str, Any] | None = None) -> None:
         """Initialise a :py:class:`PennyLaneModel` instance with
         an empty `circuit_map` dictionary.
 
@@ -245,7 +244,7 @@ class PennyLaneModel(Model, torch.nn.Module):
     @classmethod
     def from_diagrams(cls,
                       diagrams: list[Diagram],
-                      backend_config: Optional[dict[str, Any]] = None,
+                      backend_config: dict[str, Any] | None = None,
                       **kwargs: Any) -> PennyLaneModel:
         """Build model from a list of
         :py:class:`Circuits <discopy.quantum.Circuit>`.

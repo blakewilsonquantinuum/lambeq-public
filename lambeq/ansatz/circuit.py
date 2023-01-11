@@ -23,9 +23,8 @@ from __future__ import annotations
 __all__ = ['CircuitAnsatz', 'IQPAnsatz']
 
 from abc import abstractmethod
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from itertools import cycle
-from typing import Callable, Optional
 
 from discopy.quantum.circuit import (Circuit, Discard, Functor, Id,
                                      IQPansatz as IQP, qubit,
@@ -50,7 +49,7 @@ class CircuitAnsatz(BaseAnsatz):
                  n_single_qubit_params: int,
                  circuit: Callable[[int, np.ndarray], Circuit],
                  discard: bool = False,
-                 single_qubit_rotations: Optional[list[Circuit]] = None,
+                 single_qubit_rotations: list[Circuit] | None = None,
                  postselection_basis: Circuit = computational_basis) -> None:
         """Instantiate a circuit ansatz.
 
@@ -272,7 +271,7 @@ class StronglyEntanglingAnsatz(CircuitAnsatz):
                  ob_map: Mapping[Ty, int],
                  n_layers: int,
                  n_single_qubit_params: int = 3,
-                 ranges: Optional[list[int]] = None,
+                 ranges: list[int] | None = None,
                  discard: bool = False) -> None:
         """Instantiate a strongly entangling ansatz.
 

@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from math import ceil
 import random
-from typing import Any, Union
+from typing import Any
 
 from discopy import Tensor
 
@@ -78,7 +78,7 @@ class Dataset:
 
         self.batches_per_epoch = ceil(len(self.data) / self.batch_size)
 
-    def __getitem__(self, index: Union[int, slice]) -> tuple[Any, Any]:
+    def __getitem__(self, index: int | slice) -> tuple[Any, Any]:
         """Get a single item or a subset from the dataset."""
         x = self.data[index]
         y = self.targets[index]

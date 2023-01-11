@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 import pickle
-from typing import Any, TYPE_CHECKING, Union
+from typing import Any, TYPE_CHECKING
 
 from discopy import Tensor
 from discopy.tensor import Diagram
@@ -119,9 +119,10 @@ class NumpyModel(QuantumModel):
                         b._phase = b._data
         return diagrams
 
-    def get_diagram_output(self,
-                           diagrams: list[Diagram]) -> Union[jnp.ndarray,
-                                                             numpy.ndarray]:
+    def get_diagram_output(
+        self,
+        diagrams: list[Diagram]
+    ) -> jnp.ndarray | numpy.ndarray:
         """Return the exact prediction for each diagram.
 
         Parameters

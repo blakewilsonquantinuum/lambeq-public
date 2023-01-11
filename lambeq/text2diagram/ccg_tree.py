@@ -16,10 +16,10 @@ from __future__ import annotations
 
 __all__ = ['CCGTree']
 
-from collections.abc import Sequence
+from collections.abc import Iterable
 from copy import deepcopy
 import json
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict
 from typing import overload
 
 from discopy import rigid, Word
@@ -127,11 +127,11 @@ class CCGTree:
     """
 
     def __init__(self,
-                 text: Optional[str] = None,
+                 text: str | None = None,
                  *,
-                 rule: Union[str, CCGRule] = CCGRule.UNKNOWN,
+                 rule: CCGRule | str = CCGRule.UNKNOWN,
                  biclosed_type: Ty,
-                 children: Optional[Sequence[CCGTree]] = None) -> None:
+                 children: Iterable[CCGTree] | None = None) -> None:
         """Initialise a CCG tree.
 
         Parameters
@@ -152,7 +152,7 @@ class CCGTree:
         self._text = text
         self.rule = CCGRule(rule)
         self.biclosed_type = biclosed_type
-        self.children = children if children is not None else []
+        self.children = list(children) if children is not None else []
 
         n_children = len(self.children)
         child_requirements = {CCGRule.LEXICAL: 0,
@@ -207,11 +207,11 @@ class CCGTree:
 
     @overload
     @classmethod
-    def from_json(cls, data: Union[str, _JSONDictT]) -> CCGTree: ...
+    def from_json(cls, data: _JSONDictT | str) -> CCGTree: ...
 
     @classmethod
     def from_json(cls,
-                  data: Union[None, str, _JSONDictT]) -> Optional[CCGTree]:
+                  data: _JSONDictT | str | None) -> CCGTree | None:
         """Create a :py:class:`CCGTree` from a JSON representation.
 
         A JSON representation of a derivation contains the following
@@ -433,7 +433,7 @@ class CCGTree:
     def _to_biclosed_diagram(
             self,
             planar: bool = False,
-            resolved_output: Optional[Ty] = None) -> tuple[Diagram, Diagram]:
+            resolved_output: Ty | None = None) -> tuple[Diagram, Diagram]:
         biclosed_type = resolved_output or self.biclosed_type
 
         if self.rule == CCGRule.LEXICAL:

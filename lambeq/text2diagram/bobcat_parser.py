@@ -30,7 +30,7 @@ from pathlib import Path
 import sys
 import tarfile
 import tempfile
-from typing import Any, Optional, Union
+from typing import Any
 import warnings
 
 from discopy.biclosed import Ty
@@ -51,8 +51,7 @@ from lambeq.text2diagram.ccg_parser import CCGParser
 from lambeq.text2diagram.ccg_rule import CCGRule
 from lambeq.text2diagram.ccg_tree import CCGTree
 from lambeq.text2diagram.ccg_types import CCGAtomicType
-
-StrPathT = Union[str, 'os.PathLike[str]']
+from lambeq.typing import StrPathT
 
 MODELS_URL = 'https://qnlp.cambridgequantum.com/models'
 MODELS = {'bert'}
@@ -65,8 +64,10 @@ def get_model_url(model: str) -> str:
     return f'{MODELS_URL}/{model}/latest'
 
 
-def get_model_dir(model: str,
-                  cache_dir: StrPathT = None) -> Path:  # pragma: no cover
+def get_model_dir(
+    model: str,
+    cache_dir: StrPathT | None = None
+) -> Path:  # pragma: no cover
     if cache_dir is None:
         try:
             cache_dir = Path(os.getenv('XDG_CACHE_HOME'))
@@ -107,10 +108,10 @@ def model_is_stale(model: str, model_dir: str) -> bool:
 
 
 def download_model(
-        model_name: str,
-        model_dir: Optional[StrPathT] = None,
-        verbose: str = VerbosityLevel.PROGRESS.value
-        ) -> None:  # pragma: no cover
+    model_name: str,
+    model_dir: StrPathT | None = None,
+    verbose: str = VerbosityLevel.PROGRESS.value
+) -> None:  # pragma: no cover
     import requests
     url = get_model_url(model_name) + '/model.tar.gz'
 
@@ -168,9 +169,9 @@ class BobcatParser(CCGParser):
 
     def __init__(self,
                  model_name_or_path: str = 'bert',
-                 root_cats: Optional[Iterable[str]] = None,
+                 root_cats: Iterable[str] | None = None,
                  device: int = -1,
-                 cache_dir: Optional[StrPathT] = None,
+                 cache_dir: StrPathT | None = None,
                  force_download: bool = False,
                  verbose: str = VerbosityLevel.PROGRESS.value,
                  **kwargs: Any) -> None:
@@ -305,12 +306,12 @@ class BobcatParser(CCGParser):
         return Sentence(sent.words, sent_tags, spans)
 
     def sentences2trees(
-            self,
-            sentences: SentenceBatchType,
-            tokenised: bool = False,
-            suppress_exceptions: bool = False,
-            verbose: Optional[str] = None
-            ) -> list[Optional[CCGTree]]:
+        self,
+        sentences: SentenceBatchType,
+        tokenised: bool = False,
+        suppress_exceptions: bool = False,
+        verbose: str | None = None
+    ) -> list[CCGTree] | None:
         """Parse multiple sentences into a list of :py:class:`.CCGTree` s.
 
         Parameters
@@ -422,7 +423,7 @@ class BobcatParser(CCGParser):
 
         children = [BobcatParser._build_ccgtree(child)
                     for child in filter(None, (tree.left, tree.right))]
-        return CCGTree(text=tree.word,
+        return CCGTree(text=tree.word if tree.is_leaf else None,
                        rule=CCGRule(tree.rule.name),
                        biclosed_type=BobcatParser._to_biclosed(tree.cat),
                        children=children)

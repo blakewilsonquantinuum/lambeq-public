@@ -22,7 +22,7 @@ Approximation optimizer.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -45,7 +45,7 @@ class SPSAOptimizer(Optimizer):
     def __init__(self, model: QuantumModel,
                  hyperparams: dict[str, float],
                  loss_fn: Callable[[Any, Any], float],
-                 bounds: Optional[ArrayLike] = None) -> None:
+                 bounds: ArrayLike | None = None) -> None:
         """Initialise the SPSA optimizer.
 
         The hyperparameters must contain the following key value pairs::

@@ -19,7 +19,7 @@ __all__ = ['CCGAtomicType', 'CCGParseError', 'replace_cat_result',
 
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from discopy import rigid
 from discopy.biclosed import Over, Ty, Under
@@ -203,7 +203,7 @@ def _clean_str2biclosed(cat: str,
 def replace_cat_result(cat: Ty,
                        original: Ty,
                        replacement: Ty,
-                       direction: str = '|') -> tuple[Ty, Optional[Ty]]:
+                       direction: str = '|') -> tuple[Ty, Ty | None]:
     """Replace the innermost category result with a new category.
 
     This attempts to replace the specified result category with a
