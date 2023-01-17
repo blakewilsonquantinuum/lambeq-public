@@ -37,7 +37,7 @@ class CCGParseError(Exception):
         self.message = message
 
     def __str__(self) -> str:
-        return f'Failed to parse "{self.cat}": {self.message}.'
+        return f'Failed to parse {repr(self.cat)}: {self.message}.'
 
 
 class _CCGAtomicTypeMeta(Ty, Enum):
@@ -121,7 +121,10 @@ def str2biclosed(cat: str, str2type: Callable[[str], Ty] = Ty) -> Ty:
 
     extra = clean_cat[end:]
     if extra:
-        raise CCGParseError(cat, f'extra text after index {end-1} - "{extra}"')
+        raise CCGParseError(
+            cat,
+            f'extra text from index {end} - {repr(extra)}'
+        )
     return biclosed_type
 
 
@@ -175,8 +178,10 @@ def _clean_str2biclosed(cat: str,
     if cat[start] != '(':
         # base case
         if cat[start] in r'/\)':
-            raise CCGParseError(cat,
-                                f'unexpected "{cat[start]}" at index {start}')
+            raise CCGParseError(
+                cat,
+                f'unexpected {repr(cat[start])} at index {start}'
+            )
         end = start
         while end < len(cat) and cat[end] not in r'/\)':
             if cat[end] == '(':
@@ -274,7 +279,7 @@ def replace_cat_result(cat: Ty,
     """
 
     if not (len(direction) in (1, 2) and set(direction).issubset('<|>')):
-        raise ValueError(f'Invalid direction: "{direction}"')
+        raise ValueError(f'Invalid direction: `{direction}`')
     if not cat.left:
         return cat, None
 

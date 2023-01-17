@@ -60,7 +60,7 @@ class CCGBankParseError(Exception):
 
     def __str__(self) -> str:
         if self.sentence:
-            return f'Failed to parse "{self.sentence}": {self.message}.'
+            return f'Failed to parse {repr(self.sentence)}: {self.message}.'
         return self.message
 
 
@@ -197,11 +197,11 @@ class CCGBankParser(CCGParser):
         for file in sorted(path.iterdir()):
             with open(file) as f:
                 if verbose == VerbosityLevel.TEXT.value:
-                    print(f'Parsing "{file}"', file=sys.stderr)
+                    print(f'Parsing `{file}`', file=sys.stderr)
                 line_no = 0
                 for line in tqdm(
                         f,
-                        desc=f'Parsing "{file}"',
+                        desc=f'Parsing `{file}`',
                         leave=False,
                         disable=verbose != VerbosityLevel.PROGRESS.value):
                     line_no += 1
@@ -214,12 +214,12 @@ class CCGBankParser(CCGParser):
                         except CCGBankParseError as e:
                             if not suppress_exceptions:
                                 raise CCGBankParseError(
-                                        f'Failed to parse tree in "{file}" '
+                                        f'Failed to parse tree in `{file}` '
                                         f'line {line_no}: {e.message}')
                         yield match['id'], tree
                     elif not suppress_exceptions:
                         raise CCGBankParseError('Failed to parse ID in '
-                                                f'"{file}" line {line_no}')
+                                                f'`{file}` line {line_no}')
 
     def section2diagrams(
             self,
@@ -379,8 +379,8 @@ class CCGBankParser(CCGParser):
             try:
                 tree, pos = CCGBankParser._build_ccgtree(sentence, 0)
                 if pos < len(sentence):
-                    raise CCGBankParseError('extra text starting at character '
-                                            f'{pos+1} - "{sentence[pos:]}"')
+                    raise CCGBankParseError(f'extra text from index {pos+1} - '
+                                            f'{repr(sentence[pos:])}')
             except Exception as e:
                 if not suppress_exceptions:
                     raise CCGBankParseError(sentence, str(e))
@@ -391,8 +391,8 @@ class CCGBankParser(CCGParser):
     def _build_ccgtree(sentence: str, start: int) -> tuple[CCGTree, int]:
         tree_match = CCGBankParser.tree_regex.match(sentence, pos=start)
         if not tree_match:
-            raise CCGBankParseError('malformed tree starting from character '
-                                    f'{start+1} - "{sentence[start:]}"')
+            raise CCGBankParseError(f'malformed tree from index {start+1} - '
+                                    f'{repr(sentence[start:])}')
 
         ccg_str = tree_match['ccg_str']
         if ccg_str == r'((S[b]\NP)/NP)/':  # fix mistake in CCGBank
@@ -426,7 +426,7 @@ class CCGBankParser(CCGParser):
     def _parse_atomic_type(cat: str) -> Ty:
         match = CCGBankParser.ccg_type_regex.fullmatch(cat)
         if not match:
-            raise CCGBankParseError(f'failed to parse atomic type "{cat}"')
+            raise CCGBankParseError(f'failed to parse atomic type {repr(cat)}')
         cat = match['bare_cat'] or cat
         if cat in ('N', 'NP'):
             return CCGAtomicType.NOUN

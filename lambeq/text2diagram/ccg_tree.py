@@ -159,10 +159,11 @@ class CCGTree:
                               CCGRule.UNARY: 1,
                               CCGRule.FORWARD_TYPE_RAISING: 1,
                               CCGRule.BACKWARD_TYPE_RAISING: 1}
-        if (self.rule != CCGRule.UNKNOWN
-                and child_requirements.get(self.rule, 2) != n_children):
-            raise ValueError(f'Invalid number of children ({n_children}) for '
-                             f'rule "{self.rule}"')
+        required_children = child_requirements.get(self.rule, 2)
+        if self.rule != CCGRule.UNKNOWN and n_children != required_children:
+            raise ValueError('Invalid number of children for rule '
+                             f'`{self.rule}`: expected {required_children}, '
+                             f'got {n_children}.')
 
         if text and not children:
             self.rule = CCGRule.LEXICAL
@@ -296,7 +297,7 @@ class CCGTree:
         """Create a vertical string representation of the CCG tree."""
         output_type = biclosed2str(self.biclosed_type, not use_slashes)
         if self.rule == CCGRule.LEXICAL:
-            deriv = f' {output_type} {chr_set["SUCH_THAT"]} "{self.text}"'
+            deriv = f' {output_type} {chr_set["SUCH_THAT"]} {repr(self.text)}'
         else:
             deriv = (f'{self.rule}: {output_type} {chr_set["LEFT_ARROW"]} '
                      + ' + '.join(biclosed2str(child.biclosed_type,
