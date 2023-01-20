@@ -1,7 +1,6 @@
 import pytest
 
 from discopy import biclosed, Word
-from discopy.cat import AxiomError
 from discopy.biclosed import Box
 from discopy.rigid import Cap, Cup, Diagram, Id, Swap, caps, cups
 
@@ -398,11 +397,11 @@ class TestUnarySwap(CCGRuleTester):
     )
 
     def test_planar_biclosed_diagram(self):
-        with pytest.raises(AxiomError):
+        with pytest.raises(ValueError):
             self.tree.to_biclosed_diagram(planar=True)
 
     def test_planar_diagram(self):
-        with pytest.raises(AxiomError):
+        with pytest.raises(ValueError):
             self.tree.to_diagram(planar=True)
 
     test_infer_rule = None

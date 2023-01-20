@@ -427,37 +427,98 @@ class CCGTree:
             using cross composition.
 
         """
-        words, grammar = self._to_biclosed_diagram(planar)
+        words, grammar = self._resolved()._to_biclosed_diagram(planar)
         return words >> grammar
 
-    def _to_biclosed_diagram(
-            self,
-            planar: bool = False,
-            resolved_output: Ty | None = None) -> tuple[Diagram, Diagram]:
-        biclosed_type = resolved_output or self.biclosed_type
+    def _resolved(self, output: Ty | None = None) -> CCGTree:
+        """Perform type resolution on the tree.
+
+        Actions:
+        - unary rules (for the most part) are removed and the types are
+        changed directly, resulting in changes in the lexical word
+        types.
+        - unary rules that involve a swap in the direction of the type
+        are not changed.
+        - conjunctions are replaced by applications.
+        - one other special case: rewriting the type of a forward
+        composition which has a type-raising child requires special
+        handling to ensure that the composed (middle) type is correct.
+
+        Resolution starts from the root of the tree, and then rewritten
+        types are propagated towards the leaves by recursive calls with
+        `output` set to the rewritten type (may be the same as the
+        original type if no rewriting is required for that child).
+
+        """
+        biclosed_type = output or self.biclosed_type
 
         if self.rule == CCGRule.LEXICAL:
-            word = Box(self.text, Ty(), biclosed_type)
-            return word, Id(biclosed_type)
+            if biclosed_type == self.biclosed_type:
+                return self
+            else:
+                return CCGTree(self.text, biclosed_type=biclosed_type)
 
-        if (self.rule == CCGRule.UNARY
-                and not planar
-                and {type(biclosed_type),
-                     type(self.children[0].biclosed_type)} == {Over, Under}):
-            this_layer = UnarySwap(biclosed_type)
-        elif (self.rule == CCGRule.FORWARD_COMPOSITION
+        this_layer: Diagram
+        rule = self.rule
+        if rule == CCGRule.UNARY:
+            if ({type(biclosed_type), type(self.children[0].biclosed_type)}
+                    == {Over, Under}):
+                this_layer = UnarySwap(biclosed_type)
+            else:
+                return self.child._resolved(biclosed_type)
+        elif (rule == CCGRule.FORWARD_COMPOSITION
                 and self.children[0].rule == CCGRule.FORWARD_TYPE_RAISING):
             left = biclosed_type.left
             right = biclosed_type.right
             mid = (self.children[0].biclosed_type.right.left) >> left
-            this_layer = self.rule((left << mid) @ (mid << right),
-                                   biclosed_type)
+            this_layer = rule((left << mid) @ (mid << right), biclosed_type)
         else:
             child_types = [child.biclosed_type for child in self.children]
-            this_layer = self.rule(Ty.tensor(*child_types), biclosed_type)
+            this_layer = rule(Ty.tensor(*child_types), biclosed_type)
 
-        children = [child._to_biclosed_diagram(planar,
-                                               this_layer.dom[i:i+1])
+            if rule == CCGRule.CONJUNCTION:
+                if CCGAtomicType.conjoinable(child_types[0]):
+                    rule = CCGRule.FORWARD_APPLICATION
+                else:
+                    rule = CCGRule.BACKWARD_APPLICATION
+
+        children = [child._resolved(this_layer.dom[i:i+1])
+                    for i, child in enumerate(self.children)]
+        if children == self.children and biclosed_type == self.biclosed_type:
+            return self
+        else:
+            return CCGTree(rule=rule,
+                           biclosed_type=biclosed_type,
+                           children=children)
+
+    def _to_biclosed_diagram(self,
+                             planar: bool = False) -> tuple[Diagram, Diagram]:
+        """Convert a (type-resolved) tree into a biclosed diagram.
+
+        Expects its input to already be type resolved. This can be done
+        using `._resolve()`.
+
+        Turns each rule into the correct box, and if the output is
+        expected to be planar, rearranges cross-composed diagrams.
+
+        """
+        if self.rule == CCGRule.LEXICAL:
+            return (Box(self.text, Ty(), self.biclosed_type),
+                    Id(self.biclosed_type))
+
+        this_layer: Diagram
+        if self.rule == CCGRule.UNARY:
+            if planar:
+                raise ValueError('This diagram cannot be represented as a '
+                                 'planar biclosed diagram since it requires a '
+                                 'unary swap.')
+            else:
+                this_layer = UnarySwap(self.biclosed_type)
+        else:
+            child_types = [child.biclosed_type for child in self.children]
+            this_layer = self.rule(Ty.tensor(*child_types), self.biclosed_type)
+
+        children = [child._to_biclosed_diagram(planar)
                     for i, child in enumerate(self.children)]
 
         if planar and self.rule == CCGRule.BACKWARD_CROSSED_COMPOSITION:
