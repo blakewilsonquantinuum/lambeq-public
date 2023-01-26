@@ -65,7 +65,7 @@ jobs:
       run: pip install .[extras] .[test]
     - name: Locate bobcat pre-trained model cache
       id: loc-bobcat-cache
-      run: echo "::set-output name=dir::$(python -c 'from lambeq.text2diagram.bobcat_parser import get_model_dir; print(get_model_dir("bert"))')"
+      run: echo "dir=$(python -c 'from lambeq.text2diagram.bobcat_parser import get_model_dir; print(get_model_dir("bert"))')" >> $GITHUB_OUTPUT
     - name: Restore bobcat pre-trained model from cache
       id: bobcat-cache
       uses: actions/cache@v2
@@ -93,7 +93,7 @@ jobs:
       run: |
         pip install cython  # must be installed before depccg
         pip install depccg==2.0.3.2
-        echo "::set-output name=dir::$(python -c 'from depccg.instance_models import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')"
+        echo "dir=$(python -c 'from depccg.instance_models import MODEL_DIRECTORY, MODELS; print(MODEL_DIRECTORY / MODELS["en"][1])')" >> $GITHUB_OUTPUT
         pip install lambeq  # override dependency conflicts
     - name: Restore depccg pre-trained model from cache
       id: depccg-cache
