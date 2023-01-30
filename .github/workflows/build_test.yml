@@ -82,10 +82,12 @@ jobs:
         --ignore=docs/extract_code_cells.py
     - name: Determine if depccg tests should be run
       # only test depccg if it is explicitly changed, since it is very slow
+      # tests are also disabled on Python 3.11
       id: depccg-enabled
       continue-on-error: true  # this is expected to fail but the job should still succeed
       run: >
-        git fetch --depth=1 origin ${{ github.base_ref || github.event.before }}:before
+        ${{ matrix.python-version != '3.11' }}
+        && git fetch --depth=1 origin ${{ github.base_ref || github.event.before }}:before
         && git diff --name-only before | grep depccg
     - name: Install depccg and locate depccg pre-trained model cache
       id: loc-depccg-cache
