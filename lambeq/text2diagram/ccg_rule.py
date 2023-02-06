@@ -16,13 +16,14 @@ from __future__ import annotations
 
 __all__ = ['CCGRule', 'CCGRuleUseError']
 
+from collections.abc import Sequence
 from enum import Enum
 from typing import Any
 
 from discopy.biclosed import Box, Diagram, Id, Over, Ty, Under
 from discopy.monoidal import BinaryBoxConstructor
 
-from lambeq.text2diagram.ccg_types import CCGAtomicType, replace_cat_result
+from lambeq.text2diagram.ccg_type import CCGType, replace_cat_result
 
 
 class CCGRuleUseError(Exception):
@@ -217,25 +218,25 @@ class CCGRule(str, Enum):
                                  left=True)
         elif self == CCGRule.CONJUNCTION:
             left, right = dom[:1], dom[1:]
-            if CCGAtomicType.conjoinable(left):
+            if CCGType.conjoinable(left):
                 return Diagram.fa(cod, right)
-            elif CCGAtomicType.conjoinable(right):
+            elif CCGType.conjoinable(right):
                 return Diagram.ba(left, cod)
             else:
                 raise CCGRuleUseError(self, 'no conjunction found')
         raise CCGRuleUseError(self, 'unknown CCG rule')
 
     @classmethod
-    def infer_rule(cls, dom: Ty, cod: Ty) -> CCGRule:
+    def infer_rule(cls, dom: Sequence[CCGType], cod: CCGType) -> CCGRule:
         """Infer the CCG rule that admits the given domain and codomain.
 
         Return :py:attr:`CCGRule.UNKNOWN` if no other rule matches.
 
         Parameters
         ----------
-        dom : discopy.biclosed.Ty
+        dom : CCGType
             The domain of the rule.
-        cod : discopy.biclosed.Ty
+        cod : CCGType
             The codomain of the rule.
 
         Returns
@@ -244,7 +245,12 @@ class CCGRule(str, Enum):
             A CCG rule that admits the required domain and codomain.
 
         """
+        return cls.infer_rule_discopy(Ty().tensor(*map(CCGType.discopy, dom)),
+                                      cod.discopy())
 
+    @classmethod
+    def infer_rule_discopy(cls, dom: Ty, cod: Ty) -> CCGRule:
+        """Infer rule using discopy domain and codomain."""
         if len(dom) == 0:
             return CCGRule.LEXICAL
         elif len(dom) == 1:
@@ -256,12 +262,12 @@ class CCGRule(str, Enum):
             return CCGRule.UNARY
         elif len(dom) == 2:
             left, right = dom[:1], dom[1:]
-            if left == CCGAtomicType.PUNCTUATION:
+            if left == CCGType.PUNCTUATION.discopy():
                 if cod == right >> right:
                     return CCGRule.CONJUNCTION
                 else:
                     return CCGRule.REMOVE_PUNCTUATION_LEFT
-            if right == CCGAtomicType.PUNCTUATION:
+            if right == CCGType.PUNCTUATION.discopy():
                 if cod == left << left:
                     return CCGRule.CONJUNCTION
                 else:
@@ -270,7 +276,7 @@ class CCGRule(str, Enum):
                 return CCGRule.FORWARD_APPLICATION
             if right == left >> cod:
                 return CCGRule.BACKWARD_APPLICATION
-            if CCGAtomicType.CONJUNCTION in (left, right):
+            if CCGType.CONJUNCTION.discopy() in (left, right):
                 return CCGRule.CONJUNCTION
 
             if isinstance(left, Over):
