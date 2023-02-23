@@ -46,13 +46,9 @@ class QuantumModel(Model):
     weights : array
         A data structure containing the numeric values of the model
         parameters
-    SMOOTHING : float
-        A smoothing constant
 
     """
     weights: np.ndarray
-
-    SMOOTHING = 1e-9
 
     def __init__(self) -> None:
         """Initialise a :py:class:`QuantumModel`."""
@@ -71,16 +67,20 @@ class QuantumModel(Model):
 
     def _normalise_vector(self, predictions: np.ndarray) -> np.ndarray:
         """Normalise the vector input.
-        Does not normalise scalar values; instead, returns the absolute
-        value of scalars.
+
+        Special cases:
+          * scalar value: Returns the absolute value.
+          * zero-vector: Returns the vector as-is.
         """
+
         backend = Tensor.get_backend()
-        ret: np.ndarray
-        if not predictions.shape:
-            ret = backend.abs(predictions)
-        else:
-            smoothed_predictions = backend.abs(predictions) + self.SMOOTHING
-            ret = smoothed_predictions / smoothed_predictions.sum()
+        ret: np.ndarray = backend.abs(predictions)
+
+        if predictions.shape:
+            # Prevent division by 0
+            l1_norm = backend.maximum(1e-9, ret.sum())
+            ret = ret / l1_norm
+
         return ret
 
     def initialise_weights(self) -> None:

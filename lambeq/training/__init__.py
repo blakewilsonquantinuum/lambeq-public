@@ -27,7 +27,12 @@ __all__ = ['Checkpoint',
 
            'Trainer',
            'PytorchTrainer',
-           'QuantumTrainer']
+           'QuantumTrainer',
+
+           'BinaryCrossEntropyLoss',
+           'CrossEntropyLoss',
+           'LossFunction',
+           'MSELoss', ]
 
 from lambeq.training.checkpoint import Checkpoint
 
@@ -46,3 +51,8 @@ from lambeq.training.spsa_optimizer import SPSAOptimizer
 from lambeq.training.trainer import Trainer
 from lambeq.training.pytorch_trainer import PytorchTrainer
 from lambeq.training.quantum_trainer import QuantumTrainer
+
+from lambeq.training.loss import (BinaryCrossEntropyLoss,
+                                  CrossEntropyLoss,
+                                  LossFunction,
+                                  MSELoss)

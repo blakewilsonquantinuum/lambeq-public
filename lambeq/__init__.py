@@ -96,6 +96,11 @@ __all__ = [
         'Trainer',
         'PytorchTrainer',
         'QuantumTrainer',
+
+        'BinaryCrossEntropyLoss',
+        'CrossEntropyLoss',
+        'LossFunction',
+        'MSELoss',
 ]
 
 from lambeq import (ansatz, core, pregroups, rewrite,
@@ -123,6 +128,7 @@ from lambeq.tokeniser import Tokeniser, SpacyTokeniser
 from lambeq.training import (Checkpoint, Dataset, Optimizer, SPSAOptimizer,
                              Model, NumpyModel, PennyLaneModel, PytorchModel,
                              QuantumModel, TketModel, Trainer, PytorchTrainer,
-                             QuantumTrainer)
+                             QuantumTrainer, BinaryCrossEntropyLoss,
+                             CrossEntropyLoss, LossFunction, MSELoss)
 from lambeq.version import (version as __version__,
                             version_tuple as __version_info__)
