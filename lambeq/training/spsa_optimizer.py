@@ -123,30 +123,39 @@ class SPSAOptimizer(Optimizer):
         """
         diagrams, targets = batch
         diags_gen = flatten(diagrams)
-        relevant_params = set.union(*[diag.free_symbols for diag in diags_gen])
+
         # the symbolic parameters
         parameters = self.model.symbols
         x = self.model.weights
+
+        relevant_params = set.union(*[diag.free_symbols for diag in diags_gen])
+        mask = np.array([1 if sym in relevant_params else 0
+                         for sym in parameters])
+
         # the perturbations
         delta = np.random.choice([-1, 1], size=len(x))
-        mask = [0 if sym in relevant_params else 1 for sym in parameters]
-        delta = np.ma.masked_array(delta, mask=mask)
+
         # calculate gradient
         xplus = self.project(x + self.ck * delta)
         self.model.weights = xplus
         y0 = self.model(diagrams)
         loss0 = self.loss_fn(y0, targets)
+
         xminus = self.project(x - self.ck * delta)
         self.model.weights = xminus
         y1 = self.model(diagrams)
         loss1 = self.loss_fn(y1, targets)
+
         if self.bounds is None:
             grad = (loss0 - loss1) / (2 * self.ck * delta)
         else:
             grad = (loss0 - loss1) / (xplus - xminus)
-        self.gradient += np.ma.filled(grad, fill_value=0)
+
+        self.gradient += grad * mask
+
         # restore parameter value
         self.model.weights = x
+
         loss = (loss0 + loss1) / 2
         return loss
 
