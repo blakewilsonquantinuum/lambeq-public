@@ -34,9 +34,9 @@ author = 'Cambridge Quantum QNLP Dev Team'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'm2r2',
     'nbsphinx',
     'numpydoc',
+    'sphinx_mdinclude',
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.graphviz',
