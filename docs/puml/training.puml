@@ -82,6 +82,23 @@ class SPSAOptimizer {
     bounds
 }
 
+class BinaryCrossEntropyLoss {
+  calculate_loss()
+}
+
+class CrossEntropyLoss {
+  calculate_loss()
+}
+
+class LossFunction {
+  backend : module
+  {abstract}calculate_loss()
+}
+
+class MSELoss {
+  calculate_loss()
+}
+
 Model <|-- PytorchModel
 PytorchModel <|-- PennyLaneModel
 Model <|-- QuantumModel
@@ -109,5 +126,10 @@ PennyLaneModel -- PytorchTrainer: usedWith
 PytorchModel -- PytorchTrainer: usedWith
 NumpyModel -- QuantumTrainer: usedWith
 TketModel -- QuantumTrainer: usedWith
+QuantumModel -- LossFunction: uses
+
+CrossEntropyLoss <|-- BinaryCrossEntropyLoss
+LossFunction <|-- CrossEntropyLoss
+LossFunction <|-- MSELoss
 
 @enduml

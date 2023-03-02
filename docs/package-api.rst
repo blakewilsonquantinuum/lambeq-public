@@ -166,8 +166,12 @@ Provides a selection of :term:`trainers <trainer>`, :term:`models <model>`, and 
 .. rubric:: Classes
 
 .. inheritance-diagram::
+    lambeq.training.BinaryCrossEntropyLoss
     lambeq.training.Checkpoint
+    lambeq.training.CrossEntropyLoss
     lambeq.training.Dataset
+    lambeq.training.MSELoss
+    lambeq.training.LossFunction
     lambeq.training.NumpyModel
     lambeq.training.PytorchModel
     lambeq.training.PytorchTrainer

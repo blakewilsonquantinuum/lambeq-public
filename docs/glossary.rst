@@ -59,6 +59,9 @@ Glossary
     IQP circuit
         Instantaneous Quantum Polynomial. A circuit which interleaves layers of Hadamard :term:`quantum gates <quantum gate>` with diagonal unitaries.
 
+    loss function
+        In machine learning, a function that estimates how far the prediction of a :term:`model` is from its true value. The purpose of training is to minimise the loss over the training set.
+
     matrix product state (MPS)
         A factorization of a large tensor into a chain-like product of smaller tensors. ``lambeq`` is equipped with :term:`ansätze <ansatz (plural: ansätze)>` that implement various forms of matrix product states, allowing the execution of large :term:`tensor networks <tensor network>` on classical hardware.
 
