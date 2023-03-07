@@ -20,6 +20,7 @@ Module implementing a basic lambeq model based on a Pytorch backend.
 """
 from __future__ import annotations
 
+from math import sqrt
 import pickle
 
 from discopy import Tensor
@@ -63,9 +64,9 @@ class PytorchModel(Model, torch.nn.Module):
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`PytorchModel.from_diagrams()`.')
-        self.weights = torch.nn.ParameterList(
-            [torch.nn.init.xavier_uniform_(torch.empty(w.size, 1)).squeeze(1)
-             for w in self.symbols])
+        self.weights = torch.nn.ParameterList([
+            (2 * torch.rand(w.size) - 1) * sqrt(3 / w.directed_cod)
+            for w in self.symbols])
 
     def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
         """Load the model weights and symbols from a lambeq
