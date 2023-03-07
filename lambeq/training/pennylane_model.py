@@ -32,17 +32,7 @@ from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.model import Model
 
 if TYPE_CHECKING:
-    import pennylane as qml
     from discopy.quantum.pennylane import PennyLaneCircuit
-
-
-def _import_pennylane() -> None:
-    global qml
-    import pennylane as qml
-
-
-STATE_BACKENDS = ['default.qubit', 'lightning.qubit', 'qiskit.aer']
-STATE_DEVICES = ['aer_simulator_statevector', 'statevector_simulator']
 
 
 class PennyLaneModel(Model, torch.nn.Module):
@@ -55,7 +45,11 @@ class PennyLaneModel(Model, torch.nn.Module):
     weights: torch.nn.ParameterList  # type: ignore[assignment]
     symbols: list[Symbol]
 
-    def __init__(self, backend_config: dict[str, Any] | None = None) -> None:
+    def __init__(self,
+                 probabilities: bool = True,
+                 normalize: bool = True,
+                 diff_method: str = 'best',
+                 backend_config: dict[str, Any] | None = None) -> None:
         """Initialise a :py:class:`PennyLaneModel` instance with
         an empty `circuit_map` dictionary.
 
@@ -73,42 +67,11 @@ class PennyLaneModel(Model, torch.nn.Module):
         """
         Model.__init__(self)
         torch.nn.Module.__init__(self)
-        _import_pennylane()
         self.circuit_map: dict[Circuit, PennyLaneCircuit] = {}
-
-        if backend_config is None:
-            backend_config = {'backend': 'default.qubit'}
-
-        backend_config = {'probabilities': True,
-                          'normalize': True,
-                          **backend_config}
-
-        self._backend = backend_config.pop('backend')
-
-        if self._backend == 'honeywell.hqs':
-            try:
-                backend_config['machine'] = backend_config.pop('device')
-            except KeyError as e:
-                raise ValueError(
-                    'When using the provider `honeywell.hqs` a device must be '
-                    'specified.'
-                ) from e
-        elif 'device' in backend_config:
-            backend_config['backend'] = backend_config.pop('device')
-
-        self._probabilities = backend_config.pop('probabilities')
-        self._normalize = backend_config.pop('normalize')
+        self._probabilities = probabilities
+        self._normalize = normalize
+        self._diff_method = diff_method
         self._backend_config = backend_config
-
-        if not self._probabilities:
-            if self._backend not in STATE_BACKENDS:
-                raise ValueError(f'The {self._backend} backend is not '
-                                 'compatible with state outputs.')
-            elif ('backend' in self._backend_config
-                  and self._backend_config['backend'] not in STATE_DEVICES):
-                raise ValueError(f'The {self._backend_config["backend"]} '
-                                 'device is not compatible with state '
-                                 'outputs.')
 
     def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
         """Load the model weights and symbols from a lambeq
@@ -125,15 +88,13 @@ class PennyLaneModel(Model, torch.nn.Module):
         self.weights = checkpoint['model_weights']
         self._probabilities = checkpoint['model_probabilities']
         self._normalize = checkpoint['model_normalize']
-        self._backend = checkpoint['model_backend']
+        self._diff_method = checkpoint['model_diff_method']
         self._backend_config = checkpoint['model_backend_config']
         self.circuit_map = checkpoint['model_circuits']
         self.load_state_dict(checkpoint['model_state_dict'])
 
         for p_circ in self.circuit_map.values():
-            p_circ.device = qml.device(self._backend,
-                                       wires=p_circ.n_qubits,
-                                       **self._backend_config)
+            p_circ.initialise_device_and_circuit()
 
     def _make_checkpoint(self) -> Checkpoint:
         """Create checkpoint that contains the model weights and symbols.
@@ -149,13 +110,14 @@ class PennyLaneModel(Model, torch.nn.Module):
         checkpoint = Checkpoint()
         circuit_map = {k: copy.copy(v) for k, v in self.circuit_map.items()}
         for c in circuit_map.values():
-            c.device = None
+            c._device = None
+            c._circuit = None
 
         checkpoint.add_many({'model_weights': self.weights,
                              'model_symbols': self.symbols,
                              'model_probabilities': self._probabilities,
                              'model_normalize': self._normalize,
-                             'model_backend': self._backend,
+                             'model_diff_method': self._diff_method,
                              'model_backend_config': self._backend_config,
                              'model_circuits': circuit_map,
                              'model_state_dict': self.state_dict()})
@@ -183,8 +145,13 @@ class PennyLaneModel(Model, torch.nn.Module):
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`PennyLaneModel.from_diagrams()`.')
-        self.weights = torch.nn.ParameterList([torch.rand((1,))
-                                               for _ in self.symbols])
+        self.weights = torch.nn.ParameterList(
+            [torch.nn.Parameter(torch.rand(1).squeeze())
+             for _ in self.symbols]
+        )
+
+        for p_circ in self.circuit_map.values():
+            p_circ.initialise_concrete_params(self.symbols, self.weights)
 
     def get_diagram_output(self, diagrams: list[Diagram]) -> torch.Tensor:
         """Evaluate outputs of circuits using PennyLane.
@@ -206,7 +173,7 @@ class PennyLaneModel(Model, torch.nn.Module):
             Resulting tensor.
 
         """
-        circuit_evals = [self.circuit_map[d].eval(self.symbols, self.weights)
+        circuit_evals = [self.circuit_map[d].eval()
                          for d in diagrams]
         if self._normalize:
             if self._probabilities:
@@ -215,7 +182,9 @@ class PennyLaneModel(Model, torch.nn.Module):
                 circuit_evals = [c / torch.sum(torch.square(torch.abs(c)))
                                  for c in circuit_evals]
 
-        stacked = torch.stack(circuit_evals).squeeze(-1)
+        stacked = torch.stack(circuit_evals)
+        stacked = stacked.squeeze(-1)
+
         if self._probabilities:
             return stacked.to(self.weights[0].dtype)
         else:
@@ -244,6 +213,9 @@ class PennyLaneModel(Model, torch.nn.Module):
     @classmethod
     def from_diagrams(cls,
                       diagrams: list[Diagram],
+                      probabilities: bool = True,
+                      normalize: bool = True,
+                      diff_method: str = 'best',
                       backend_config: dict[str, Any] | None = None,
                       **kwargs: Any) -> PennyLaneModel:
         """Build model from a list of
@@ -265,16 +237,17 @@ class PennyLaneModel(Model, torch.nn.Module):
             raise ValueError('All diagrams must be of type'
                              '`discopy.quantum.Circuit`.')
 
-        model = cls(backend_config=backend_config, **kwargs)
+        model = cls(probabilities=probabilities, normalize=normalize,
+                    diff_method=diff_method, backend_config=backend_config,
+                    **kwargs)
 
         model.symbols = sorted(
             {sym for circ in diagrams for sym in circ.free_symbols},
             key=default_sort_key)
         for circ in diagrams:
-            p_circ = circ.to_pennylane(probabilities=model._probabilities)
-            p_circ.device = qml.device(model._backend,
-                                       wires=p_circ.n_qubits,
-                                       **model._backend_config)
+            p_circ = circ.to_pennylane(probabilities=model._probabilities,
+                                       diff_method=model._diff_method,
+                                       backend_config=model._backend_config)
 
             model.circuit_map[circ] = p_circ
 

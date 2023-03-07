@@ -64,16 +64,16 @@ def test_normalize():
 
     for i in range(len(diagrams)):
         for b in [True, False]:
-            backend_config = {'backend': 'default.qubit',
-                              'probabilities': b,
-                              'normalize': False}
-            instance = PennyLaneModel.from_diagrams(diagrams, backend_config)
+            backend_config = {'backend': 'default.qubit'}
+            instance = PennyLaneModel.from_diagrams(diagrams, probabilities=b,
+                                                    normalize=False,
+                                                    backend_config=backend_config)
             instance.initialise_weights()
 
             p_pred = instance.forward(diagrams)[i]
             d = (diagrams[i] >> Measure()) if b else diagrams[i]
             d_pred = (d.lambdify(*instance.symbols)
-                    (*[x.item() for x in instance.weights]).eval().array)
+                     (*[x.item() for x in instance.weights]).eval().array)
 
             assert np.allclose(p_pred.detach().numpy(), d_pred, atol=1e-5)
 
@@ -118,14 +118,7 @@ def test_checkpoint_loading():
     model = PennyLaneModel.from_diagrams([diagram])
     model.initialise_weights()
 
-    checkpoint = {'model_weights': model.weights,
-                  'model_symbols': model.symbols,
-                  'model_probabilities': model._probabilities,
-                  'model_normalize': model._normalize,
-                  'model_backend': model._backend,
-                  'model_backend_config': model._backend_config,
-                  'model_circuits': model.circuit_map,
-                  'model_state_dict': model.state_dict()}
+    checkpoint = model._make_checkpoint()
     with patch('lambeq.training.checkpoint.open', mock_open(read_data=pickle.dumps(checkpoint))) as m, \
             patch('lambeq.training.checkpoint.os.path.exists', lambda x: True) as p:
         model_new = PennyLaneModel.from_checkpoint('model.lt')
@@ -215,12 +208,6 @@ def test_backends():
                       >> Cup(N, N.r) @ Id(S)))
     diagrams = [diagram]
 
-    model = PennyLaneModel.from_diagrams(diagrams)
-    assert model._backend == 'default.qubit'
-    assert model._probabilities
-    assert model._normalize
-    assert model._backend_config == {}
-
     from qiskit.providers.aer.noise import NoiseModel
 
     noise_model = NoiseModel()
@@ -229,22 +216,16 @@ def test_backends():
                       'shots': 2048}
     model = PennyLaneModel.from_diagrams(diagrams,
                                          backend_config=backend_config)
-    assert model._backend == 'qiskit.aer'
-    assert model._backend_config == {'noise_model': noise_model,
-                                      'shots': 2048}
+    assert model._backend_config == {'backend': 'qiskit.aer',
+                                     'noise_model': noise_model,
+                                     'shots': 2048}
 
     backend_config = {'backend': 'qiskit.ibmq',
-                       'device': 'ibmq_manila'}
+                      'device': 'ibmq_manila'}
     with pytest.raises(IBMQAccountError):
-        _ = PennyLaneModel.from_diagrams(diagrams,
-                                            backend_config=backend_config)
-
-    backend_config = {'backend': 'honeywell.hqs',
-                      'device': 'H1-1E'}
-    model = PennyLaneModel.from_diagrams(diagrams,
+        m = PennyLaneModel.from_diagrams(diagrams,
                                          backend_config=backend_config)
-    assert model._backend == 'honeywell.hqs'
-    assert model._backend_config == {'machine': 'H1-1E'}
+
 
     backend_config = {'backend': 'honeywell.hqs'}
     with pytest.raises(ValueError):
@@ -252,7 +233,7 @@ def test_backends():
                                          backend_config=backend_config)
 
 
-def test_initialization_error():
+def test_initialisation_error():
     N = AtomicType.NOUN
     S = AtomicType.SENTENCE
     ansatz = IQPAnsatz({AtomicType.NOUN: 1, AtomicType.SENTENCE: 1},
@@ -266,15 +247,15 @@ def test_initialization_error():
         _ = PennyLaneModel.from_diagrams(diagrams,
                                          backend_config=backend_config)
 
-    backend_config = {'backend': 'qiskit.ibmq',
-                      'probabilities': False}
+    backend_config = {'backend': 'qiskit.ibmq'}
     with pytest.raises(ValueError):
         _ = PennyLaneModel.from_diagrams(diagrams,
+                                         probabilities=False,
                                          backend_config=backend_config)
 
     backend_config = {'backend': 'qiskit.aer',
-                      'device': 'aer_simulator',
-                      'probabilities': False}
+                      'device': 'aer_simulator'}
     with pytest.raises(ValueError):
         _ = PennyLaneModel.from_diagrams(diagrams,
+                                         probabilities=False,
                                          backend_config=backend_config)
