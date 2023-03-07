@@ -84,7 +84,7 @@ Glossary
         A statistical tool that converts a sentence into a hierarchical representation that reflects the syntactic relationships between the words (a :term:`syntax tree`) based on a specific grammar formalism.
 
     PennyLane
-        A Python library for differentiable programming of quantum computers, developed by Xanadu, enabling quantum machine learning.
+        A Python library for differentiable programming of quantum computers, developed by Xanadu, enabling quantum machine learning. See more `here <https://pennylane.ai/qml/>`_.
 
     post-selection
         The act of conditioning the probability space on a particular event. In practice, this involves disregarding measurement outcomes where a particular qubit does not match the post-selected value.
