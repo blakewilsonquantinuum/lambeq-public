@@ -18,7 +18,7 @@ Added:
 Changed:
 
 - Improve tensor initialisation in the :py:class:`~lambeq.PytorchModel`. This enables the training of larger models as all parameters are initialised such that the expected L2 norm of all output vectors is approximately 1. We use a symmetric uniform distribution where the range depends on the output dimension (flow) of each box.
-- Improve the fail-safety of the py:class:`~lambeq.BobcatParser` model download method by adding hash checks and atomic transactions.
+- Improve the fail-safety of the :py:class:`~lambeq.BobcatParser` model download method by adding hash checks and atomic transactions.
 - Use type union expression ``|`` instead of ``Union`` in type hints.
 - Use ``raise from`` syntax for better exception handling.
 - Update the requirements for the documentation.
