@@ -64,9 +64,18 @@ class PytorchModel(Model, torch.nn.Module):
         if not self.symbols:
             raise ValueError('Symbols not initialised. Instantiate through '
                              '`PytorchModel.from_diagrams()`.')
+
+        def mean(size: int) -> float:
+            if size < 6:
+                correction_factor = [float('nan'), 3, 2.6, 2, 1.6, 1.3][size]
+            else:
+                correction_factor = 1 / (0.16 * size - 0.04)
+            return sqrt(size/3 - 1/(15 - correction_factor))
+
         self.weights = torch.nn.ParameterList([
-            (2 * torch.rand(w.size) - 1) * sqrt(3 / w.directed_cod)
-            for w in self.symbols])
+            (2 * torch.rand(w.size) - 1) / mean(w.directed_cod)
+            for w in self.symbols
+        ])
 
     def _load_checkpoint(self, checkpoint: Checkpoint) -> None:
         """Load the model weights and symbols from a lambeq
