@@ -23,7 +23,7 @@ from typing import Any
 from discopy.grammar.categorial import Box, Diagram, Id, Ty
 from discopy.utils import BinaryBoxConstructor
 
-from lambeq.text2diagram.ccg_type import CCGType, replace_cat_result
+from lambeq.text2diagram.ccg_type import CCGType
 
 
 class CCGRuleUseError(Exception):
@@ -38,42 +38,32 @@ class CCGRuleUseError(Exception):
 
 class GBC(BinaryBoxConstructor, Box):
     """Generalized Backward Composition box."""
-    def __init__(self, left: Ty, right: Ty) -> None:
+    def __init__(self, left: Ty, right: Ty, cod: Ty) -> None:
         dom = left @ right
-        cod, old = replace_cat_result(left, right.left, right.right, '>')
-        CCGRule.GENERALIZED_BACKWARD_COMPOSITION.check_match(old, right.left)
         Box.__init__(self, f'GBC({left}, {right})', dom, cod)
         BinaryBoxConstructor.__init__(self, left, right)
 
 
 class GBX(BinaryBoxConstructor, Box):
     """Generalized Backward Crossed Composition box."""
-    def __init__(self, left: Ty, right: Ty) -> None:
+    def __init__(self, left: Ty, right: Ty, cod: Ty) -> None:
         dom = left @ right
-        cod, old = replace_cat_result(left, right.left, right.right, '<|')
-        CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION.check_match(
-                old, right.left)
         Box.__init__(self, f'GBX({left}, {right})', dom, cod)
         BinaryBoxConstructor.__init__(self, left, right)
 
 
 class GFC(BinaryBoxConstructor, Box):
     """Generalized Forward Composition box."""
-    def __init__(self, left: Ty, right: Ty) -> None:
+    def __init__(self, left: Ty, right: Ty, cod: Ty) -> None:
         dom = left @ right
-        cod, old = replace_cat_result(right, left.right, left.left, '<')
-        CCGRule.GENERALIZED_FORWARD_COMPOSITION.check_match(left.right, old)
         Box.__init__(self, f'GFC({left}, {right})', dom, cod)
         BinaryBoxConstructor.__init__(self, left, right)
 
 
 class GFX(BinaryBoxConstructor, Box):
     """Generalized Forward Crossed Composition box."""
-    def __init__(self, left: Ty, right: Ty) -> None:
+    def __init__(self, left: Ty, right: Ty, cod: Ty) -> None:
         dom = left @ right
-        cod, old = replace_cat_result(right, left.right, left.left, '>|')
-        CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION.check_match(left.right,
-                                                                    old)
         Box.__init__(self, f'GFX({left}, {right})', dom, cod)
         BinaryBoxConstructor.__init__(self, left, right)
 
@@ -136,11 +126,97 @@ class CCGRule(str, Enum):
     def _missing_(cls, _: Any) -> CCGRule:
         return cls.UNKNOWN
 
-    def check_match(self, left: Ty, right: Ty) -> None:
-        """Raise an exception if `left` does not match `right`."""
+    def check_match(self, /, left: CCGType, right: CCGType) -> None:
+        """Raise an exception if the two arguments do not match."""
         if left != right:
-            raise CCGRuleUseError(
-                    self, f'mismatched composing types - {left} != {right}')
+            raise CCGRuleUseError(self,
+                                  f'mismatched types - {left} != {right}')
+
+    def resolve(self,
+                dom: Sequence[CCGType],
+                cod: CCGType) -> tuple[CCGType, ...]:
+        """Perform type resolution on this rule use.
+
+        This is used to propagate any type changes that has occured in
+        the codomain to the domain, such that applying this rule to the
+        rewritten domain produces the provided codomain, while remaining
+        as compatible as possible with the provided domain.
+
+        Parameters
+        ----------
+        dom : list of CCGType
+            The original domain of this rule use.
+        cod : CCGType
+            The required codomain of this rule use.
+
+        Returns
+        -------
+        tuple of CCGType
+            The rewritten domain.
+
+        """
+        if self == CCGRule.UNKNOWN:
+            raise CCGRuleUseError(self, 'unknown CCG rule')
+        elif self == CCGRule.LEXICAL:
+            assert not dom
+            return ()
+        elif self == CCGRule.UNARY:
+            return cod,
+        elif self in (CCGRule.BACKWARD_TYPE_RAISING,
+                      CCGRule.FORWARD_TYPE_RAISING):
+            return cod.argument.argument,
+
+        left, right = dom
+        new_left: CCGType | None
+        new_right: CCGType | None
+        if self == CCGRule.FORWARD_APPLICATION:
+            return cod << right, right
+        elif self == CCGRule.BACKWARD_APPLICATION:
+            return left, left >> cod
+        elif self == CCGRule.FORWARD_COMPOSITION:
+            self.check_match(left.right, right.left)
+            return cod.result << left.right, right.left << cod.argument
+        elif self == CCGRule.BACKWARD_COMPOSITION:
+            self.check_match(left.right, right.left)
+            return cod.argument >> left.right, right.left >> cod.result
+        elif self == CCGRule.FORWARD_CROSSED_COMPOSITION:
+            self.check_match(left.right, right.right)
+            return cod.right << left.right, cod.right >> right.right
+        elif self == CCGRule.BACKWARD_CROSSED_COMPOSITION:
+            self.check_match(left.left, right.left)
+            return left.left << cod.right, right.left >> cod.left
+        elif self == CCGRule.GENERALIZED_FORWARD_COMPOSITION:
+            ll, lr = left.left, left.right
+            new_right, new_left = cod.replace_result(ll, lr, '/')
+            assert new_left is not None
+            return new_left << left.right, new_right
+        elif self == CCGRule.GENERALIZED_BACKWARD_COMPOSITION:
+            rl, rr = right.left, right.right
+            new_left, new_right = cod.replace_result(rr, rl, '\\')
+            assert new_right is not None
+            return new_left, rl >> new_right
+        elif self == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
+            ll, lr = left.left, left.right
+            new_right, new_left = cod.replace_result(ll, lr, r'\|')
+            assert new_left is not None
+            return new_left << lr, new_right
+        elif self == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
+            rl, rr = right.left, right.right
+            new_left, new_right = cod.replace_result(rr, rl, '/|')
+            assert new_right is not None
+            return new_left, right.left >> new_right
+        elif self == CCGRule.REMOVE_PUNCTUATION_LEFT:
+            return left, cod
+        elif self == CCGRule.REMOVE_PUNCTUATION_RIGHT:
+            return cod, right
+        elif self == CCGRule.CONJUNCTION:
+            if left.is_conjoinable:
+                return cod << right, right
+            elif right.is_conjoinable:
+                return left, left >> cod
+            else:
+                raise CCGRuleUseError(self, 'no conjunction found')
+        raise AssertionError('unreachable code')
 
     def __call__(self, dom: Ty, cod: Ty) -> Diagram:
         return self.apply(dom, cod)
@@ -179,37 +255,29 @@ class CCGRule(str, Enum):
         elif self == CCGRule.BACKWARD_APPLICATION:
             return Diagram.ba(dom[:1], cod)
         elif self == CCGRule.FORWARD_COMPOSITION:
-            self.check_match(dom[0].right, dom[1].left)
             l, m, r = cod.left, dom[0].right, cod.right
             return Diagram.fc(l, m, r)
         elif self == CCGRule.BACKWARD_COMPOSITION:
-            self.check_match(dom[0].right, dom[1].left)
             l, m, r = cod.left, dom[0].right, cod.right
             return Diagram.bc(l, m, r)
         elif self == CCGRule.FORWARD_CROSSED_COMPOSITION:
-            self.check_match(dom[0].right, dom[1].right)
             l, m, r = cod.right, dom[0].right, cod.left
             return Diagram.fx(l, m, r)
         elif self == CCGRule.BACKWARD_CROSSED_COMPOSITION:
-            self.check_match(dom[0].left, dom[1].left)
             l, m, r = cod.right, dom[0].left, cod.left
             return Diagram.bx(l, m, r)
         elif self == CCGRule.GENERALIZED_FORWARD_COMPOSITION:
-            ll, lr = dom[0].left, dom[0].right
-            right, left = replace_cat_result(cod, ll, lr, '<')
-            return GFC(left << lr, right)
+            left, right = dom[:1], dom[1:]
+            return GFC(left, right, cod)
         elif self == CCGRule.GENERALIZED_BACKWARD_COMPOSITION:
-            rl, rr = dom[1].left, dom[1].right
-            left, right = replace_cat_result(cod, rr, rl, '>')
-            return GBC(left, rl >> right)
+            left, right = dom[:1], dom[1:]
+            return GBC(left, right, cod)
         elif self == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
-            ll, lr = dom[0].left, dom[0].right
-            right, left = replace_cat_result(cod, ll, lr, '>|')
-            return GFX(left << lr, right)
+            left, right = dom[:1], dom[1:]
+            return GFX(left, right, cod)
         elif self == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
-            rl, rr = dom[1].left, dom[1].right
-            left, right = replace_cat_result(cod, rr, rl, '<|')
-            return GBX(left, rl >> right)
+            left, right = dom[:1], dom[1:]
+            return GBX(left, right, cod)
         elif self == CCGRule.REMOVE_PUNCTUATION_LEFT:
             return RPL(dom[:1], cod)
         elif self == CCGRule.REMOVE_PUNCTUATION_RIGHT:

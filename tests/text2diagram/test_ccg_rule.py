@@ -216,7 +216,7 @@ class TestGeneralizedBackwardComposition(CCGRuleTester):
     tree = CCGTree(rule='GBC', biclosed_type=n >> (s >> s), children=(word, is_))
 
     biclosed_words = Box('word', i, n >> (s >> n)) @ Box('is', i, n >> s)
-    biclosed_diagram = biclosed_words >> GBC((n >> (s >> n)).discopy(), (n >> s).discopy())
+    biclosed_diagram = biclosed_words >> GBC((n >> (s >> n)).discopy(), (n >> s).discopy(), (n >> (s >> s)).discopy())
 
     words = Word('word', N >> (S >> N)) @ Word('is', N >> S)
     diagram = words >> (Id(N.r @ S.r) @ Cup(N, N.r) @ Id(S))
@@ -227,7 +227,7 @@ class TestGeneralizedBackwardCrossedComposition(CCGRuleTester):
     tree = CCGTree(rule='GBX', biclosed_type=n >> (s << n), children=(have, not_))
 
     biclosed_words = Box('have', i, n >> (s << n)) @ Box('not', i, s >> s)
-    biclosed_diagram = biclosed_words >> GBX((n >> (s << n)).discopy(), (s >> s).discopy())
+    biclosed_diagram = biclosed_words >> GBX((n >> (s << n)).discopy(), (s >> s).discopy(), (n >> (s << n)).discopy())
 
     words = Word('have', N >> S << N) @ Word('not', S >> S)
     diagram = (words >>
@@ -235,7 +235,7 @@ class TestGeneralizedBackwardCrossedComposition(CCGRuleTester):
                Id(N.r) @ Cup(S, S.r) @ Id(S << N))
 
     have_box, not_box = biclosed_words.boxes
-    planar_biclosed_diagram = have_box >> PlanarGBX((n >> (s << n)).discopy(), not_box)
+    planar_biclosed_diagram = have_box >> PlanarGBX((n >> (s << n)).discopy(), not_box, (n >> (s << n)).discopy())
 
     have_word, not_word = words.boxes
     planar_diagram = (have_word >>
@@ -248,7 +248,7 @@ class TestGeneralizedForwardComposition(CCGRuleTester):
     tree = CCGTree(rule='GFC', biclosed_type=(s << s) << n, children=(be, word))
 
     biclosed_words = Box('be', i, s << n) @ Box('word', i, (n << s) << n)
-    biclosed_diagram = biclosed_words >> GFC((s << n).discopy(), ((n << s) << n).discopy())
+    biclosed_diagram = biclosed_words >> GFC((s << n).discopy(), ((n << s) << n).discopy(), ((s << s) << n).discopy())
 
     words = Word('be', S << N) @ Word('word', (N << S) << N)
     diagram = words >> (Id(S) @ Cup(N.l, N) @ Id(S.l @ N.l))
@@ -259,7 +259,7 @@ class TestGeneralizedForwardCrossedComposition(CCGRuleTester):
     tree = CCGTree(rule='GFX', biclosed_type=(n >> s) << n, children=(do, have))
 
     biclosed_words = Box('do', i, s << s) @ Box('have', i, (n >> s) << n)
-    biclosed_diagram = biclosed_words >> GFX((s << s).discopy(), ((n >> s) << n).discopy())
+    biclosed_diagram = biclosed_words >> GFX((s << s).discopy(), ((n >> s) << n).discopy(), ((n >> s) << n).discopy())
 
     words = Word('do', S << S) @ Word('have', N >> S << N)
     diagram = (words >>
@@ -267,7 +267,7 @@ class TestGeneralizedForwardCrossedComposition(CCGRuleTester):
                Id(N >> S) @ Cup(S.l, S) @ Id(N.l))
 
     do_box, have_box = biclosed_words.boxes
-    planar_biclosed_diagram = have_box >> PlanarGFX(((n >> s) << n).discopy(), do_box)
+    planar_biclosed_diagram = have_box >> PlanarGFX(((n >> s) << n).discopy(), do_box, ((n >> s) << n).discopy())
 
     do_word, have_word = words.boxes
     planar_diagram = (have_word >>

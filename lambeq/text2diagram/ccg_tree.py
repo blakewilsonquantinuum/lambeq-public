@@ -27,7 +27,7 @@ from discopy.grammar.categorial import (Box, Diagram, Functor, Id, Ty,
                                         unaryBoxConstructor)
 
 from lambeq.text2diagram.ccg_rule import CCGRule, GBC, GBX, GFC, GFX
-from lambeq.text2diagram.ccg_type import CCGType, replace_cat_result
+from lambeq.text2diagram.ccg_type import CCGType
 
 # Types
 _JSONDictT = Dict[str, Any]
@@ -89,28 +89,22 @@ class PlanarFX(Box):
 
 
 class PlanarGBX(Box):
-    def __init__(self, dom: Ty, diagram: Diagram):
+    def __init__(self, dom: Ty, diagram: Diagram, cod: Ty):
         assert not diagram.dom
 
         right = diagram.cod
         assert right.is_under
-
-        cod, original = replace_cat_result(dom, right.left, right.right, '<|')
-        assert original == right.left
 
         self.diagram = diagram
         super().__init__(f'PlanarGBX({dom}, {diagram})', dom, cod)
 
 
 class PlanarGFX(Box):
-    def __init__(self, dom: Ty, diagram: Diagram):
+    def __init__(self, dom: Ty, diagram: Diagram, cod: Ty):
         assert not diagram.dom
 
         left = diagram.cod
         assert left.is_over
-
-        cod, original = replace_cat_result(dom, left.right, left.left, '>|')
-        assert original == left.right
 
         self.diagram = diagram
         super().__init__(f'PlanarGFX({dom}, {diagram})', dom, cod)
@@ -460,30 +454,26 @@ class CCGTree:
             else:
                 return CCGTree(self.text, biclosed_type=output)
 
-        this_layer: Diagram
+        resolved_dom: tuple[CCGType, ...]
         rule = self.rule
         if rule == CCGRule.UNARY:
             if ({output._direction, self.child.biclosed_type._direction}
                     == {'/', '\\'}):
                 this_layer = UnarySwap(output.discopy())
+                resolved_dom = (CCGType.from_discopy(this_layer.dom),)
             else:
                 return self.child._resolved(output)
         elif (rule == CCGRule.FORWARD_COMPOSITION
                 and self.left.rule == CCGRule.FORWARD_TYPE_RAISING):
-            left_ = output.left
-            right_ = output.right
-            mid_ = self.left.biclosed_type.right.left >> left_
+            left = output.left
+            right = output.right
+            mid = self.left.biclosed_type.right.left >> left
 
-            left = left_.discopy()
-            mid = mid_.discopy()
-            right = right_.discopy()
-
-            this_layer = rule.apply((left << mid) @ (mid << right),
-                                    output.discopy())
+            resolved_dom = rule.resolve((left << mid, mid << right), output)
         else:
-            child_types = [child.biclosed_type.discopy()
+            child_types = [child.biclosed_type
                            for child in self.children]
-            this_layer = rule.apply(Ty.tensor(*child_types), output.discopy())
+            resolved_dom = rule.resolve(child_types, output)
 
             if rule == CCGRule.CONJUNCTION:
                 if self.children[0].biclosed_type.is_conjoinable:
@@ -492,7 +482,7 @@ class CCGTree:
                     rule = CCGRule.BACKWARD_APPLICATION
 
         children = [
-            child._resolved(CCGType.from_discopy(this_layer.dom[i:i+1]))
+            child._resolved(resolved_dom[i])
             for i, child in enumerate(self.children)
         ]
         if children == self.children and output == self.biclosed_type:
@@ -511,9 +501,9 @@ class CCGTree:
         expected to be planar, rearranges cross-composed diagrams.
 
         """
+        biclosed_type = self.biclosed_type.discopy()
         if self.rule == CCGRule.LEXICAL:
-            return (Box(self.text, Ty(), self.biclosed_type.discopy()),
-                    Id(self.biclosed_type.discopy()))
+            return Box(self.text, Ty(), biclosed_type), Id(biclosed_type)
 
         this_layer: Diagram
         if self.rule == CCGRule.UNARY:
@@ -522,12 +512,12 @@ class CCGTree:
                                  'planar biclosed diagram since it requires a '
                                  'unary swap.')
             else:
-                this_layer = UnarySwap(self.biclosed_type.discopy())
+                this_layer = UnarySwap(biclosed_type)
         else:
             child_types = [child.biclosed_type.discopy()
                            for child in self.children]
             this_layer = self.rule.apply(Ty.tensor(*child_types),
-                                         self.biclosed_type.discopy())
+                                         biclosed_type)
 
         children = [child._to_biclosed_diagram(planar)
                     for i, child in enumerate(self.children)]
@@ -543,13 +533,15 @@ class CCGTree:
         elif planar and (self.rule
                          == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION):
             (words, left_diag), (right_words, right_diag) = children
-            diag = (left_diag
-                    >> PlanarGBX(left_diag.cod, right_words >> right_diag))
+            diag = left_diag >> PlanarGBX(left_diag.cod,
+                                          right_words >> right_diag,
+                                          biclosed_type)
         elif planar and (self.rule
                          == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION):
             (left_words, left_diag), (words, right_diag) = children
-            diag = (right_diag
-                    >> PlanarGFX(right_diag.cod, left_words >> left_diag))
+            diag = right_diag >> PlanarGFX(right_diag.cod,
+                                           left_words >> left_diag,
+                                           biclosed_type)
         else:
             words, diag = [Diagram.tensor(*d) for d in zip(*children)]
             diag >>= this_layer

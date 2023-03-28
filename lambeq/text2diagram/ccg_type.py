@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-__all__ = ['CCGParseError', 'CCGType', 'replace_cat_result']
+__all__ = ['CCGParseError', 'CCGType']
 
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -418,10 +418,84 @@ class CCGType:
                        direction: str = '|') -> tuple[CCGType, CCGType | None]:
         r"""Replace the innermost category result with a new category.
 
-        See docstring for `replace_cat_result`.
+        This performs a lenient replacement operation. This means that
+        it will attempt to replace the specified result category
+        `original` with `replacement`, but if `original` cannot be
+        found, the innermost result category will be replaced (still by
+        `replacement`). This makes it suitable for cases where type
+        resolution has occurred, so that type rewrites can propagate.
+        This method returns the new category, alongside which category
+        has been replaced.
+        `direction` can be used to specify a particular structure that
+        must be satisfied by the replacement operation. If this is not
+        satisfied, then no replacement takes place, and the returned
+        replaced result category is `None`.
 
-        Apart from changing the types of the arguments, this also
-        changes `direction` to use characters `\|/` instead of `>|<`.
+        Parameters
+        ----------
+        original : CCGType
+            The category that should be replaced.
+        replacement : CCGType
+            The replacement for the new category.
+        direction : str
+            Used to check the operations in the category. Consists of
+            either 1 or 2 characters, each being one of '/', '\', '|'.
+            If 2 characters, the first checks the innermost operation,
+            and the second checks the rest. If only 1 character, it is
+            used for all checks.
+
+        Returns
+        -------
+        CCGType
+            The new category. If replacement fails, this is set to the
+            original category.
+        CCGType or None
+            The replaced result category. If replacement fails, this is
+            set to `None`.
+
+        Notes
+        -----
+        This function is mainly used for substituting inner types in
+        generalised versions of CCG rules. (See :py:meth:`.infer_rule`)
+
+        Examples
+        --------
+        >>> a, b, c, x, y = map(CCGType, 'abcxy')
+
+        **Example 1**: ``b >> c`` in ``a >> (b >> c)`` is matched and
+        replaced with ``x``.
+
+        >>> new, replaced = (a >> (b >> c)).replace_result(b >> c, x)
+        >>> print(new, replaced)
+        (x\a) (c\b)
+
+        **Example 2**: ``x`` cannot be matched, so the innermost
+        category ``c`` is replaced instead.
+
+        >>> new, replaced = (a >> (b >> c)).replace_result(x, x << y)
+        >>> print(new, replaced)
+        (((x/y)\b)\a) c
+
+        **Example 3**: if not all operators are ``<<``, then nothing is
+        replaced.
+
+        >>> new, replaced = (a >> (c << b)).replace_result(x, y, '/')
+        >>> print(new, replaced)
+        ((c/b)\a) None
+
+        **Example 4**: the innermost use of ``<<`` is on ``c`` and
+        ``b``, so the target ``c`` is replaced with ``y``.
+
+        >>> new, replaced = (a >> (c << b)).replace_result(x, y, '/|')
+        >>> print(new, replaced)
+        ((y/b)\a) c
+
+        **Example 5**: the innermost use of ``>>`` is on ``a`` and
+        ``(c << b)``, so its target ``(c << b)`` is replaced by ``y``.
+
+        >>> new, replaced = (a >> (c << b)).replace_result(x, y, r'\|')
+        >>> print(new, replaced)
+        (y\a) (c/b)
 
         """
         if not (len(direction) in (1, 2) and set(direction).issubset(r'\|/')):
@@ -429,30 +503,29 @@ class CCGType:
         if self.is_atomic:
             return self, None
 
-        cat_dir = self.direction
-        arg, res = self.argument, self.result
-
-        # `replace` indicates whether `res` should be replaced, due to
-        # one of the following conditions being true:
-        # - `res` matches `original`
-        # - `res` is an atomic type
-        # - `cat_dir` does not match the required operation
+        # `replace` indicates whether `self.result` should be replaced,
+        # due to one of the following conditions being true:
+        # - `self.result` matches `original`
+        # - `self.result` is an atomic type
+        # - `self.direction` does not match the required operation
         # - attempting to replace any inner category fails
-        replace = res == original or res.is_atomic
+        replace = self.result == original or self.result.is_atomic
         if not replace:
-            if cat_dir != direction[-1] != '|':
+            if self.direction != direction[-1] != '|':
                 replace = True
             else:
-                new, old = res.replace_result(original, replacement, direction)
+                new, old = self.result.replace_result(original,
+                                                      replacement,
+                                                      direction)
                 if old is None:
                     replace = True  # replacing inner category failed
 
         if replace:
-            if cat_dir != direction[0] != '|':
+            if self.direction != direction[0] != '|':
                 return self, None
-            new, old = replacement, res
+            new, old = replacement, self.result
 
-        return new.slash(cat_dir, arg), old
+        return new.slash(self.direction, self.argument), old
 
 
 CCGType.NOUN = CCGType('n')
@@ -461,92 +534,3 @@ CCGType.SENTENCE = CCGType('s')
 CCGType.PREPOSITIONAL_PHRASE = CCGType('p')
 CCGType.CONJUNCTION = CCGType('conj')
 CCGType.PUNCTUATION = CCGType('punc')
-
-
-def replace_cat_result(cat: Ty,
-                       original: Ty,
-                       replacement: Ty,
-                       direction: str = '|') -> tuple[Ty, Ty | None]:
-    """Replace the innermost category result with a new category.
-
-    This attempts to replace the specified result category with a
-    replacement. If the specified category cannot be found, it replaces
-    the innermost category possible. In both cases, the replaced
-    category is returned alongside the new category.
-
-    Parameters
-    ----------
-    cat : discopy.biclosed.Ty
-        The category whose result is replaced.
-    original : discopy.biclosed.Ty
-        The category that should be replaced.
-    replacement : discopy.biclosed.Ty
-        The replacement for the new category.
-    direction : str
-        Used to check the operations in the category. Consists of either
-        1 or 2 characters, each being one of '<', '>', '|'. If 2
-        characters, the first checks the innermost operation, and the
-        second checks the rest. If only 1 character, it is used for all
-        checks.
-
-    Returns
-    -------
-    discopy.biclosed.Ty
-        The new category.
-    discopy.biclosed.Ty
-        The replaced result category.
-
-    Notes
-    -----
-    This function is mainly used for substituting inner types in
-    generalised versions of CCG rules. (See :py:meth:`.infer_rule`)
-
-    Examples
-    --------
-    >>> from discopy.grammar.categorial import Ty
-    >>> a, b, c, x, y = map(Ty, 'abcxy')
-
-    **Example 1**: ``b >> c`` in ``a >> (b >> c)`` is matched and
-    replaced with ``x``.
-
-    >>> new, replaced = replace_cat_result(a >> (b >> c), b >> c, x)
-    >>> print(new, replaced)
-    (a >> x) (b >> c)
-
-    **Example 2**: ``b >> a`` cannot be matched, so the innermost
-    category ``c`` is replaced instead.
-
-    >>> new, replaced = replace_cat_result(a >> (b >> c), b >> a, x << y)
-    >>> print(new, replaced)
-    (a >> (b >> (x << y))) c
-
-    **Example 3**: if not all operators are ``<<``, then nothing is
-    replaced.
-
-    >>> new, replaced = replace_cat_result(a >> (c << b), x, y, '<')
-    >>> print(new, replaced)
-    (a >> (c << b)) None
-
-    **Example 4**: the innermost use of ``<<`` is on ``c`` and ``b``,
-    so the target ``c`` is replaced with ``y``.
-
-    >>> new, replaced = replace_cat_result(a >> (c << b), x, y, '<|')
-    >>> print(new, replaced)
-    (a >> (y << b)) c
-
-    **Example 5**: the innermost use of ``>>`` is on ``a`` and
-    ``(c << b)``, so its target ``(c << b)`` is replaced by ``y``.
-
-    >>> new, replaced = replace_cat_result(a >> (c << b), x, y, '>|')
-    >>> print(new, replaced)
-    (a >> y) (c << b)
-
-    """
-
-    new, old = CCGType.from_discopy(cat).replace_result(
-        CCGType.from_discopy(original),
-        CCGType.from_discopy(replacement),
-        direction.replace('<', '/').replace('>', '\\')
-    )
-
-    return new.discopy(), None if old is None else old.discopy()
