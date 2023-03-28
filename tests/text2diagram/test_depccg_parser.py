@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from discopy import Word
 from discopy.rigid import Cup, Diagram, Id, Swap, Ty
 
-from lambeq import AtomicType, DepCCGParser, DepCCGParseError, VerbosityLevel
+from lambeq import AtomicType, CCGType, DepCCGParser, DepCCGParseError, VerbosityLevel
 
 
 @pytest.fixture(scope='module')
@@ -22,7 +22,7 @@ def tokenised_sentence():
 
 def test_to_biclosed(depccg_parser):
     mock_type = Mock(is_functor=False, is_NorNP=False, base='PP')
-    assert depccg_parser._to_biclosed(mock_type) == AtomicType.PREPOSITIONAL_PHRASE
+    assert depccg_parser._to_biclosed(mock_type) == CCGType.PREPOSITIONAL_PHRASE
 
     mock_type.base = 'UNK'
     with pytest.raises(Exception):

@@ -449,8 +449,7 @@ class DepCCGParser(CCGParser):
         else:
             children = [*map(DepCCGParser._build_ccgtree, tree.children)]
             if tree.op_string == 'tr':
-                rule = ('BTR' if biclosed_type.left.left == biclosed_type.right
-                        else 'FTR')
+                rule = 'FTR' if biclosed_type.direction == '/' else 'BTR'
             elif tree.op_symbol == '<un>':
                 rule = 'U'
             elif tree.op_string in ('gbx', 'gfc'):
