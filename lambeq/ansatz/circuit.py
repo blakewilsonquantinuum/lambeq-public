@@ -121,11 +121,13 @@ class CircuitAnsatz(BaseAnsatz):
 
         if cod > dom:
             circuit <<= Id(dom) @ Ket(*[0]*(cod - dom))
-        elif self.discard:
-            circuit >>= Id(cod) @ Discard(dom - cod)
-        else:
-            circuit >>= Id(cod).tensor(*[self.postselection_basis] * (dom-cod))
-            circuit >>= Id(cod) @ Bra(*[0]*(dom - cod))
+        elif cod < dom:
+            if self.discard:
+                circuit >>= Id(cod) @ Discard(dom - cod)
+            else:
+                circuit >>= Id(cod).tensor(
+                    *[self.postselection_basis] * (dom-cod))
+                circuit >>= Id(cod) @ Bra(*[0]*(dom - cod))
         return circuit
 
 
