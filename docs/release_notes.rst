@@ -29,6 +29,8 @@ Fixed:
 - Fixed bug in :py:class:`~lambeq.SPSAOptimizer` triggered by the usage of masked arrays.
 - Fixed test for :py:class:`~lambeq.NumpyModel` that was failing due to a change in the behaviour of Jax.
 - Fixed brittle quote-wrapped strings in error messages.
+- Fixed 400 response code during Bobcat model download.
+- Fixed bug where :py:class:`~lambeq.CircuitAnsatz` would add empty discards and postselections to the circuit.
 
 Removed:
 
