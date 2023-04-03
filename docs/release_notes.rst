@@ -14,6 +14,7 @@ Added:
 - Support for hybrid quantum-classical models using the :py:class:`~lambeq.PennyLaneModel`. :term:`PennyLane` is a powerful QML library that allows the development of hybrid ML models by hooking numerically determined gradients of parametrised quantum circuits (PQCs) to the autograd modules of ML libraries like PyTorch or TensorFlow.
 - Add lambeq-native loss functions :py:class:`~lambeq.LossFunction` to be used in conjunction with the :py:class:`~lambeq.QuantumTrainer`. Currently, we support the :py:class:`~lambeq.CrossEntropyLoss`, :py:class:`~lambeq.BinaryCrossEntropyLoss`, and the :py:class:`~lambeq.MSELoss` loss functions.
 - Python 3.11 support.
+- An extensive :ref:`NLP-101 tutorial <sec-nlp-intro>`, covering basic definitions, text preprocessing, tokenisation, handling of unknown words, machine learning best practices, text classification, and other concepts.
 
 Changed:
 
