@@ -35,6 +35,9 @@ MODELS_URL = 'https://qnlp.cambridgequantum.com/models'
 MODELS = {'bert'}
 VERSION_FNAME = 'version.txt'
 CHECKSUM_FNAME = 'model_checksum.sha256'
+# The server expects a user-agent header in each request, even if the
+# field is empty.
+HEADERS = {'user-agent': ''}
 
 
 class ModelDownloaderError(Exception):
@@ -146,7 +149,7 @@ class ModelDownloader:
         model_file = tempfile.NamedTemporaryFile()
 
         if verbose == VerbosityLevel.PROGRESS.value:
-            response = requests.get(download_url, stream=True)
+            response = requests.get(download_url, headers=HEADERS, stream=True)
 
             if response.status_code != 200:
                 raise ModelDownloaderError(
@@ -168,7 +171,7 @@ class ModelDownloader:
                 model_file.write(data)
 
         else:
-            response = requests.get(download_url)
+            response = requests.get(download_url, headers=HEADERS)
 
             if response.status_code != 200:
                 raise ModelDownloaderError(
@@ -217,7 +220,8 @@ class ModelDownloader:
         ver_url = self.model_url + '/' + VERSION_FNAME
 
         try:
-            remote_version: str = requests.get(ver_url).text.strip()
+            remote_version: str = requests.get(ver_url,
+                                               headers=HEADERS).text.strip()
         except Exception as e:
             raise ModelDownloaderError(
                 'Failed to retrieve remote version number from '
@@ -232,7 +236,8 @@ class ModelDownloader:
         checksum_url = self.model_url + '/' + CHECKSUM_FNAME
 
         try:
-            checksum_response: str = requests.get(checksum_url).text
+            checksum_response: str = requests.get(checksum_url,
+                                                  headers=HEADERS).text
         except Exception as e:
             raise ModelDownloaderError(
                 'Failed to retrieve remote checksum from '

@@ -19,7 +19,7 @@ def generate_mock_requests_get_fn(status_code,
                                   checksum_response=None,
                                   version_response='1.2.3'):
 
-    def mock_requests_get(url):
+    def mock_requests_get(url, *args, **kwargs):
         if 'model.tar.gz' in url:
             return MockRequestGetResponse(status_code, content=tar_response)
         if 'model_checksum' in url:
