@@ -100,7 +100,7 @@ class MSELoss {
 }
 
 Model <|-- PytorchModel
-PytorchModel <|-- PennyLaneModel
+Model <|-- PennyLaneModel
 Model <|-- QuantumModel
 QuantumModel <|-- TketModel
 QuantumModel <|-- NumpyModel
@@ -110,6 +110,7 @@ Trainer <|-- QuantumTrainer
 Optimizer <|-- SPSAOptimizer
 
 PennyLaneModel -- pennylane
+PennyLaneModel -- pytorch
 PytorchModel -- pytorch
 PytorchTrainer -- pytorch
 TketModel -- tket

@@ -177,6 +177,7 @@ Provides a selection of :term:`trainers <trainer>`, :term:`models <model>`, and 
     lambeq.training.PytorchTrainer
     lambeq.training.SPSAOptimizer
     lambeq.training.TketModel
+    lambeq.training.PennyLaneModel
     lambeq.training.QuantumModel
     lambeq.training.QuantumTrainer
    :parts: 1
