@@ -98,7 +98,7 @@ def test_tree_reader(sentence, words, parser):
     assert reader1.sentence2diagram(sentence) == mode1_expect
 
     reader2 = TreeReader(ccg_parser=parser, mode=TreeReaderMode.RULE_TYPE)
-    mode2_expect = the_words >> make_parse('FA(n << n)', 'FA((n >> s) << n)', 'BA(n >> s)')
+    mode2_expect = the_words >> make_parse('FA(n/n, n)', r'FA((s\n)/n, n)', r'BA(n, s\n)')
     assert reader2.sentence2diagram(sentence) == mode2_expect
 
     reader3 = TreeReader(ccg_parser=parser, mode=TreeReaderMode.HEIGHT)

@@ -244,12 +244,19 @@ class CCGType:
         elif self.is_atomic:
             return self.name
         else:
+            result = self.result.to_string(pretty)
+            if self.result.is_complex:
+                result = f'({result})'
+
+            argument = self.argument.to_string(pretty)
+            if self.argument.is_complex:
+                argument = f'({argument})'
+
             if self.is_over:
-                template = '({0}↢{1})' if pretty else '({0}/{1})'
+                template = '{0}↢{1}' if pretty else '{0}/{1}'
             else:
-                template = '({1}↣{0})' if pretty else r'({0}\{1})'
-            return template.format(self.result.to_string(pretty),
-                                   self.argument.to_string(pretty))
+                template = '{1}↣{0}' if pretty else r'{0}\{1}'
+            return template.format(result, argument)
 
     def __str__(self) -> str:
         return self.to_string()
@@ -467,35 +474,35 @@ class CCGType:
 
         >>> new, replaced = (a >> (b >> c)).replace_result(b >> c, x)
         >>> print(new, replaced)
-        (x\a) (c\b)
+        x\a c\b
 
         **Example 2**: ``x`` cannot be matched, so the innermost
         category ``c`` is replaced instead.
 
         >>> new, replaced = (a >> (b >> c)).replace_result(x, x << y)
         >>> print(new, replaced)
-        (((x/y)\b)\a) c
+        ((x/y)\b)\a c
 
         **Example 3**: if not all operators are ``<<``, then nothing is
         replaced.
 
         >>> new, replaced = (a >> (c << b)).replace_result(x, y, '/')
         >>> print(new, replaced)
-        ((c/b)\a) None
+        (c/b)\a None
 
         **Example 4**: the innermost use of ``<<`` is on ``c`` and
         ``b``, so the target ``c`` is replaced with ``y``.
 
         >>> new, replaced = (a >> (c << b)).replace_result(x, y, '/|')
         >>> print(new, replaced)
-        ((y/b)\a) c
+        (y/b)\a c
 
         **Example 5**: the innermost use of ``>>`` is on ``a`` and
         ``(c << b)``, so its target ``(c << b)`` is replaced by ``y``.
 
         >>> new, replaced = (a >> (c << b)).replace_result(x, y, r'\|')
         >>> print(new, replaced)
-        (y\a) (c/b)
+        y\a c/b
 
         """
         if not (len(direction) in (1, 2) and set(direction).issubset(r'\|/')):

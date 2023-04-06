@@ -168,6 +168,11 @@ class CCGTree:
         self.is_unary = len(self.children) == 1
         self.is_binary = len(self.children) == 2
 
+        if not self.children:
+            self.height = 0
+        else:
+            self.height = 1 + max(child.height for child in self.children)
+
     @property
     def text(self) -> str:
         """The word or phrase associated to the tree."""
@@ -320,8 +325,6 @@ class CCGTree:
         """Create a standard CCG diagram for the tree with the
         words arranged horizontally."""
         output_type = self.biclosed_type.to_string(not use_slashes)
-        if output_type.startswith('('):
-            output_type = output_type[1:-1]
         if self.rule == CCGRule.LEXICAL:
             width = max(len(output_type), len(self.text))
             return (f'{self.text:{" "}^{width}}\n'
