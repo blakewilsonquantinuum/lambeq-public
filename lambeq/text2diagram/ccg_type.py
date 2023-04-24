@@ -18,10 +18,10 @@ __all__ = ['CCGParseError', 'CCGType']
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import ClassVar, TYPE_CHECKING
+from typing import Any, ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from discopy.grammar.categorial import Ty
+    from discopy.grammar import pregroup
 
 
 class CCGParseError(Exception):
@@ -204,10 +204,6 @@ class CCGType:
         """Whether the CCG type can be used to conjoin words."""
         return self in (self.CONJUNCTION, self.PUNCTUATION)
 
-    @classmethod
-    def conjoinable(cls, type_: Ty) -> bool:
-        return cls.from_discopy(type_) in (cls.CONJUNCTION, cls.PUNCTUATION)
-
     def slash(self, direction: str, argument: CCGType) -> CCGType:
         """Create a complex CCG type."""
         return CCGType(result=self,
@@ -263,35 +259,7 @@ class CCGType:
 
     def __repr__(self) -> str:
         class_name = type(self).__name__
-        if self.is_atomic:
-            return f'{class_name}({self.to_string()})'
-        else:
-            return f'{class_name}{self.to_string()}'
-
-    def discopy(self) -> Ty:
-        """Turn the CCG type into a DisCoPy biclosed type."""
-        from discopy.grammar.categorial import Ty
-        if self.is_over:
-            return self.left.discopy() << self.right.discopy()
-        elif self.is_under:
-            return self.left.discopy() >> self.right.discopy()
-        elif self.is_atomic:
-            return Ty(self.name)
-        else:
-            return Ty()
-
-    @classmethod
-    def from_discopy(cls, ty) -> CCGType:
-        """Turn a DisCoPy biclosed type into a CCG type."""
-        if ty.is_over:
-            return cls.from_discopy(ty.left) << cls.from_discopy(ty.right)
-        elif ty.is_under:
-            return cls.from_discopy(ty.left) >> cls.from_discopy(ty.right)
-        else:
-            try:
-                return cls(ty[0].name)
-            except IndexError:
-                return cls()
+        return f'{class_name}({self.to_string()})'
 
     @classmethod
     def parse(cls,
@@ -533,6 +501,51 @@ class CCGType:
             new, old = replacement, self.result
 
         return new.slash(self.direction, self.argument), old
+
+    def to_discopy(self, Ty: type | None = None) -> pregroup.Ty | Any:
+        """Turn the CCG type into a DisCoPy pregroup type."""
+        if Ty is None:
+            from discopy.grammar.pregroup import Ty  # type: ignore[no-redef]
+            assert Ty is not None
+
+        if self.is_over:
+            return self.left.to_discopy(Ty) << self.right.to_discopy(Ty)
+        elif self.is_under:
+            return self.left.to_discopy(Ty) >> self.right.to_discopy(Ty)
+        elif self.is_atomic:
+            return Ty(self.name)
+        else:
+            return Ty()
+
+    def split(self, base: CCGType) -> tuple[pregroup.Ty,
+                                            pregroup.Ty,
+                                            pregroup.Ty]:
+        r"""Isolate the inner type of a CCG type, in DisCoPy.
+
+        For example, if the input is `T = (X\Y)/Z`, the DisCoPy type
+        would be `Y.r @ X @ Z.l` so:
+
+        >>> T = CCGType.parse(r'(X\Y)/Z')
+        >>> left, mid, right = T.split(CCGType('X'))
+        >>> print(left, mid, right, sep='  +  ')
+        Y.r  +  X  +  Z.l
+
+        >>> left, mid, right = T.split(CCGType.parse(r'X\Y'))
+        >>> print(left, mid, right, sep='  +  ')
+        Ty()  +  Y.r @ X  +  Z.l
+
+        """
+        from discopy.grammar.pregroup import Ty
+        cat = self
+        left = right = Ty()
+        while cat != base:
+            if cat.is_over:
+                right = cat.right.to_discopy().l @ right
+                cat = cat.left
+            else:
+                left @= cat.left.to_discopy().r
+                cat = cat.right
+        return left, cat.to_discopy(), right
 
 
 CCGType.NOUN = CCGType('n')

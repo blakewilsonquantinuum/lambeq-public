@@ -20,8 +20,7 @@ from collections.abc import Sequence
 from enum import Enum
 from typing import Any
 
-from discopy.grammar.categorial import Box, Diagram, Id, Ty
-from discopy.utils import BinaryBoxConstructor
+from discopy.grammar.pregroup import Diagram, Id
 
 from lambeq.text2diagram.ccg_type import CCGType
 
@@ -34,54 +33,6 @@ class CCGRuleUseError(Exception):
 
     def __str__(self) -> str:
         return f'Illegal use of {self.rule}: {self.message}.'
-
-
-class GBC(BinaryBoxConstructor, Box):
-    """Generalized Backward Composition box."""
-    def __init__(self, left: Ty, right: Ty, cod: Ty) -> None:
-        dom = left @ right
-        Box.__init__(self, f'GBC({left}, {right})', dom, cod)
-        BinaryBoxConstructor.__init__(self, left, right)
-
-
-class GBX(BinaryBoxConstructor, Box):
-    """Generalized Backward Crossed Composition box."""
-    def __init__(self, left: Ty, right: Ty, cod: Ty) -> None:
-        dom = left @ right
-        Box.__init__(self, f'GBX({left}, {right})', dom, cod)
-        BinaryBoxConstructor.__init__(self, left, right)
-
-
-class GFC(BinaryBoxConstructor, Box):
-    """Generalized Forward Composition box."""
-    def __init__(self, left: Ty, right: Ty, cod: Ty) -> None:
-        dom = left @ right
-        Box.__init__(self, f'GFC({left}, {right})', dom, cod)
-        BinaryBoxConstructor.__init__(self, left, right)
-
-
-class GFX(BinaryBoxConstructor, Box):
-    """Generalized Forward Crossed Composition box."""
-    def __init__(self, left: Ty, right: Ty, cod: Ty) -> None:
-        dom = left @ right
-        Box.__init__(self, f'GFX({left}, {right})', dom, cod)
-        BinaryBoxConstructor.__init__(self, left, right)
-
-
-class RPL(BinaryBoxConstructor, Box):
-    """Remove Left Punctuation box."""
-    def __init__(self, left: Ty, right: Ty) -> None:
-        dom, cod = left @ right, right
-        Box.__init__(self, f'RPL({left}, {right})', dom, cod)
-        BinaryBoxConstructor.__init__(self, left, right)
-
-
-class RPR(BinaryBoxConstructor, Box):
-    """Remove Right Punctuation box."""
-    def __init__(self, left: Ty, right: Ty) -> None:
-        dom, cod = left @ right, left
-        Box.__init__(self, f'RPR({left}, {right})', dom, cod)
-        BinaryBoxConstructor.__init__(self, left, right)
 
 
 class CCGRule(str, Enum):
@@ -218,25 +169,31 @@ class CCGRule(str, Enum):
                 raise CCGRuleUseError(self, 'no conjunction found')
         raise AssertionError('unreachable code')
 
-    def __call__(self, dom: Ty, cod: Ty) -> Diagram:
+    def __call__(self,
+                 dom: Sequence[CCGType],
+                 cod: CCGType | None = None) -> Diagram:
         return self.apply(dom, cod)
 
-    def apply(self, dom: Ty, cod: Ty) -> Diagram:
+    def apply(self,
+              dom: Sequence[CCGType],
+              cod: CCGType | None = None) -> Diagram:
         """Produce a DisCoPy diagram for this rule.
 
-        If it is not possible to produce a valid diagram with the given
-        parameters, the domain may be rewritten.
+        This is primarily used by CCG trees that have been resolved.
+        This means, for example, that diagrams cannot be produced for
+        the conjunction rule, since they are rewritten when resolved.
 
         Parameters
         ----------
-        dom : discopy.grammar.categorial.Ty
-            The expected domain of the diagram.
-        cod : discopy.grammar.categorial.Ty
-            The expected codomain of the diagram.
+        dom : list of CCGType
+            The domain of the diagram.
+        cod : CCGType, optional
+            The codomain of the diagram. This is only used for
+            type-raising rules.
 
         Returns
         -------
-        discopy.grammar.categorial.Diagram
+        discopy.pregroup.Diagram
             The resulting diagram.
 
         Raises
@@ -245,58 +202,106 @@ class CCGRule(str, Enum):
             If a diagram cannot be produced.
 
         """
-
-        if self == CCGRule.LEXICAL:
+        if self == CCGRule.UNKNOWN:
+            raise CCGRuleUseError(self, 'unknown CCG rule')
+        elif self == CCGRule.LEXICAL:
             raise CCGRuleUseError(self, 'lexical rules are not applicable')
-        elif self == CCGRule.UNARY:
-            return Id(cod)
-        elif self == CCGRule.FORWARD_APPLICATION:
-            return Diagram.fa(cod, dom[1:])
-        elif self == CCGRule.BACKWARD_APPLICATION:
-            return Diagram.ba(dom[:1], cod)
-        elif self == CCGRule.FORWARD_COMPOSITION:
-            l, m, r = cod.left, dom[0].right, cod.right
-            return Diagram.fc(l, m, r)
-        elif self == CCGRule.BACKWARD_COMPOSITION:
-            l, m, r = cod.left, dom[0].right, cod.right
-            return Diagram.bc(l, m, r)
-        elif self == CCGRule.FORWARD_CROSSED_COMPOSITION:
-            l, m, r = cod.right, dom[0].right, cod.left
-            return Diagram.fx(l, m, r)
-        elif self == CCGRule.BACKWARD_CROSSED_COMPOSITION:
-            l, m, r = cod.right, dom[0].left, cod.left
-            return Diagram.bx(l, m, r)
-        elif self == CCGRule.GENERALIZED_FORWARD_COMPOSITION:
-            left, right = dom[:1], dom[1:]
-            return GFC(left, right, cod)
-        elif self == CCGRule.GENERALIZED_BACKWARD_COMPOSITION:
-            left, right = dom[:1], dom[1:]
-            return GBC(left, right, cod)
-        elif self == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
-            left, right = dom[:1], dom[1:]
-            return GFX(left, right, cod)
-        elif self == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
-            left, right = dom[:1], dom[1:]
-            return GBX(left, right, cod)
-        elif self == CCGRule.REMOVE_PUNCTUATION_LEFT:
-            return RPL(dom[:1], cod)
-        elif self == CCGRule.REMOVE_PUNCTUATION_RIGHT:
-            return RPR(cod, dom[1:])
-        elif self == CCGRule.FORWARD_TYPE_RAISING:
-            return Diagram.curry(Diagram.ba(cod.right.left, cod.left),
-                                 left=True)
-        elif self == CCGRule.BACKWARD_TYPE_RAISING:
-            return Diagram.curry(Diagram.fa(cod.right, cod.left.right),
-                                 left=False)
         elif self == CCGRule.CONJUNCTION:
-            left, right = dom[:1], dom[1:]
-            if CCGType.conjoinable(left):
-                return Diagram.fa(cod, right)
-            elif CCGType.conjoinable(right):
-                return Diagram.ba(left, cod)
+            raise CCGRuleUseError(
+                self, 'conjunctions should be resolved before drawing'
+            )
+
+        # unary rules
+        elif self in (CCGRule.UNARY,
+                      CCGRule.BACKWARD_TYPE_RAISING,
+                      CCGRule.FORWARD_TYPE_RAISING):
+            if len(dom) != 1:
+                raise CCGRuleUseError(
+                    self, f'expected a domain of length 1, got {len(dom)}'
+                )
+
+            if self == CCGRule.UNARY:
+                return Id(dom[0].to_discopy())
+
+            # else type-raising rule
+            if cod is None:
+                raise CCGRuleUseError(
+                    self,
+                    'The codomain is required for type-raising rules.'
+                )
+
+            result = cod.result.to_discopy()
+            if self == CCGRule.BACKWARD_TYPE_RAISING:
+                return Id(dom[0].to_discopy()) @ Diagram.caps(result.r, result)
             else:
-                raise CCGRuleUseError(self, 'no conjunction found')
-        raise CCGRuleUseError(self, 'unknown CCG rule')
+                return Diagram.caps(result, result.l) @ Id(dom[0].to_discopy())
+
+        # binary rules
+        if len(dom) != 2:
+            raise CCGRuleUseError(
+                self, f'expected a domain of length 2, got {len(dom)}'
+            )
+        left, right = dom
+        if self == CCGRule.FORWARD_APPLICATION:
+            # X/Y + Y -> X
+            return Diagram.fa(left.result.to_discopy(), right.to_discopy())
+        elif self == CCGRule.BACKWARD_APPLICATION:
+            # Y + X\Y -> X
+            return Diagram.ba(left.to_discopy(), right.result.to_discopy())
+        elif self == CCGRule.FORWARD_COMPOSITION:
+            # X/Y + Y/Z -> X/Z
+            return Diagram.fc(left.left.to_discopy(),
+                              left.right.to_discopy(),
+                              right.right.to_discopy())
+        elif self == CCGRule.BACKWARD_COMPOSITION:
+            # Z\Y + X\Y -> X\Z
+            return Diagram.bc(left.left.to_discopy(),
+                              left.right.to_discopy(),
+                              right.right.to_discopy())
+        elif self == CCGRule.FORWARD_CROSSED_COMPOSITION:
+            # X/Y + Y\Z -> X\Z
+            return Diagram.fx(left.left.to_discopy(),
+                              left.right.to_discopy(),
+                              right.left.to_discopy())
+        elif self == CCGRule.BACKWARD_CROSSED_COMPOSITION:
+            # Y/Z + X\Y -> X/Z
+            return Diagram.bx(left.right.to_discopy(),
+                              left.left.to_discopy(),
+                              right.left.to_discopy())
+        elif self == CCGRule.GENERALIZED_FORWARD_COMPOSITION:
+            # X/Y + (Y/Z)/... -> (X/Z)/...
+            mid = left.argument.to_discopy()
+            return (Id(left.result.to_discopy())
+                    @ Diagram.cups(mid.l, mid)
+                    @ Id(right.to_discopy()[len(mid):]))
+        elif self == CCGRule.GENERALIZED_BACKWARD_COMPOSITION:
+            # (Y\Z)\... + X\Y -> (X\Z)\...
+            mid = right.argument.to_discopy()
+            return (Id(left.to_discopy()[:-len(mid)])
+                    @ Diagram.cups(mid, mid.r)
+                    @ Id(right.result.to_discopy()))
+        elif self == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
+            # X/Y + (Y\Z)|... -> (X\Z)|...
+            mid = left.left.to_discopy()
+            l, join, r = right.split(left.right)
+            return (
+                Diagram.swap(mid << join, l) @ Id(join)
+                >> Id(l @ mid) @ Diagram.cups(join.l, join)
+            ) @ Id(r)
+        elif self == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
+            # (Y/Z)|... + X\Y -> (X/Z)|...
+            mid = right.right.to_discopy()
+            l, join, r = left.split(right.left)
+            return Id(l) @ (
+                Id(join) @ Diagram.swap(r, join >> mid)
+                >> Diagram.cups(join, join.r) @ Id(mid @ r)
+            )
+        elif self == CCGRule.REMOVE_PUNCTUATION_LEFT:
+            # punc + X -> X
+            return Id(right.to_discopy())
+        elif self == CCGRule.REMOVE_PUNCTUATION_RIGHT:
+            # X + punc -> X
+            return Id(left.to_discopy())
 
     @classmethod
     def infer_rule(cls, dom: Sequence[CCGType], cod: CCGType) -> CCGRule:
@@ -306,7 +311,7 @@ class CCGRule(str, Enum):
 
         Parameters
         ----------
-        dom : CCGType
+        dom : list of CCGType
             The domain of the rule.
         cod : CCGType
             The codomain of the rule.
