@@ -208,9 +208,12 @@ class Ty(Entity):
             return NotImplemented
         return self.r @ rhs
 
-    def __pow__(self, z: int) -> Self:
-        assert z >= 0
-        return self.tensor(*[self] * (z-1))
+    def repeat(self, times: int) -> Self:
+        assert times >= 0
+        return type(self)().tensor(*[self] * times)
+
+    def __pow__(self, times: int) -> Self:
+        return self.repeat(times)
 
 
 @grammar

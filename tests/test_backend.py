@@ -21,7 +21,10 @@ def test_Ty():
     assert a.wind(42).unwind() == a
     assert a << b == a @ b.l
     assert a >> b == a.r @ b
+    assert a**0 == Ty()
+    assert a**1 == a
     assert a**2 == a @ a
+    assert a**3 == a @ a @ a
 
     with raises(TypeError):
         a @ 'b'
