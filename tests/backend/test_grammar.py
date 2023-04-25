@@ -8,7 +8,6 @@ def test_Ty():
     ab = a @ b
 
     assert a.r.l == a == a.l.r
-    assert a.is_adjoint(a.r) and a.r.is_adjoint(a)
     assert a.is_atomic and b.is_atomic
     assert ab.is_complex
     assert c.is_empty
@@ -97,6 +96,25 @@ def test_pregroup():
     assert sentence.is_pregroup()
     assert not diagram.is_pregroup()
 
+def test_Cap():
+    a, b = map(Ty, 'ab')
+    ab = a @ b
+
+    # Errors when instantiating
+    with raises(ValueError):
+        Cap(ab, ab.r)
+    with raises(ValueError):
+        Cap(a, a)
+    with raises(ValueError):
+        Cap(a.l, a)
+
+    cap = Cap(a, a.l)
+    assert cap.l == Cap(a.l.l, a.l, True)
+    assert cap.r == Cap(a, a.r, True)
+    assert cap.l.r == cap == cap.r.l
+    assert cap.dagger() == Cup(a, a.l, True)
+    assert cap.dagger().dagger() == cap
+
 
 def test_Cup():
     a, b = map(Ty, 'ab')
@@ -107,24 +125,16 @@ def test_Cup():
         Cup(ab, ab.r)
     with raises(ValueError):
         Cup(a, a)
+    with raises(ValueError):
+        Cup(a.r, a)
 
     cup = Cup(a, a.r)
-    assert cup.l.r == cup
+    assert cup.l == Cup(a, a.l, True)
+    assert cup.r == Cup(a.r.r, a.r, True)
+    assert cup.l.r == cup == cup.r.l
+    assert cup.dagger() == Cap(a, a.r, True)
     assert cup.dagger().dagger() == cup
 
-def test_Cap():
-    a, b = map(Ty, 'ab')
-    ab = a @ b
-
-    # Errors when instantiating
-    with raises(ValueError):
-        Cap(ab, ab.r)
-    with raises(ValueError):
-        Cap(a, a)
-
-    cap = Cap(a, a.r)
-    assert cap.l.r == cap
-    assert cap.dagger().dagger() == cap
 
 def test_Spider():
     a, b = map(Ty, 'ab')

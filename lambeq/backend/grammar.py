@@ -23,7 +23,7 @@ BSD 3-Clause "New" or "Revised" License.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field, InitVar, replace
 from typing import Any, ClassVar, Type, TypeVar
 from typing import cast, overload, TYPE_CHECKING
 
@@ -108,9 +108,6 @@ class Ty(Entity):
         assert not (len(self.objects) > 1 and self.name is not None)
         if not self.is_atomic:
             assert self.z == 0
-
-    def is_adjoint(self, other: Ty) -> bool:
-        return self == other.l or self == other.r
 
     @property
     def is_empty(self) -> bool:
@@ -837,39 +834,54 @@ class Cap(Box):
     Parameters
     ----------
     left : Ty
-        The atomic type.
+        The type of the left output.
     right : Ty
-        Its left adjoint.
+        The type of the right output.
+    is_reversed : bool, default: False
+        Whether the cap is reversed or not. Normally, caps only allow
+        outputs where `right` is the left adjoint of `left`. However,
+        to facilitate operations like `dagger`, we pass in a flag that
+        indicates that the inputs are the opposite way round, which
+        initialises a reversed cap. Then, when a cap is adjointed, it
+        turns into a reversed cap, which can be adjointed again to turn
+        it back into a normal cap.
 
     """
     left: Ty
     right: Ty
+    is_reversed: InitVar[bool] = False
 
     name: str = field(init=False)
     dom: Ty = field(init=False)
     cod: Ty = field(init=False)
     z: int = field(init=False)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, is_reversed: bool) -> None:
         if not self.left.is_atomic or not self.right.is_atomic:
             raise ValueError('left and right need to be atomic types.')
-        if not self.left.is_adjoint(self.right):
-            raise ValueError('left and right need to be adjoints')
+
+        if is_reversed:
+            if self.left != self.right.l:
+                raise ValueError('left and right need to be adjoints')
+        else:
+            if self.left != self.right.r:
+                raise ValueError('left and right need to be adjoints')
+
         self.name = 'CAP'
         self.dom = self.category.Ty()
         self.cod = self.left @ self.right
-        self.z = 0
+        self.z = int(is_reversed)
 
     @property
     def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(self.right.l, self.left.l)
+        return type(self)(self.right.l, self.left.l, is_reversed=not self.z)
 
     @property
     def r(self) -> Self:
-        return type(self)(self.right.r, self.left.r)
+        return type(self)(self.right.r, self.left.r, is_reversed=not self.z)
 
     def dagger(self) -> Cup:
-        return Cup(self.left, self.right)
+        return Cup(self.left, self.right, is_reversed=not self.z)
 
     __repr__ = Box.__repr__
 
@@ -881,39 +893,54 @@ class Cup(Box):
     Parameters
     ----------
     left : Ty
-        The atomic type.
+        The type of the left output.
     right : Ty
-        Its left adjoint.
+        The type of the right output.
+    is_reversed : bool, default: False
+        Whether the cup is reversed or not. Normally, cups only allow
+        inputs where `right` is the right adjoint of `left`. However,
+        to facilitate operations like `dagger`, we pass in a flag that
+        indicates that the inputs are the opposite way round, which
+        initialises a reversed cup. Then, when a cup is adjointed, it
+        turns into a reversed cup, which can be adjointed again to turn
+        it back into a normal cup.
 
     """
     left: Ty
     right: Ty
+    is_reversed: InitVar[bool] = False
 
     name: str = field(init=False)
     dom: Ty = field(init=False)
     cod: Ty = field(init=False)
     z: int = field(init=False)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, is_reversed: bool) -> None:
         if not self.left.is_atomic or not self.right.is_atomic:
             raise ValueError('left and right need to be atomic types.')
-        if not self.left.is_adjoint(self.right):
-            raise ValueError('left and right need to be adjoints')
+
+        if is_reversed:
+            if self.left != self.right.r:
+                raise ValueError('left and right need to be adjoints')
+        else:
+            if self.left != self.right.l:
+                raise ValueError('left and right need to be adjoints')
+
         self.name = 'CUP'
         self.dom = self.left @ self.right
         self.cod = self.category.Ty()
-        self.z = 0
+        self.z = int(is_reversed)
 
     @property
     def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(self.right.l, self.left.l)
+        return type(self)(self.right.l, self.left.l, is_reversed=not self.z)
 
     @property
     def r(self) -> Self:
-        return type(self)(self.right.r, self.left.r)
+        return type(self)(self.right.r, self.left.r, is_reversed=not self.z)
 
     def dagger(self) -> Cap:
-        return Cap(self.left, self.right)
+        return Cap(self.left, self.right, is_reversed=not self.z)
 
     __repr__ = Box.__repr__
 
@@ -940,9 +967,6 @@ class Daggered(Box):
         self.cod = self.box.dom
         self.z = 0
 
-    def dagger(self) -> Box | Daggered:
-        return self.box
-
     @property
     def l(self) -> Self:  # noqa: E741, E743
         return type(self)(self.box.l)
@@ -950,6 +974,9 @@ class Daggered(Box):
     @property
     def r(self) -> Self:
         return type(self)(self.box.r)
+
+    def dagger(self) -> Box:
+        return self.box
 
     __repr__ = Box.__repr__
 
@@ -975,7 +1002,7 @@ class Spider(Box):
     name: str = field(init=False)
     dom: Ty = field(init=False)
     cod: Ty = field(init=False)
-    z: int = field(init=False)
+    z: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
         if not self.type.is_atomic:
@@ -983,7 +1010,6 @@ class Spider(Box):
         self.name = 'SPIDER'
         self.dom = self.type ** self.n_legs_in
         self.cod = self.type ** self.n_legs_out
-        self.z = 0
 
     @property
     def l(self) -> Self:  # noqa: E741, E743
@@ -1019,17 +1045,15 @@ class Swap(Box):
     name: str = field(init=False)
     dom: Ty = field(init=False)
     cod: Ty = field(init=False)
-    z: int = field(init=False)
+    z: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
         if not self.left.is_atomic or not self.right.is_atomic:
             raise ValueError('Types need to be atomic')
 
-        self.name = f'Swap({repr(self.left)}, {repr(self.right)})'
-        self.dom, self.cod = self.left @ self.right, self.right @ self.left
-
-    def dagger(self) -> Self:
-        return type(self)(self.right, self.left)
+        self.name = 'SWAP'
+        self.dom = self.left @ self.right
+        self.cod = self.right @ self.left
 
     @property
     def l(self) -> Self:  # noqa: E741, E743
@@ -1038,6 +1062,9 @@ class Swap(Box):
     @property
     def r(self) -> Self:
         return type(self)(self.right.r, self.left.r)
+
+    def dagger(self) -> Self:
+        return type(self)(self.right, self.left)
 
     __repr__ = Box.__repr__
 
@@ -1062,11 +1089,10 @@ class Word(Box):
     cod: Ty
 
     dom: Ty = field(init=False)
-    z: int = field(init=False)
+    z: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
         self.dom = self.category.Ty()
-        self.z = 0
 
     def __repr__(self) -> str:
         return f'Word({self.name}, {repr(self.cod), {repr(self.z)}})'
@@ -1079,7 +1105,7 @@ class Word(Box):
     def r(self) -> Self:
         return type(self)(self.name, self.cod.r)
 
-    def dagger(self) -> Daggered | Box:
+    def dagger(self) -> Daggered:
         return Daggered(self)
 
 
