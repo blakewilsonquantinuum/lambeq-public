@@ -152,10 +152,10 @@ def test_Layer():
     a, b, c, d = map(Ty, 'abcd')
     box = Box('nikhil', a, b)
 
-    layer = Layer(box, Ty(), Ty())
+    layer = Layer(box=box, left=Ty(), right=Ty())
 
     assert layer.extend() == layer
-    assert layer.extend(left=c, right=d) == Layer(box, c, d)
+    assert layer.extend(left=c, right=d) == Layer(box=box, left=c, right=d)
 
 def test_Id():
     a, b = map(Ty, 'ab')
