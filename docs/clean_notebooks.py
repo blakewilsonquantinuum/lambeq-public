@@ -1,3 +1,14 @@
+"""
+This script performs the following actions on example and
+tutorial notebooks:
+
+- Removes cell IDs
+- Keeps only `useful_metadata` for each cell
+- Renumbers code cells, ignoring hidden ones
+- Keeps only necessary notebook metadata
+- Pins nbformat version
+"""
+
 from pathlib import Path
 from itertools import chain
 import nbformat as nbf
@@ -15,6 +26,8 @@ for file in chain(nbs_path.iterdir(), tut_path.iterdir()):
 
     ntbk = nbf.read(file, nbf.NO_CONVERT)
 
+    exec_count = 0
+
     for cell in ntbk.cells:
         # Delete cell ID if it's there
         cell.pop("id", None)
@@ -24,6 +37,14 @@ for file in chain(nbs_path.iterdir(), tut_path.iterdir()):
                         for x in useful_metadata
                         if x in cell.metadata}
         cell.metadata = new_metadata
+
+        # Renumber execution counts, ignoring hidden cells
+        if cell.cell_type == "code":
+            if cell.metadata.get("nbsphinx") == "hidden":
+                cell.execution_count = None
+            else:
+                exec_count += 1
+                cell.execution_count = exec_count
 
     ntbk.metadata = {"language_info": {"name": "python"}}
 
