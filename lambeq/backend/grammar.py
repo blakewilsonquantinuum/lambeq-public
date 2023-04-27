@@ -178,25 +178,26 @@ class Ty(Entity):
     def __matmul__(self, rhs: Self) -> Self:
         return self.tensor(rhs)
 
-    def wind(self, z: int) -> Self:
+    def rotate(self, z: int) -> Self:
+        """Rotate the type, changing the winding number."""
         if self.is_empty or z == 0:
             return self
         elif self.is_atomic:
             return replace(self, z=self.z + z)
         else:
             objects = reversed(self.objects) if z % 2 == 1 else self.objects
-            return type(self)(objects=[ob.wind(z) for ob in objects])
+            return type(self)(objects=[ob.rotate(z) for ob in objects])
 
     def unwind(self) -> Self:
-        return self.wind(-self.z)
+        return self.rotate(-self.z)
 
     @property
     def l(self) -> Self:  # noqa: E741, E743
-        return self.wind(-1)
+        return self.rotate(-1)
 
     @property
     def r(self) -> Self:
-        return self.wind(1)
+        return self.rotate(1)
 
     def __lshift__(self, rhs: Self) -> Self:
         if not isinstance(rhs, type(self)):
@@ -265,22 +266,23 @@ class Box(Entity):
     def __rshift__(self, rhs: Box | Diagram) -> Diagram:
         return self.to_diagram().then(rhs.to_diagram())
 
-    def wind(self, z: int) -> Self:
+    def rotate(self, z: int) -> Self:
+        """Rotate the box, changing the winding number."""
         return replace(self,
-                       dom=self.dom.wind(z),
-                       cod=self.cod.wind(z),
+                       dom=self.dom.rotate(z),
+                       cod=self.cod.rotate(z),
                        z=self.z + z)
 
     @property
     def l(self) -> Self:  # noqa: E741, E743
-        return self.wind(-1)
+        return self.rotate(-1)
 
     @property
     def r(self) -> Self:
-        return self.wind(1)
+        return self.rotate(1)
 
     def unwind(self) -> Self:
-        return self.wind(-self.z)
+        return self.rotate(-self.z)
 
     def dagger(self) -> Daggered | Box:
         return Daggered(self)
@@ -320,6 +322,18 @@ class Layer(Entity):
         if right is None:
             right = ID
         return replace(self, left=left @ self.left, right=self.right @ right)
+
+    def rotate(self, z: int) -> Self:
+        """Rotate the layer."""
+        if z % 2 == 1:
+            left, right = self.right, self.left
+        else:
+            left, right = self.left, self.right
+
+        return replace(self,
+                       left=left.rotate(z),
+                       box=self.box.rotate(z),
+                       right=right.rotate(z))
 
 
 class InterchangerError(Exception):
@@ -524,23 +538,19 @@ class Diagram(Entity):
     def __rshift__(self, rhs: Self) -> Self:
         return self.then(rhs)
 
+    def rotate(self, z: int) -> Self:
+        """Rotate the diagram."""
+        return type(self)(dom=self.dom.rotate(z),
+                          cod=self.cod.rotate(z),
+                          layers=[layer.rotate(z) for layer in self.layers])
+
     @property
     def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(dom=self.dom.l,
-                          cod=self.cod.l,
-                          layers=[type(layer)(box=layer.box.l,
-                                              left=layer.right.l,
-                                              right=layer.left.l)
-                                  for layer in self.layers])
+        return self.rotate(-1)
 
     @property
     def r(self) -> Self:
-        return type(self)(dom=self.dom.r,
-                          cod=self.cod.r,
-                          layers=[type(layer)(box=layer.box.r,
-                                              left=layer.right.r,
-                                              right=layer.left.r)
-                                  for layer in self.layers])
+        return self.rotate(1)
 
     def dagger(self) -> Self:
         if self.is_id:
@@ -880,13 +890,16 @@ class Cap(Box):
         self.cod = self.left @ self.right
         self.z = int(is_reversed)
 
-    @property
-    def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(self.right.l, self.left.l, is_reversed=not self.z)
-
-    @property
-    def r(self) -> Self:
-        return type(self)(self.right.r, self.left.r, is_reversed=not self.z)
+    def rotate(self, z: int) -> Self:
+        """Rotate the cap."""
+        if z % 2 == 1:
+            left, right = self.right, self.left
+        else:
+            left, right = self.left, self.right
+        is_reversed = (self.z + z) % 2 == 1
+        return type(self)(left.rotate(z),
+                          right.rotate(z),
+                          is_reversed=is_reversed)
 
     def dagger(self) -> Cup:
         return Cup(self.left, self.right, is_reversed=not self.z)
@@ -940,13 +953,16 @@ class Cup(Box):
         self.cod = self.category.Ty()
         self.z = int(is_reversed)
 
-    @property
-    def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(self.right.l, self.left.l, is_reversed=not self.z)
-
-    @property
-    def r(self) -> Self:
-        return type(self)(self.right.r, self.left.r, is_reversed=not self.z)
+    def rotate(self, z: int) -> Self:
+        """Rotate the cup."""
+        if z % 2 == 1:
+            left, right = self.right, self.left
+        else:
+            left, right = self.left, self.right
+        is_reversed = (self.z + z) % 2 == 1
+        return type(self)(left.rotate(z),
+                          right.rotate(z),
+                          is_reversed=is_reversed)
 
     def dagger(self) -> Cap:
         return Cap(self.left, self.right, is_reversed=not self.z)
@@ -977,13 +993,9 @@ class Daggered(Box):
         self.cod = self.box.dom
         self.z = 0
 
-    @property
-    def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(self.box.l)
-
-    @property
-    def r(self) -> Self:
-        return type(self)(self.box.r)
+    def rotate(self, z: int) -> Self:
+        """Rotate the daggered box."""
+        return type(self)(self.box.rotate(z))
 
     def dagger(self) -> Box:
         return self.box
@@ -1022,13 +1034,9 @@ class Spider(Box):
         self.dom = self.type ** self.n_legs_in
         self.cod = self.type ** self.n_legs_out
 
-    @property
-    def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(self.type.l, len(self.dom), len(self.cod))
-
-    @property
-    def r(self) -> Self:
-        return type(self)(self.type.r, len(self.dom), len(self.cod))
+    def rotate(self, z: int) -> Self:
+        """Rotate the spider."""
+        return type(self)(self.type.rotate(z), len(self.dom), len(self.cod))
 
     def dagger(self) -> Self:
         return type(self)(self.type, self.n_legs_out, self.n_legs_in)
@@ -1067,13 +1075,13 @@ class Swap(Box):
         self.dom = self.left @ self.right
         self.cod = self.right @ self.left
 
-    @property
-    def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(self.right.l, self.left.l)
-
-    @property
-    def r(self) -> Self:
-        return type(self)(self.right.r, self.left.r)
+    def rotate(self, z: int) -> Self:
+        """Rotate the swap."""
+        if z % 2 == 1:
+            left, right = self.right, self.left
+        else:
+            left, right = self.left, self.right
+        return type(self)(left.rotate(z), right.rotate(z))
 
     def dagger(self) -> Self:
         return type(self)(self.right, self.left)
@@ -1110,13 +1118,9 @@ class Word(Box):
     def __repr__(self) -> str:
         return f'Word({self.name}, {repr(self.cod), {repr(self.z)}})'
 
-    @property
-    def l(self) -> Self:  # noqa: E741, E743
-        return type(self)(self.name, self.cod.l)
-
-    @property
-    def r(self) -> Self:
-        return type(self)(self.name, self.cod.r)
+    def rotate(self, z: int) -> Self:
+        """Rotate the Word box, changing the winding number."""
+        return type(self)(self.name, self.cod.rotate(z))
 
     def dagger(self) -> Daggered:
         return Daggered(self)

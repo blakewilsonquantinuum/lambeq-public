@@ -16,8 +16,8 @@ def test_Ty():
     assert list(ab) == [a, b]
     assert ab[0] == a and ab[1] == b and a[0] == a
     assert a @ c == a
-    assert a.wind(0) == a
-    assert a.wind(42).unwind() == a
+    assert a.rotate(0) == a
+    assert a.rotate(42).unwind() == a
     assert a << b == a @ b.l
     assert a >> b == a.r @ b
     assert a**0 == Ty()
@@ -46,8 +46,8 @@ def test_Box():
     assert A.dagger().dagger() == A
     assert A.name == 'richie' and A.dom == a and A.cod == b
     assert A.r.l == A and A.l.r == A
-    assert A.wind(42).z == 42
-    assert A.wind(42).unwind() == A
+    assert A.rotate(42).z == 42
+    assert A.rotate(42).unwind() == A
     assert A.dagger() >> Id(a)
 
 def test_Box_magics():
@@ -187,6 +187,11 @@ def test_Diagram():
     assert diagram.l.r == diagram
     assert diagram.dagger().dagger() == diagram
     assert diagram.is_pregroup() == False
+
+    assert diagram.rotate(5) == diagram.rotate(7).rotate(-2)
+    assert diagram.rotate(5).dom == diagram.dom.rotate(5)
+    assert diagram.rotate(5).cod == diagram.cod.rotate(5)
+    assert diagram.rotate(5).rotate(-5) == diagram
 
 def test_Pregroup_Diagram():
     n, s = Ty('n'), Ty('s')
