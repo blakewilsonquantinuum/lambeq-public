@@ -137,6 +137,9 @@ class Ty(Entity):
         else:
             return ' @ '.join(map(str, self.objects))
 
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
     def __len__(self) -> int:
         return 1 if self.is_atomic else len(self.objects)
 
@@ -241,6 +244,9 @@ class Box(Entity):
 
     def __str__(self) -> str:
         return f'{self.name}{".l"*(-self.z)}{".r"*self.z}'
+
+    def __hash__(self) -> int:
+        return hash(repr(self))
 
     def to_diagram(self) -> Diagram:
         ID = self.category.Ty()
@@ -823,8 +829,10 @@ class Diagram(Entity):
         for _diagram in diagram.normalize(left=left):
             yield _diagram
 
-    def draw(self, **kwargs):
-        raise NotImplementedError  # TODO in new PR
+    def draw(self, **kwargs) -> None:
+
+        from lambeq.backend.drawing import draw
+        draw(self, **kwargs)
 
 
 @dataclass
@@ -884,6 +892,7 @@ class Cap(Box):
         return Cup(self.left, self.right, is_reversed=not self.z)
 
     __repr__ = Box.__repr__
+    __hash__ = Box.__hash__
 
 
 @dataclass
@@ -943,6 +952,7 @@ class Cup(Box):
         return Cap(self.left, self.right, is_reversed=not self.z)
 
     __repr__ = Box.__repr__
+    __hash__ = Box.__hash__
 
 
 @dataclass
@@ -979,6 +989,7 @@ class Daggered(Box):
         return self.box
 
     __repr__ = Box.__repr__
+    __hash__ = Box.__hash__
 
 
 @dataclass
@@ -1023,6 +1034,7 @@ class Spider(Box):
         return type(self)(self.type, self.n_legs_out, self.n_legs_in)
 
     __repr__ = Box.__repr__
+    __hash__ = Box.__hash__
 
 
 @dataclass
@@ -1067,6 +1079,7 @@ class Swap(Box):
         return type(self)(self.right, self.left)
 
     __repr__ = Box.__repr__
+    __hash__ = Box.__hash__
 
 
 @dataclass
