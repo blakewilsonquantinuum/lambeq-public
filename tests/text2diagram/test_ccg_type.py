@@ -19,7 +19,7 @@ def test_replace_result():
 
 
 def test_replace_cat_result():
-    from discopy.biclosed import Ty
+    from discopy.grammar.categorial import Ty
     a, b, c = map(Ty, 'abc')
     with pytest.raises(ValueError):
         replace_cat_result(a >> b, b, c, direction='123')

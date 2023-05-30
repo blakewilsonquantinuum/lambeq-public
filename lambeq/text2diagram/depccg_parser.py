@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from depccg.annotator import (annotate_XX, english_annotator,
                                   japanese_annotator)
     from depccg.cat import Category
-    from discopy import Diagram
+    from discopy.pregroup import Diagram
 
 
 def _import_depccg() -> None:

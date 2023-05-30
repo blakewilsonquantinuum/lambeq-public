@@ -1,7 +1,8 @@
 import pytest
 
-from discopy import biclosed, Word
-from discopy.rigid import Cap, Cup, Diagram, Id, Swap, caps, cups
+from discopy.grammar import categorial as biclosed
+from discopy.grammar.categorial import Box
+from discopy.grammar.pregroup import Cap, Cup, Diagram, Id, Swap, Word
 
 from lambeq import AtomicType, CCGType, CCGTree, CCGRule, CCGRuleUseError
 from lambeq.text2diagram.ccg_rule import GBC, GBX, GFC, GFX, RPL, RPR
@@ -107,7 +108,7 @@ class TestBackwardTypeRaising(CCGRuleTester):
     tree = CCGTree(rule='BTR', biclosed_type=(s << n) >> s, children=(it,))
 
     biclosed_diagram = (Box('it', i, n) >>
-                        biclosed.Curry(biclosed.FA((s << n).discopy()), left=True))
+                        biclosed.Curry(biclosed.FA((s << n).discopy()), left=False))
 
     diagram = (Word('it', N) >>
                Cap(N, N.l) @ Id(N) >>
@@ -206,7 +207,7 @@ class TestForwardTypeRaising(CCGRuleTester):
     biclosed_diagram = Box('it', i, n) >> biclosed.Curry(biclosed.BA((n >> s).discopy()))
 
     diagram = (Word('it', N) >>
-               Id(N) @ caps(N >> S, (N >> S).l) >>
+               Id(N) @ Diagram.caps(N >> S, (N >> S).l) >>
                Cup(N, N.r) @ Id((S << S) @ N))
 
 
@@ -393,8 +394,8 @@ class TestUnarySwap(CCGRuleTester):
          @ Word('you', N)
          @ Word('need', (N >> N) @ N.r)
          @ Word('is love', N >> S))
-        >> Swap(S.l, S) @ Id(N @ N) @ caps(N >> N, (N >> N).l) @ Id((N >> N) @ N.r @ (N >> S))
-        >> Id((S << S) @ N) @ Cup(N, N.r) @ Id(N) @ cups((N >> N).l, N >> N) @ Id(N.r @ (N >> S))
+        >> Swap(S.l, S) @ Id(N @ N) @ Diagram.caps(N >> N, (N >> N).l) @ Id((N >> N) @ N.r @ (N >> S))
+        >> Id((S << S) @ N) @ Cup(N, N.r) @ Id(N) @ Diagram.cups((N >> N).l, N >> N) @ Id(N.r @ (N >> S))
         >> Id((S << S) @ N) @ Swap(N, N.r) @ Id(N >> S)
         >> Id(S << S) @ Cup(N, N.r) @ Cup(N, N.r) @ Id(S)
         >> Id(S) @ Cup(S.l, S)

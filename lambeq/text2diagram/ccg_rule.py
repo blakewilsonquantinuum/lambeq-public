@@ -20,8 +20,8 @@ from collections.abc import Sequence
 from enum import Enum
 from typing import Any
 
-from discopy.biclosed import Box, Diagram, Id, Ty
-from discopy.monoidal import BinaryBoxConstructor
+from discopy.grammar.categorial import Box, Diagram, Id, Ty
+from discopy.utils import BinaryBoxConstructor
 
 from lambeq.text2diagram.ccg_type import CCGType, replace_cat_result
 
@@ -150,14 +150,14 @@ class CCGRule(str, Enum):
 
         Parameters
         ----------
-        dom : discopy.biclosed.Ty
+        dom : discopy.grammar.categorial.Ty
             The expected domain of the diagram.
-        cod : discopy.biclosed.Ty
+        cod : discopy.grammar.categorial.Ty
             The expected codomain of the diagram.
 
         Returns
         -------
-        discopy.biclosed.Diagram
+        discopy.grammar.categorial.Diagram
             The resulting diagram.
 
         Raises
@@ -212,10 +212,11 @@ class CCGRule(str, Enum):
         elif self == CCGRule.REMOVE_PUNCTUATION_RIGHT:
             return RPR(cod, dom[1:])
         elif self == CCGRule.FORWARD_TYPE_RAISING:
-            return Diagram.curry(Diagram.ba(cod.right.left, cod.left))
+            return Diagram.curry(Diagram.ba(cod.right.left, cod.left),
+                                 left=True)
         elif self == CCGRule.BACKWARD_TYPE_RAISING:
             return Diagram.curry(Diagram.fa(cod.right, cod.left.right),
-                                 left=True)
+                                 left=False)
         elif self == CCGRule.CONJUNCTION:
             left, right = dom[:1], dom[1:]
             if CCGType.conjoinable(left):

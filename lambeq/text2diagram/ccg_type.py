@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from typing import ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from discopy.biclosed import Ty
+    from discopy.grammar.categorial import Ty
 
 
 class CCGParseError(Exception):
@@ -263,7 +263,7 @@ class CCGType:
 
     def discopy(self) -> Ty:
         """Turn the CCG type into a DisCoPy biclosed type."""
-        from discopy.biclosed import Ty
+        from discopy.grammar.categorial import Ty
         if self.is_over:
             return self.left.discopy() << self.right.discopy()
         elif self.is_under:
@@ -276,10 +276,9 @@ class CCGType:
     @classmethod
     def from_discopy(cls, ty) -> CCGType:
         """Turn a DisCoPy biclosed type into a CCG type."""
-        from discopy.biclosed import Over, Under
-        if isinstance(ty, Over):
+        if ty.is_over:
             return cls.from_discopy(ty.left) << cls.from_discopy(ty.right)
-        elif isinstance(ty, Under):
+        elif ty.is_under:
             return cls.from_discopy(ty.left) >> cls.from_discopy(ty.right)
         else:
             try:
@@ -504,7 +503,7 @@ def replace_cat_result(cat: Ty,
 
     Examples
     --------
-    >>> from discopy.biclosed import Ty
+    >>> from discopy.grammar.categorial import Ty
     >>> a, b, c, x, y = map(Ty, 'abcxy')
 
     **Example 1**: ``b >> c`` in ``a >> (b >> c)`` is matched and
