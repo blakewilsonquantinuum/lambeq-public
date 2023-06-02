@@ -46,6 +46,13 @@ for file in chain(nbs_path.iterdir(), tut_path.iterdir()):
                 exec_count += 1
                 cell.execution_count = exec_count
 
+            # Adjust the output execution count, if present
+            if len(cell.outputs) > 0:
+                output = cell.outputs[-1]  # execute_result must be
+                                           # the last entry
+                if output.output_type == "execute_result":
+                    output.execution_count = cell.execution_count
+
     ntbk.metadata = {"language_info": {"name": "python"}}
 
     # We need the version of nbformat to be x.4, otherwise cells IDs
