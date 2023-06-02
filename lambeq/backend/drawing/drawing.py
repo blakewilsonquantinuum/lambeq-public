@@ -31,6 +31,7 @@ from PIL import Image
 
 from lambeq.backend import grammar
 from lambeq.backend.drawing.drawable import (BoxNode, DrawableDiagram,
+                                             DrawablePregroup,
                                              WireEndpointType)
 from lambeq.backend.drawing.drawing_backend import (DEFAULT_ASPECT,
                                                     DEFAULT_MARGINS,
@@ -114,6 +115,68 @@ def draw(diagram: Diagram, **params) -> None:
     for node in drawable.boxes:
         if not drawn_as_spider(node.obj):
             backend = _draw_box(backend, drawable, node, **params)
+
+    backend.output(
+        path=params.get('path', None),
+        baseline=len(drawable.boxes) / 2 or .5,
+        tikz_options=params.get('tikz_options', None),
+        show=params.get('show', True),
+        margins=params.get('margins', DEFAULT_MARGINS),
+        aspect=params.get('aspect', DEFAULT_ASPECT))
+
+
+def draw_pregroup(diagram: Diagram, **params) -> None:
+    """
+    Draws a pregroup grammar diagram.
+    A pregroup diagram is structured as:
+        (State @ State ... State) >> (Cups and Swaps)
+
+    Parameters
+    ----------
+    diagram: Diagram
+        Diagram to draw.
+    draw_as_nodes : bool, optional
+        Whether to draw boxes as nodes, default is `False`.
+    color : string, optional
+        Color of the box or node, default is white (`'#ffffff'`) for
+        boxes and red (`'#ff0000'`) for nodes.
+    textpad : pair of floats, optional
+        Padding between text and wires, default is `(0.1, 0.1)`.
+    aspect : string, optional
+        Aspect ratio, one of `['auto', 'equal']`.
+    margins : tuple, optional
+        Margins, default is `(0.05, 0.05)`.
+    fontsize : int, optional
+        Font size for the boxes, default is `12`.
+    fontsize_types : int, optional
+        Font size for the types, default is `12`.
+    figsize : tuple, optional
+        Figure size.
+    path : str, optional
+        Where to save the image, if `None` we call `plt.show()`.
+    to_tikz : bool, optional
+        Whether to output tikz code instead of matplotlib.
+
+    """
+
+    drawable = DrawablePregroup.from_diagram(diagram)
+    drawable.scale_and_pad(params.get('scale', (1, 1)),
+                           params.get('pad', (0, 0)))
+
+    if 'backend' in params:
+        backend: DrawingBackend = params.pop('backend')
+    elif params.get('to_tikz', False):
+        backend = TikzBackend(
+            use_tikzstyles=params.get('use_tikzstyles', None))
+    else:
+        backend = MatBackend(figsize=params.get('figsize', None))
+
+    backend = _draw_wires(backend, drawable, **params)
+    backend.draw_spiders(drawable, **params)
+
+    for node in drawable.boxes:
+        if not drawn_as_spider(node.obj):
+            backend = _draw_pregroup_state(backend, node, **params)
 
     backend.output(
         path=params.get('path', None),
@@ -302,6 +365,46 @@ def _draw_box(backend: DrawingBackend,
         backend.draw_text(box.name, drawable_box.x, drawable_box.y,
                           ha='center', va='center',
                           fontsize=params.get('fontsize', None))
+
+    return backend
+
+
+def _draw_pregroup_state(backend: DrawingBackend,
+                         drawable_box: BoxNode,
+                         **params) -> DrawingBackend:
+    """
+    Draws a pregroup word state on a given backend.
+
+    Parameters
+    ----------
+    backend: DrawingBackend
+        A lambeq drawing backend.
+    drawable_box: BoxNode
+        A BoxNode to be drawn.
+    **params:
+        Additional drawing parameters. See `drawing.draw`.
+
+    Returns
+    -------
+    backend: DrawingBackend
+        Drawing backend updated with the box's graphic.
+
+    """
+
+    box = drawable_box.obj
+
+    left = drawable_box.x
+    right = left + 2
+    height = drawable_box.y - .25
+
+    points = [[left, height], [right, height],
+              [right, height + .5], [(left + right) / 2, height + 0.6],
+              [left, height + .5]]
+
+    backend.draw_polygon(*points)
+    backend.draw_text(box.name, drawable_box.x + 1, drawable_box.y,
+                      ha='center', va='center',
+                      fontsize=params.get('fontsize', None))
 
     return backend
 

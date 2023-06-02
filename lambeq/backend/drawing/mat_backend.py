@@ -29,6 +29,7 @@ from lambeq.backend.drawing.drawing_backend import (COLORS, DEFAULT_ASPECT,
                                                     DEFAULT_MARGINS,
                                                     DrawingBackend, SHAPES)
 from lambeq.backend.drawing.helpers import drawn_as_spider
+from lambeq.backend.grammar import Spider
 
 
 class MatBackend(DrawingBackend):
@@ -88,7 +89,7 @@ class MatBackend(DrawingBackend):
 
         nodes = [node for node in drawable.boxes if drawn_as_spider(node.obj)]
         for node in nodes:
-            if not node.obj.cod.is_empty and not node.obj.dom.is_empty:
+            if isinstance(node, Spider):
                 self.draw_node(*node.coordinates, **params)
             for wire in node.cod_wires:
                 self.draw_wire(node.coordinates,

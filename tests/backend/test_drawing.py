@@ -1,8 +1,8 @@
 import pytest
 
-from lambeq.backend import Ty, Box, Id, Spider, Cup, Cap
+from lambeq.backend import Ty, Box, Id, Spider, Cup, Cap, Swap
 from lambeq.backend.drawing import draw_equation
-from lambeq.backend.drawing.drawable import DrawableDiagram, BoxNode, WireEndpoint, WireEndpointType
+from lambeq.backend.drawing.drawable import DrawableDiagram, DrawablePregroup, PregroupError, BoxNode, WireEndpoint, WireEndpointType
 from lambeq.backend.drawing.tikz_backend import TikzBackend
 
 
@@ -212,7 +212,7 @@ tikz_outputs = [
 \\node [] (19) at (2.5, 1.25) {};
 \\node [] (20) at (2.5, 0) {};
 \\node [style=none, fill=white, right] (21) at (2.6, 1.15) {s.r};
-\\node [circle, fill=black, scale=0.577] (22) at (2.0, 1.5) {};
+\\node [] (22) at (2.0, 1.5) {};
 \\node [] (23) at (0.75, 0.5) {};
 \\node [] (24) at (-0.25, 2.25) {};
 \\node [] (25) at (1.25, 2.25) {};
@@ -335,7 +335,7 @@ expected_equation_tikz = """\\begin{tikzpicture}[baseline=(0.base)]
 \\node [] (19) at (2.5, 1.25) {};
 \\node [] (20) at (2.5, 0.0) {};
 \\node [style=none, fill=white, right] (21) at (2.6, 1.15) {s.r};
-\\node [circle, fill=black, scale=0.577] (22) at (2.0, 1.5) {};
+\\node [] (22) at (2.0, 1.5) {};
 \\node [] (23) at (0.75, 0.5) {};
 \\node [] (24) at (-0.25, 2.25) {};
 \\node [] (25) at (1.25, 2.25) {};
@@ -365,7 +365,7 @@ expected_equation_tikz = """\\begin{tikzpicture}[baseline=(0.base)]
 \\node [] (49) at (8.1, 0.0) {};
 \\node [style=none, fill=white, right] (50) at (8.2, 1.15) {s.r};
 \\node [] (51) at (6.1, 2.5) {};
-\\node [circle, fill=black, scale=0.351] (52) at (7.1, 1.5) {};
+\\node [] (52) at (7.1, 1.5) {};
 \\node [] (53) at (4.85, 0.25) {};
 \\node [] (54) at (6.6, 0.25) {};
 \\node [] (55) at (6.35, 0.75) {};
@@ -494,3 +494,72 @@ def test_scale_and_pad(scale, pad, expected_drawable):
         assert dd_wep.kind == dr_wep.kind
         assert dd_wep.obj == dr_wep.obj
         assert dd_wep.coordinates == pytest.approx(dr_wep.coordinates)
+
+
+state_A = Box("A", Ty(), n)
+state_B = Box("B", Ty(), n @ n.r)
+
+prgrp_diagrams = [bx_1 @ Id(s),
+                  bx_1 >> bx_1.dagger(),
+                  state_A >> Id(n),
+                  (state_A @ state_B) >> (Swap(n, n) @ Id(n.r)) >> (Id(n) @ Swap(n, n.r)),
+                  (state_A @ Cap(n.r.r, n.r)) >> (Id(n) @ Swap(n.r.r, n.r)) >> Cup(n, n.r) @ Id(n.r.r)
+                  ]
+prgrp_expected_drawables = [None,
+                            None,
+                            DrawablePregroup(boxes=[BoxNode(state_A, x=0.0, y=0.75, dom_wires=[], cod_wires=[0])],
+                                             wire_endpoints=[WireEndpoint(kind=WireEndpointType.COD, obj=n, x=1.0, y=1.0),
+                                                             WireEndpoint(kind=WireEndpointType.OUTPUT, obj=n, x=1.0, y=0.0)],
+                                             wires=[(0, 1)],
+                                             x_tracks=[0, -1]),
+                            DrawablePregroup(boxes=[BoxNode(obj=state_A, x=0.0, y=2.25, dom_wires=[], cod_wires=[0]),
+                                                    BoxNode(obj=state_B, x=2.5, y=2.25, dom_wires=[], cod_wires=[1, 2]),
+                                                    BoxNode(obj=Swap(n, n), x=2.083333333333333, y=1.5, dom_wires=[3, 4], cod_wires=[5, 6]),
+                                                    BoxNode(obj=Swap(n, n.r), x=3.5, y=0.75, dom_wires=[7, 8], cod_wires=[9, 10])],
+                                             wire_endpoints=[WireEndpoint(kind=WireEndpointType.COD, obj=n, x=1.0, y=2.5),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n, x=3.1666666666666665, y=2.5),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n.r, x=3.833333333333333, y=2.5),
+                                                             WireEndpoint(kind=WireEndpointType.DOM, obj=n, x=1.0, y=1.875),
+                                                             WireEndpoint(kind=WireEndpointType.DOM, obj=n, x=3.1666666666666665, y=1.875),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n, x=1.0, y=1.5),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n, x=3.1666666666666665, y=1.5),
+                                                             WireEndpoint(kind=WireEndpointType.DOM, obj=n, x=3.1666666666666665, y=1.125),
+                                                             WireEndpoint(kind=WireEndpointType.DOM, obj=n.r, x=3.833333333333333, y=1.125),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n.r, x=3.1666666666666665, y=0.75),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n, x=3.833333333333333, y=0.75),
+                                                             WireEndpoint(kind=WireEndpointType.OUTPUT, obj=n, x=1.0, y=0.0),
+                                                             WireEndpoint(kind=WireEndpointType.OUTPUT, obj=n.r, x=3.1666666666666665, y=0.0),
+                                                             WireEndpoint(kind=WireEndpointType.OUTPUT, obj=n, x=3.833333333333333, y=0.0)],
+                                             wires=[(0, 3), (1, 4), (6, 7), (2, 8), (5, 11), (9, 12), (10, 13)],
+                                             x_tracks=[0, 1, 2, 0, 1, 0, 1, 1, 2, 1, 2, -1, -1, -1]),
+                            DrawablePregroup(boxes=[BoxNode(obj=state_A, x=0.0, y=2.25, dom_wires=[], cod_wires=[0]),
+                                                    BoxNode(obj=Cap(n.r.r, n.r), x=3.5, y=2.25, dom_wires=[], cod_wires=[1, 2]),
+                                                    BoxNode(obj=Swap(n.r.r, n.r), x=3.5, y=1.5, dom_wires=[3, 4], cod_wires=[5, 6]),
+                                                    BoxNode(obj=Cup(n, n.r), x=2.083333333333333, y=0.75, dom_wires=[7, 8], cod_wires=[])],
+                                             wire_endpoints=[WireEndpoint(kind=WireEndpointType.COD, obj=n, x=1.0, y=2.5),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n.r.r, x=3.1666666666666665, y=2.5),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n.r, x=3.833333333333333, y=2.5),
+                                                             WireEndpoint(kind=WireEndpointType.DOM, obj=n.r.r, x=3.1666666666666665, y=1.875),
+                                                             WireEndpoint(kind=WireEndpointType.DOM, obj=n.r, x=3.833333333333333, y=1.875),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n.r, x=3.1666666666666665, y=1.5),
+                                                             WireEndpoint(kind=WireEndpointType.COD, obj=n.r.r, x=3.833333333333333, y=1.5),
+                                                             WireEndpoint(kind=WireEndpointType.DOM, obj=n, x=1.0, y=1.125),
+                                                             WireEndpoint(kind=WireEndpointType.DOM, obj=n.r, x=3.1666666666666665, y=1.125),
+                                                             WireEndpoint(kind=WireEndpointType.OUTPUT, obj=n.r.r, x=3.833333333333333, y=0.0)],
+                                             wires=[(1, 3), (2, 4), (0, 7), (5, 8), (6, 9)], x_tracks=[0, 1, 2, 1, 2, 1, 2, 0, 1, -1]),
+                            ]
+prgrp_errs = [True,
+              True,
+              False,
+              False,
+              False]
+
+@pytest.mark.parametrize('diagram, drawable, err', zip(prgrp_diagrams, prgrp_expected_drawables, prgrp_errs))
+def test_pregroup_drawable_generation(diagram, drawable, err):
+
+    if err:
+        with pytest.raises(PregroupError):
+            DrawablePregroup.from_diagram(diagram)
+    else:
+        dr_prgrp = DrawablePregroup.from_diagram(diagram)
+        assert dr_prgrp == drawable

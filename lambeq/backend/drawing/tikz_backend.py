@@ -25,6 +25,7 @@ from math import sqrt
 from lambeq.backend.drawing.drawable import DrawableDiagram
 from lambeq.backend.drawing.drawing_backend import COLORS, DrawingBackend
 from lambeq.backend.drawing.helpers import drawn_as_spider
+from lambeq.backend.grammar import Spider
 
 
 class TikzBackend(DrawingBackend):
@@ -156,7 +157,7 @@ class TikzBackend(DrawingBackend):
         spiders = [node for node in drawable.boxes
                    if drawn_as_spider(node.obj)]
         for node in spiders:
-            if not node.obj.cod.is_empty and not node.obj.dom.is_empty:
+            if isinstance(node, Spider):
                 i, j = node.coordinates
 
                 if self.use_tikzstyles:

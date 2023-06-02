@@ -36,4 +36,5 @@ def drawn_as_spider(box: grammar.Box) -> bool:
 
     return (isinstance(box, grammar.Spider)
             or isinstance(box, grammar.Cap)
-            or isinstance(box, grammar.Cup))
+            or isinstance(box, grammar.Cup)
+            or isinstance(box, grammar.Swap))

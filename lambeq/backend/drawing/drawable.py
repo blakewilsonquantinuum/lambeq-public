@@ -281,6 +281,18 @@ class DrawableDiagram:
 
         return x
 
+    def _move_to_origin(self) -> None:
+        """Set the min x and y coordinates of the diagram to 0."""
+
+        min_x = min(
+            [node.x for node in self.boxes + self.wire_endpoints])
+        min_y = min(
+            [node.y for node in self.boxes + self.wire_endpoints])
+
+        for node in self.boxes + self.wire_endpoints:
+            node.x -= min_x
+            node.y -= min_y
+
     @classmethod
     def from_diagram(cls, diagram: grammar.Diagram) -> Self:
         """
@@ -325,16 +337,7 @@ class DrawableDiagram:
             wire_end_idx = drawable._add_wire_end(wire_end)
             drawable._add_wire(scan[i], wire_end_idx)
 
-        # Set the min x and y coordinates to 0, to make scaling easier
-        # to reason about.
-        min_x = min(
-            [node.x for node in drawable.boxes + drawable.wire_endpoints])
-        min_y = min(
-            [node.y for node in drawable.boxes + drawable.wire_endpoints])
-
-        for node in drawable.boxes + drawable.wire_endpoints:
-            node.x -= min_x
-            node.y -= min_y
+        drawable._move_to_origin()
 
         return drawable
 
@@ -368,3 +371,169 @@ class DrawableDiagram:
 
             for wire_end_idx in box.cod_wires:
                 self.wire_endpoints[wire_end_idx].y = box.y - 0.25
+
+
+class PregroupError(Exception):
+    def __init__(self, diagram):
+        super().__init__(f'Diagram {diagram} is not a pregroup diagram. '
+                         'A pregroup diagram must be structured like '
+                         '(State @ State ... State) >> (Cups and Swaps)')
+
+
+@dataclass
+class DrawablePregroup(DrawableDiagram):
+    """
+    Representation of a lambeq pregroup diagram carrying all
+    information necessary to render it.
+
+    Attributes
+    ----------
+    x_tracks: list of int
+        Stores the "track" on which the corresponding `WireEndpoint` in
+        `wire_endpoints` lies. This helps determine the depth of
+        pregroup grammar boxes in the diagram.
+
+    """
+
+    x_tracks: list[int] = field(default_factory=list)
+
+    def _add_wire_end(self, wire_end: WireEndpoint, x_track=-1) -> int:
+        """Add a `WireEndpoint` to the diagram, with track information."""
+
+        self.x_tracks.append(x_track)
+        return super()._add_wire_end(wire_end)
+
+    @classmethod
+    def from_diagram(cls, diagram: grammar.Diagram) -> Self:
+        """
+        Builds a graph representation of the diagram, calculating
+        coordinates for each box and wire.
+
+        Parameters
+        ----------
+        diagram : grammar Diagram
+            A lambeq diagram.
+
+        Returns
+        -------
+        drawable : DrawableDiagram
+            Representation of diagram including all coordinates
+            necessary to draw it.
+
+        """
+
+        words = []
+
+        grammar_start_idx = len(diagram)
+
+        for i, layer in enumerate(diagram.layers):
+            if (isinstance(layer.box, grammar.Cup)
+                    or isinstance(layer.box, grammar.Swap)):
+                grammar_start_idx = i
+                break
+            if layer.right or layer.box.dom:
+                raise PregroupError(diagram)
+
+            words.append(layer.box)
+
+        HSPACE = 0.5
+        VSPACE = 0.75
+        BOX_WIDTH = 2
+
+        drawable = cls()
+        scan = []
+
+        track_ctr = 0
+
+        for i, word in enumerate(words):
+            node = BoxNode(word, (HSPACE + BOX_WIDTH) * i
+                           + (0.5 * BOX_WIDTH * isinstance(word, grammar.Cap)),
+                           0)
+            for j, ty in enumerate(word.cod):
+                wire_x = ((HSPACE + BOX_WIDTH) * i
+                          + (BOX_WIDTH / (len(word.cod) + 1)) * (j + 1))
+
+                wire_end_idx = drawable._add_wire_end(
+                    WireEndpoint(WireEndpointType.COD,
+                                 ty,
+                                 wire_x,
+                                 0.25), track_ctr)
+                node.add_cod_wire(wire_end_idx)
+                scan.append(wire_end_idx)
+
+                track_ctr += 1
+
+            drawable.boxes.append(node)
+
+        depth_map = [0.0 for _ in range(track_ctr)]
+
+        for layer in diagram.layers[grammar_start_idx:]:
+            off = len(layer.left)
+            box = layer.box
+
+            lx = drawable.wire_endpoints[scan[off]].x
+            rx = drawable.wire_endpoints[scan[off + 1]].x
+
+            l_track = drawable.x_tracks[scan[off]]
+            r_track = drawable.x_tracks[scan[off + 1]]
+
+            y = min(depth_map[l_track: r_track + 1])
+
+            l_wire_end_idx = drawable._add_wire_end(
+                WireEndpoint(WireEndpointType.DOM,
+                             box.dom[0],
+                             lx,
+                             y - VSPACE / 2), l_track)
+            r_wire_end_idx = drawable._add_wire_end(
+                WireEndpoint(WireEndpointType.DOM,
+                             box.dom[1],
+                             rx,
+                             y - VSPACE / 2), r_track)
+
+            drawable._add_wire(scan[off], l_wire_end_idx)
+            drawable._add_wire(scan[off + 1], r_wire_end_idx)
+
+            grammar_box = BoxNode(box, (lx + rx) / 2, y - VSPACE)
+            grammar_box.add_dom_wire(l_wire_end_idx)
+            grammar_box.add_dom_wire(r_wire_end_idx)
+
+            if isinstance(box, grammar.Swap):
+                l_idx = drawable._add_wire_end(
+                    WireEndpoint(WireEndpointType.COD,
+                                 box.cod[0],
+                                 lx,
+                                 y - VSPACE), l_track)
+                r_idx = drawable._add_wire_end(
+                    WireEndpoint(WireEndpointType.COD,
+                                 box.cod[1],
+                                 rx,
+                                 y - VSPACE), r_track)
+                grammar_box.add_cod_wire(l_idx)
+                grammar_box.add_cod_wire(r_idx)
+
+                scan[off] = l_idx
+                scan[off + 1] = r_idx
+            elif isinstance(box, grammar.Cup):
+                # 2 elements of the codomain are consumed.
+                scan = scan[:off] + scan[off + 2:]
+            else:
+                raise PregroupError(diagram)
+
+            drawable.boxes.append(grammar_box)
+
+            for i in range(l_track, r_track + 1):
+                depth_map[i] = y - VSPACE
+
+        min_y = min(depth_map)
+
+        for i, obj in enumerate(diagram.cod):
+            wire_end = WireEndpoint(WireEndpointType.OUTPUT,
+                                    obj,
+                                    drawable.wire_endpoints[scan[i]].x,
+                                    min_y - VSPACE)
+            wire_end_idx = drawable._add_wire_end(wire_end)
+            drawable._add_wire(scan[i], wire_end_idx)
+
+        drawable._move_to_origin()
+
+        return drawable
