@@ -26,6 +26,8 @@ def test_iqp_ansatz():
                         Id(1) @ Ket(0, 0) >> Id(1) @ H @ Id(1) >>
                         Id(2) @ H >>
                         Id(1) @ CRz(sym('runs__n.r@s_0')) >>
+                        Id(1) @ H @ Id(1) >>
+                        Id(2) @ H >>
                         CX @ Id(1) >>
                         H @ Id(2) >>
                         Id(1) @ sqrt(2) @ Id(2) >>
