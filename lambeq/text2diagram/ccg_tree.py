@@ -129,7 +129,8 @@ class CCGTree:
                  *,
                  rule: CCGRule | str = CCGRule.UNKNOWN,
                  biclosed_type: CCGType,
-                 children: Iterable[CCGTree] | None = None) -> None:
+                 children: Iterable[CCGTree] | None = None,
+                 metadata: dict[Any, Any] | None = None) -> None:
         """Initialise a CCG tree.
 
         Parameters
@@ -145,12 +146,15 @@ class CCGTree:
             A list of JSON subtrees. The types of these subtrees can be
             combined with the :py:obj:`rule` to produce the output
             :py:obj:`type`. A leaf node has an empty list of children.
+        metadata : dict, optional
+            A dictionary of miscellaneous data.
 
         """
         self._text = text
         self.rule = CCGRule(rule)
         self.biclosed_type = biclosed_type
         self.children = list(children) if children is not None else []
+        self.metadata = metadata if metadata is not None else {}
 
         n_children = len(self.children)
         child_requirements = {CCGRule.LEXICAL: 0,

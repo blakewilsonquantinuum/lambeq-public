@@ -328,13 +328,13 @@ class BobcatParser(CCGParser):
     @staticmethod
     def _build_ccgtree(tree: ParseTree) -> CCGTree:
         """Transform a Bobcat parse tree into a `CCGTree`."""
-
         children = [BobcatParser._build_ccgtree(child)
                     for child in filter(None, (tree.left, tree.right))]
         return CCGTree(text=tree.word if tree.is_leaf else None,
                        rule=CCGRule(tree.rule.name),
                        biclosed_type=BobcatParser._to_biclosed(tree.cat),
-                       children=children)
+                       children=children,
+                       metadata={'original': tree})
 
     @staticmethod
     def available_models() -> list[str]:

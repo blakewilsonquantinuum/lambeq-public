@@ -459,8 +459,8 @@ class DepCCGParser(CCGParser):
                 )
             else:
                 rule = tree.op_string.upper()
-        return CCGTree(
-                text=tree.word,
-                rule=rule,
-                biclosed_type=biclosed_type,
-                children=children)
+        return CCGTree(text=tree.word,
+                       rule=rule,
+                       biclosed_type=biclosed_type,
+                       children=children,
+                       metadata={'original': tree})

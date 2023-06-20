@@ -407,7 +407,9 @@ class CCGBankParser(CCGParser):
                 word = CCGBankParser.escaped_words[word]
             except KeyError:
                 pass
-            ccg_tree = CCGTree(text=word, biclosed_type=biclosed_type)
+            ccg_tree = CCGTree(text=word,
+                               biclosed_type=biclosed_type,
+                               metadata={'original': tree_match})
         else:
             children = []
             while not sentence[pos] == ')':
@@ -419,7 +421,8 @@ class CCGBankParser(CCGParser):
                                       biclosed_type)
             ccg_tree = CCGTree(rule=rule,
                                biclosed_type=biclosed_type,
-                               children=children)
+                               children=children,
+                               metadata={'original': tree_match})
             pos += 2
         return ccg_tree, pos
 
