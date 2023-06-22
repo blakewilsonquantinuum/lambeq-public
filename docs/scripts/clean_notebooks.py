@@ -31,6 +31,8 @@ for file in chain(nbs_path.iterdir(), tut_path.iterdir()):
     for cell in ntbk.cells:
         # Delete cell ID if it's there
         cell.pop("id", None)
+        if cell.get("attachments") == {}:
+            cell.pop("attachments", None)
 
         # Keep only useful metadata
         new_metadata = {x: cell.metadata[x]
