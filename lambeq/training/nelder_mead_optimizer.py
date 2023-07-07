@@ -32,7 +32,7 @@ from lambeq.training.quantum_model import QuantumModel
 
 
 class NelderMeadOptimizer(Optimizer):
-    """Nelder Mead Optimizer.
+    """An optimizer based on the Nelder-Mead algorithm.
 
     The Nelder-Mead optimizer is an algorithm used for unconstrained
     optimization in multidimensional spaces. Unlike some other
@@ -52,8 +52,8 @@ class NelderMeadOptimizer(Optimizer):
     heuristic search approach, which means that it can sometimes
     converge to non-stationary points or suboptimal solutions.
 
-    This implementation is based heavily scipy's `optimize.minimize`. See
-    https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html
+    This implementation is based heavily on SciPy's `optimize.minimize
+    <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>`_.
 
     """
 
@@ -93,7 +93,6 @@ class NelderMeadOptimizer(Optimizer):
         - `fatol`: float, optional, default: 1e-4
             The acceptable level of absolute error in the loss value
             between iterations that indicates convergence.
-        }
 
         Parameters
         ----------
@@ -110,22 +109,21 @@ class NelderMeadOptimizer(Optimizer):
         ------
         ValueError
             - If the hyperparameters are not set correctly, or if the
-            length of `bounds` does not match the number of the model
-            parameters.
+              length of `bounds` does not match the number of the model
+              parameters.
             - If the lower bounds are greater than the upper bounds.
             - If the initial simplex is not a 2D array.
             - If the initial simplex does not have N+1 rows, where N is
-            the number of model parameters.
+              the number of model parameters.
 
-        Warnings
-        --------
+        Warning
             - If the initial model weights are not within the bounds.
 
         References
         ----------
         Gao, Fuchang & Han, Lixing. (2012). Implementing the Nelder-Mead
-        simplex algorithm with adaptive parameters.
-        Computational Optimization and Applications. 51. 259-277.
+        Simplex Algorithm with Adaptive Parameters.
+        `Computational Optimization and Applications`, 51. 259-277.
         10.1007/s10589-010-9329-3.
 
         """
