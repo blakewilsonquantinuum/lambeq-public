@@ -73,11 +73,13 @@ See `examples/rewrite.ipynb` for illustrative usage.
 """
 from __future__ import annotations
 
-__all__ = ['RewriteRule', 'CoordinationRewriteRule', 'SimpleRewriteRule',
-           'Rewriter']
+__all__ = ['CoordinationRewriteRule', 'UnknownWordHandler', 'Rewriter',
+           'RewriteRule', 'SimpleRewriteRule', 'UnknownWordsRewriteRule']
 
 from abc import ABC, abstractmethod
+from collections import Counter
 from collections.abc import Container, Iterable
+from typing import List, Set
 
 from discopy.grammar.pregroup import (Box, Cap, Cup, Diagram, Functor, Id,
                                       Spider, Swap, Ty, Word)
@@ -392,3 +394,118 @@ class Rewriter:
 
     def _ob(self, ob: Ty) -> Ty:
         return ob
+
+
+class UnknownWordsRewriteRule(RewriteRule):
+
+    """A rewrite rule for unknown words.
+    This rule matches any words not included in the vocabulary
+    and, when passed a diagram, replaces all the boxes
+    containing an unknown word with an `UNK` box corresponding to the
+    same pregroup type.
+
+    """
+
+    def __init__(self,
+                 vocabulary: Container[str] | None = None,
+                 unk_token : str = '<UNK>') -> None:
+        """Instantiate an UnknownWordsRewriteRule.
+
+        Parameters
+        ----------
+        vocabulary : container of str, optional
+            A list of words to not be rewritten by this rule. If a box
+            contains one of these words, it will not be rewritten with
+            `UNK`.
+
+        """
+        self.vocabulary = set() if vocabulary is None else vocabulary
+        self.unk_token = unk_token
+
+    def matches(self, box: Box) -> bool:
+        return box.name not in self.vocabulary
+
+    def rewrite(self, box: Box) -> Diagram:
+        return type(box)(self.unk_token, dom=box.dom, cod=box.cod)
+
+
+class UnknownWordHandler:
+
+    """Handle unknown words in diagrams using a minimum frequency. Words
+    that appear less than `min_freq` times in the training data are
+    replaced with `UNK` boxes. This rule is used in conjunction with
+    :py:class:`UnknownWordsRewriteRule` to replace unknown words in
+    diagrams.
+
+    """
+
+    def __init__(self, min_freq: int = 1) -> None:
+        """Instantiate an UnknownWordHandler.
+
+        Parameters
+        ----------
+        min_freq : int, default: 1
+            The minimum frequency of a word to be included in the
+            vocabulary.
+
+        """
+        self.min_freq = min_freq
+        self.vocabulary: Set[str] | None = None
+
+    def create_vocabulary_from_diagrams(self, input_diagrams: List[Diagram]):
+        """Finds the words that appear more than `min_freq` times in the
+        training data and store them in `vocabulary`.
+
+        Parameters
+        ----------
+        input_diagrams : list of Diagram
+            Diagrams from which the vocabulary is determined.
+            Words appearing less than `min_freq` times are replaced with
+            the `UNK` box.
+
+        Returns
+        -------
+        set
+            The set of words that appear more than `min_freq` times in
+            the diagrams.
+
+        """
+        word_counts: Counter[str] = Counter()
+        for input_diagram in input_diagrams:
+            for box in input_diagram.boxes:
+                if isinstance(box, Word):
+                    word_counts[box.name] += 1
+        self.vocabulary = set(word
+                              for word, count in word_counts.items()
+                              if count >= self.min_freq)
+        return self.vocabulary
+
+    def replace_unknown_words(self,
+                              input_diagrams: List[Diagram]) -> List[Diagram]:
+        """Replace the words not contained in the training vocabulary
+        with the `UNK` box.
+
+        Parameters
+        ----------
+        input_diagrams : list of Diagram
+            Diagrams for which the unknown words are to be replaced with
+            the `UNK` box.
+
+        Returns
+        -------
+        list of Diagram
+            The rewritten diagrams, with words not contained in the
+            vocabulary replaced with the `UNK` box.
+
+        """
+        if self.vocabulary is None:
+            raise ValueError('Vocabulary not yet created. Run '
+                             '`create_vocabulary_from_diagrams` first.')
+
+        rule = UnknownWordsRewriteRule(vocabulary=self.vocabulary)
+        rewriter = Rewriter([rule])
+        rewritten_diagrams: List[Diagram] = []
+        for diagram in input_diagrams:
+            rewritten_diagram = rewriter(diagram)
+            rewritten_diagrams.append(rewritten_diagram)
+        return rewritten_diagrams
