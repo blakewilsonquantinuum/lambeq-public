@@ -55,11 +55,11 @@ class ModelDummy(Model):
 loss = lambda yhat, y: np.abs(yhat - y).sum() ** 2
 
 
-def test_init_without_adpative():
+def test_init_without_adaptive():
     model = ModelDummy.from_diagrams(diagrams)
     model.initialise_weights()
     optim = NelderMeadOptimizer(model=model, hyperparams={}, loss_fn=loss)
-    assert optim.objective_func
+    assert optim.objective
     assert optim.current_sweep
     assert optim.adaptive == False
     assert optim.initial_simplex is None
@@ -74,19 +74,18 @@ def test_init_without_adpative():
     assert optim.zdelt
     assert optim.project
     assert optim.sim.any()
-    assert optim.one2np1
     assert optim.fsim.any()
     assert optim.N
     assert optim.first_iter == True
 
 
-def test_init_with_adpative():
+def test_init_with_adaptive():
     model = ModelDummy.from_diagrams(diagrams)
     model.initialise_weights()
     optim = NelderMeadOptimizer(
         model=model, hyperparams={'adaptive': True}, loss_fn=loss
     )
-    assert optim.objective_func
+    assert optim.objective
     assert optim.current_sweep
     assert optim.adaptive == True
     assert optim.initial_simplex is None
@@ -101,7 +100,6 @@ def test_init_with_adpative():
     assert optim.zdelt
     assert optim.project
     assert optim.sim.any()
-    assert optim.one2np1
     assert optim.fsim.any()
     assert optim.N
     assert optim.first_iter == True

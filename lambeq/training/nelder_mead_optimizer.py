@@ -12,9 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-NelderMeadOptimizer
-=============
-Module implementing the Nelder-Mead Optimization Algorithm.
+Nelder-Mead Optimizer
+=====================
+The Nelder-Mead algorithm performs unconstrained optimization in
+multidimensional spaces. It is based on the Simplex method and is
+particularly useful when the (first and second) derivatives of the
+objective function are unknown or unreliable. Unlike some other methods,
+it does not take into account bounds or constraints on the variables.
+
+Although the Nelder-Mead algorithm is generally robust and widely
+applicable, it has some limitations. When derivatives can be accurately
+computed, alternative algorithms that utilize this information may offer
+better performance. These methods are often preferred due to their
+ability to handle a wider range of scenarios and their tendency to
+converge to more optimal solutions.
+
+Nelder-Mead technique is a heuristic search approach, so it may converge
+to non-stationary points or sub-optimal solutions.
+
 
 """
 from __future__ import annotations
@@ -34,63 +49,42 @@ from lambeq.training.quantum_model import QuantumModel
 class NelderMeadOptimizer(Optimizer):
     """An optimizer based on the Nelder-Mead algorithm.
 
-    The Nelder-Mead optimizer is an algorithm used for unconstrained
-    optimization in multidimensional spaces. Unlike some other
-    optimization methods, it does not take into account any bounds or
-    constraints on the variables. The algorithm is based on the Simplex
-    method and is particularly useful when the derivatives
-    (first and second) of the objective function are unknown or
-    unreliable.
-
-    Although the Nelder-Mead algorithm is generally robust and widely
-    applicable, it has some limitations. In cases where the derivatives
-    can be accurately computed, alternative algorithms that utilize
-    this derivative information may offer better performance. These
-    methods are often preferred due to their ability to handle a wider
-    range of scenarios and their tendency to converge to more optimal
-    solutions. It is worth noting that the Nelder-Mead technique is a
-    heuristic search approach, which means that it can sometimes
-    converge to non-stationary points or suboptimal solutions.
-
     This implementation is based heavily on SciPy's `optimize.minimize
     <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>`_.
 
     """
-
     model: QuantumModel
+    bounds: np.ndarray | None
 
-    def __init__(
-        self,
-        *,
-        model: QuantumModel,
-        hyperparams: dict[str, float],
-        loss_fn: Callable[[Any, Any], float],
-        bounds: ArrayLike | None = None,
-    ) -> None:
+    def __init__(self,
+                 *,
+                 model: QuantumModel,
+                 loss_fn: Callable[[Any, Any], float],
+                 hyperparams: dict[str, float] | None = None,
+                 bounds: ArrayLike | None = None) -> None:
         """Initialise the Nelder-Mead optimizer.
 
         The hyperparameters may contain the following key-value pairs:
 
-        - `adaptive`: bool, optional, default: False
-            Adjust the algorithm's parameters based on the dimensionality
-            of the problem. This adaptation is particularly helpful when
-            minimizing functions in high-dimensional spaces.
+        - `adaptive`: bool, default: False
+            Adjust the algorithm's parameters based on the
+            dimensionality of the problem. This is particularly helpful
+            when minimizing functions in high-dimensional spaces.
 
-        - `maxfev`: int, optional, default: 1000
+        - `maxfev`: int, default: 1000
             Maximum number of function evaluations allowed.
 
-        - `initial_simplex`: ArrayLike (N+1, N), optional, default: None
-            If provided, the `initial simplex` replaces the initial model
-            weights. Each row initial_simplex[i, :] should contain the
-            coordinates of the ith vertex among the N+1 vertices in the
-            simplex, where N represents the dimension.
+        - `initial_simplex`: ArrayLike (N+1, N), default: None
+            If provided, replaces the initial model weights. Each row
+            should contain the coordinates of the `i`th vertex of the
+            `N+1` vertices in the simplex, where `N` is the dimension.
 
-        - `xatol`: float, optional, default: 1e-4
+        - `xatol`: float, default: 1e-4
             The acceptable level of absolute error in the optimal model
             weights (optimal solution) between iterations that indicates
             convergence.
 
-        - `fatol`: float, optional, default: 1e-4
+        - `fatol`: float, default: 1e-4
             The acceptable level of absolute error in the loss value
             between iterations that indicates convergence.
 
@@ -127,50 +121,15 @@ class NelderMeadOptimizer(Optimizer):
         10.1007/s10589-010-9329-3.
 
         """
+        if hyperparams is None:
+            hyperparams = {}
+
         super().__init__(model=model,
                          hyperparams=hyperparams,
                          loss_fn=loss_fn,
                          bounds=bounds)
-
         self.ncalls = 0
 
-        def objective(x, y, w) -> float:
-            """The objective function to be minimized.
-
-            Parameters
-            ----------
-            x : ArrayLike
-                The input data.
-            y : ArrayLike
-                The labels.
-            w : ArrayLike
-                The model parameters.
-
-            Returns
-            -------
-            result: float
-                The result of the objective function.
-
-            Raises
-            ------
-            ValueError
-                If the objective function does not return a scalar value.
-            """
-            self.ncalls += 1
-            self.model.weights = np.copy(w)
-            result = self.loss_fn(self.model(x), y)
-
-            # `result` must be a scalar
-            if not np.isscalar(result):
-                try:
-                    result = np.asarray(result).item()
-                except (TypeError, ValueError) as e:
-                    raise ValueError(
-                        'Objective function must return a scalar'
-                    ) from e
-            return result
-
-        self.objective_func = objective
         self.current_sweep = 1
         self.adaptive = hyperparams.get('adaptive', False)
         self.maxfev = hyperparams.get('maxfev', 1000)
@@ -193,41 +152,42 @@ class NelderMeadOptimizer(Optimizer):
         self.nonzdelt = 0.05
         self.zdelt = 0.00025
 
-        self.project: Callable[[np.ndarray], np.ndarray]
         if bounds is None:
-            self.project = lambda _: _
+            self.bounds = None
         else:
-            bds = np.asarray(bounds)
-            if len(bds) != len(self.model.weights):
+            self.bounds = np.asarray(bounds)
+            if len(self.bounds) != len(self.model.weights):
                 raise ValueError(
                     'Length of `bounds` must be the same as the '
                     'number of the model parameters'
                 )
 
-            lb, ub = bds[:, 0], bds[:, 1]
+            lower_bound = self.bounds[:, 0]
+            upper_bound = self.bounds[:, 1]
 
             # check bounds
-            if (lb > ub).any():
+            if (lower_bound > upper_bound).any():
                 raise ValueError(
-                    'Nelder Mead'
-                    'lower bounds must be less than upper bounds.'
+                    'Nelder-Mead lower bounds must be less than upper bounds.'
                 )
-            if np.any(lb > self.model.weights) or np.any(
-                self.model.weights > ub
+
+            if (
+                np.any(lower_bound > self.model.weights)
+                or np.any(self.model.weights > upper_bound)
             ):
                 warnings.warn(
                     'Initial value of model weights is not within the bounds.',
                     stacklevel=2,
                 )
 
-            self.project = lambda x: x.clip(bds[:, 0], bds[:, 1])
             self.model.weights = self.project(self.model.weights)
 
-        N = len(self.model.weights)
+        self.N = len(self.model.weights)
         if self.initial_simplex is None:
-            self.sim = np.empty((N + 1, N), dtype=self.model.weights.dtype)
+            self.sim = np.empty((self.N + 1, self.N),
+                                dtype=self.model.weights.dtype)
             self.sim[0] = model.weights
-            for k in range(N):
+            for k in range(self.N):
                 y = np.array(self.model.weights, copy=True)
                 if y[k] != 0:
                     y[k] = (1 + self.nonzdelt) * y[k]
@@ -241,21 +201,62 @@ class NelderMeadOptimizer(Optimizer):
                 or self.sim.shape[0] != self.sim.shape[1] + 1
             ):
                 raise ValueError(
-                    '`initial_simplex` should be an array of shape'
-                    f'({N+1},{N})'
+                    '`initial_simplex` should be an array of shape '
+                    f'({self.N + 1}, {self.N})'
                 )
             if len(self.model.weights) != self.sim.shape[1]:
                 raise ValueError(
-                    'Size of `initial_simplex` is not consistent with'
+                    'Size of `initial_simplex` is not consistent with '
                     '`model.weights`'
                 )
-            N = self.sim.shape[1]
+            self.N = self.sim.shape[1]
 
         self.sim = self.project(self.sim)
-        self.one2np1 = list(range(1, N + 1))
-        self.fsim = np.full((N + 1,), np.inf, dtype=float)
-        self.N = N
+        self.fsim = np.full((self.N + 1,), np.inf, dtype=float)
         self.first_iter = True  # flag for first iteration
+
+    def project(self, x: np.ndarray) -> np.ndarray:
+        if self.bounds is None:
+            return x
+        else:
+            return x.clip(self.bounds[:, 0], self.bounds[:, 1])
+
+    def objective(self, x: Iterable[Any], y: ArrayLike, w: ArrayLike) -> float:
+        """The objective function to be minimized.
+
+        Parameters
+        ----------
+        x : ArrayLike
+            The input data.
+        y : ArrayLike
+            The labels.
+        w : ArrayLike
+            The model parameters.
+
+        Returns
+        -------
+        result: float
+            The result of the objective function.
+
+        Raises
+        ------
+        ValueError
+            If the objective function does not return a scalar value.
+
+        """
+        self.ncalls += 1
+        self.model.weights = np.copy(w)
+        result = self.loss_fn(self.model(x), y)
+
+        # `result` must be a scalar
+        if not np.isscalar(result):
+            try:
+                result = np.asarray(result).item()
+            except (TypeError, ValueError) as e:
+                raise ValueError(
+                    'Objective function must return a scalar'
+                ) from e
+        return result
 
     def backward(self, batch: tuple[Iterable[Any], np.ndarray]) -> float:
         """Calculate the gradients of the loss function.
@@ -275,105 +276,84 @@ class NelderMeadOptimizer(Optimizer):
             The calculated loss.
 
         """
-
         diagrams, targets = batch
-        diags_gen = flatten(diagrams)
 
         # the symbolic parameters
         parameters = self.model.symbols
 
         relevant_params = set.union(
-            *[diag.free_symbols for diag in diags_gen]
+            *[diag.free_symbols for diag in flatten(diagrams)]
         )
-        mask = np.array(
-            [1 if sym in relevant_params else 0 for sym in parameters]
-        )
+        mask = np.array([int(sym in relevant_params) for sym in parameters])
 
         # Initialize ind, sim and fsim
         if self.first_iter:
-            try:
-                for k in range(self.N + 1):
-                    self.fsim[k] = self.objective_func(
-                        diagrams, targets, self.sim[k]
-                    )
-            except RuntimeError:
-                pass
+            for k in range(self.N + 1):
+                self.fsim[k] = self.objective(diagrams, targets, self.sim[k])
 
             self.ind = np.argsort(self.fsim)
-            self.sim = np.take(self.sim, self.ind, 0)
-            self.fsim = np.take(self.fsim, self.ind, 0)
+            self.sim = self.sim.take(self.ind, 0)
+            self.fsim = self.fsim.take(self.ind, 0)
             self.first_iter = False
 
-        try:
-            if (
-                np.max(np.ravel(np.abs(self.sim[1:] - self.sim[0])))
-                <= self.xatol
-                and np.max(np.abs(self.fsim[0] - self.fsim[1:])) <= self.fatol
-            ):
-                raise RuntimeError(
-                    'xatol and fatol termination conditions are satisfied.'
-                )
-
-            xbar = np.add.reduce(self.sim[:-1], 0) / self.N
-            xr = (1 + self.rho) * xbar - self.rho * self.sim[-1]
-            xr = self.project(xr)
-            fxr = self.objective_func(diagrams, targets, xr)
+        if not (
+            np.abs(self.sim[1:] - self.sim[0]).max() <= self.xatol
+            and np.abs(self.fsim[0] - self.fsim[1:]).max() <= self.fatol
+        ):
+            xbar = self.sim[:-1].sum(0) / self.N
+            xr = self.project((1 + self.rho) * xbar - self.rho * self.sim[-1])
+            fxr = self.objective(diagrams, targets, xr)
             shrink = False
 
             if fxr < self.fsim[0]:
-                xe = xbar + self.rho * self.chi * (xbar - self.sim[-1])
-                xe = self.project(xe)
-                fxe = self.objective_func(diagrams, targets, xe)
+                xe = self.project(
+                    xbar + self.rho * self.chi * (xbar - self.sim[-1])
+                )
+                fxe = self.objective(diagrams, targets, xe)
                 if fxe < fxr:
                     self.sim[-1] = xe
                     self.fsim[-1] = fxe
                 else:
                     self.sim[-1] = xr
                     self.fsim[-1] = fxr
-            else:  # fsim[0] <= fxr
-                if fxr < self.fsim[-2]:
-                    self.sim[-1] = xr
-                    self.fsim[-1] = fxr
-                else:  # fxr >= fsim[-2]
-                    if fxr < self.fsim[-1]:  # Perform contraction
-                        xc = xbar + self.psi * self.rho * (
-                            xbar - self.sim[-1]
-                        )
-                        xc = self.project(xc)
-                        fxc = self.objective_func(diagrams, targets, xc)
+            elif fxr < self.fsim[-2]:  # and fsim[0] <= fxr
+                self.sim[-1] = xr
+                self.fsim[-1] = fxr
+            elif fxr < self.fsim[-1]:  # and fxr >= fsim[-2] and fsim[0] <= fxr
+                # Perform contraction
+                xc = self.project(
+                    xbar + self.psi * self.rho * (xbar - self.sim[-1])
+                )
+                fxc = self.objective(diagrams, targets, xc)
 
-                        if fxc <= fxr:
-                            self.sim[-1] = xc
-                            self.fsim[-1] = fxc
-                        else:
-                            shrink = True
-                    else:  # Perform an inside contraction
-                        xcc = self.project(
-                            (1 - self.psi) * xbar + self.psi * self.sim[-1]
-                        )
-                        fxcc = self.objective_func(diagrams, targets, xcc)
+                if fxc <= fxr:
+                    self.sim[-1] = xc
+                    self.fsim[-1] = fxc
+                else:
+                    shrink = True
+            else:  # Perform an inside contraction
+                xcc = self.project(xbar + self.psi * (self.sim[-1] - xbar))
+                fxcc = self.objective(diagrams, targets, xcc)
 
-                        if fxcc < self.fsim[-1]:
-                            self.sim[-1] = xcc
-                            self.fsim[-1] = fxcc
-                        else:
-                            shrink = True
+                if fxcc < self.fsim[-1]:
+                    self.sim[-1] = xcc
+                    self.fsim[-1] = fxcc
+                else:
+                    shrink = True
 
-                    if shrink:
-                        for j in self.one2np1:
-                            self.sim[j] = self.sim[0] + self.sigma * (
-                                self.sim[j] - self.sim[0]
-                            )
-                            self.sim[j] = self.project(self.sim[j])
-                            self.fsim[j] = self.objective_func(
-                                diagrams, targets, self.sim[j]
-                            )
-        except RuntimeError:
-            pass
+            if shrink:
+                for j in range(1, self.N + 1):
+                    self.sim[j] = self.project(
+                        self.sim[0]
+                        + self.sigma * (self.sim[j] - self.sim[0])
+                    )
+                    self.fsim[j] = self.objective(diagrams,
+                                                  targets,
+                                                  self.sim[j])
 
         self.ind = np.argsort(self.fsim)
-        self.sim = np.take(self.sim, self.ind, 0)
-        self.fsim = np.take(self.fsim, self.ind, 0)
+        self.sim = self.sim.take(self.ind, 0)
+        self.fsim = self.fsim.take(self.ind, 0)
 
         loss = float(np.min(self.fsim))
         self.gradient = self.sim[0] * mask
@@ -381,7 +361,7 @@ class NelderMeadOptimizer(Optimizer):
         if self.ncalls >= self.maxfev:
             warnings.warn(
                 'Maximum number of function evaluations exceeded.',
-                stacklevel=3,
+                stacklevel=3
             )
 
         return loss
