@@ -77,7 +77,6 @@ __all__ = [
         'RewriteRule',
         'SimpleRewriteRule',
         'UnifyCodomainRewriter',
-        'UnknownWordHandler',
         'UnknownWordsRewriteRule',
 
         'Tokeniser',
@@ -121,7 +120,7 @@ from lambeq.pregroups import (create_pregroup_diagram, diagram2str,
 from lambeq.rewrite import (CoordinationRewriteRule, CurryRewriteRule,
                             DiagramRewriter, Rewriter, RewriteRule,
                             SimpleRewriteRule, UnifyCodomainRewriter,
-                            UnknownWordHandler, UnknownWordsRewriteRule)
+                            UnknownWordsRewriteRule)
 from lambeq.text2diagram import (
         CCGType, CCGRule, CCGRuleUseError, CCGTree,
         CCGParser,

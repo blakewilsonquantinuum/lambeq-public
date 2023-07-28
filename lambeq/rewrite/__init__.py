@@ -17,7 +17,6 @@ __all__ = ['CoordinationRewriteRule',
            'Rewriter',
            'RewriteRule',
            'SimpleRewriteRule',
-           'UnknownWordHandler',
            'UnknownWordsRewriteRule',
 
            'DiagramRewriter',
@@ -25,7 +24,7 @@ __all__ = ['CoordinationRewriteRule',
 
 from lambeq.rewrite.base import (CoordinationRewriteRule, CurryRewriteRule,
                                  RewriteRule, Rewriter, SimpleRewriteRule,
-                                 UnknownWordHandler, UnknownWordsRewriteRule)
+                                 UnknownWordsRewriteRule)
 
 from lambeq.rewrite.rewrite_diagram import (DiagramRewriter,
                                             UnifyCodomainRewriter)

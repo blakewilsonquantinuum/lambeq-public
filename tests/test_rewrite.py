@@ -5,8 +5,7 @@ from discopy.grammar.pregroup import (Box, Cap, Cup, Diagram, Id, Ob, Spider,
 
 from lambeq import (AtomicType, Rewriter, CoordinationRewriteRule,
                     CurryRewriteRule, SimpleRewriteRule,
-                    UnifyCodomainRewriter, UnknownWordsRewriteRule,
-                    UnknownWordHandler)
+                    UnifyCodomainRewriter, UnknownWordsRewriteRule)
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
@@ -204,24 +203,32 @@ def test_unknown_words_rewrite_rule():
 
     assert rewritten_diagram == expected_diagram
 
-def test_handle_unknown_words():
+@pytest.mark.parametrize('ignore_types', [False, True])
+def test_handle_unknown_words(ignore_types):
     train_diagram = (Word('Alice', N) @ Word('loves', N >> S << N)
                      @ Word('Bob', N)
                      >> Cup(N, N.r) @ Id(S) @ Cup(N.l, N))
+
+    rewrite_unknown_words = Rewriter([
+        UnknownWordsRewriteRule.from_diagrams(diagrams=[train_diagram],
+                                              min_freq=1,
+                                              ignore_types=ignore_types)
+    ])
+    if ignore_types:
+        assert rewrite_unknown_words.rules[0].vocabulary == {'Alice', 'loves', 'Bob'}
+    else:
+        assert rewrite_unknown_words.rules[0].vocabulary == {('Alice', N),
+                                                             ('loves', N >> S << N),
+                                                             ('Bob', N)}
+
+    processed_train_diagram = rewrite_unknown_words(train_diagram)
+    assert processed_train_diagram == train_diagram
+
     test_diagram = (Word('Alice', N) @ Word('loves', N >> S << N)
                     @ Word('Charlie', N)
                     >> Cup(N, N.r) @ Id(S) @ Cup(N.l, N))
-    handle_unknown_words = UnknownWordHandler(min_freq=1)
-    handle_unknown_words.create_vocabulary_from_diagrams([train_diagram])
-    processed_train_diagrams = \
-        handle_unknown_words.replace_unknown_words([train_diagram])
-    processed_test_diagrams = \
-        handle_unknown_words.replace_unknown_words([test_diagram])
-    assert handle_unknown_words.vocabulary == set(['Alice', 'loves', 'Bob'])
-    assert processed_train_diagrams[0] == train_diagram
-
     expected_test_diagram = (Word('Alice', N) @ Word('loves', N >> S << N)
                              @ Word('<UNK>', N)
                              >> Cup(N, N.r) @ Id(S) @ Cup(N.l, N))
-
-    assert processed_test_diagrams[0] == expected_test_diagram
+    processed_test_diagram = rewrite_unknown_words(test_diagram)
+    assert processed_test_diagram == expected_test_diagram
