@@ -212,7 +212,7 @@ tikz_outputs = [
 \\node [] (19) at (2.5, 1.25) {};
 \\node [] (20) at (2.5, 0) {};
 \\node [style=none, fill=white, right] (21) at (2.6, 1.15) {s.r};
-\\node [] (22) at (2.0, 1.5) {};
+\\node [circle, fill=black, scale=0.577] (22) at (2.0, 1.5) {};
 \\node [] (23) at (0.75, 0.5) {};
 \\node [] (24) at (-0.25, 2.25) {};
 \\node [] (25) at (1.25, 2.25) {};
@@ -335,7 +335,7 @@ expected_equation_tikz = """\\begin{tikzpicture}[baseline=(0.base)]
 \\node [] (19) at (2.5, 1.25) {};
 \\node [] (20) at (2.5, 0.0) {};
 \\node [style=none, fill=white, right] (21) at (2.6, 1.15) {s.r};
-\\node [] (22) at (2.0, 1.5) {};
+\\node [circle, fill=black, scale=0.577] (22) at (2.0, 1.5) {};
 \\node [] (23) at (0.75, 0.5) {};
 \\node [] (24) at (-0.25, 2.25) {};
 \\node [] (25) at (1.25, 2.25) {};
@@ -365,7 +365,7 @@ expected_equation_tikz = """\\begin{tikzpicture}[baseline=(0.base)]
 \\node [] (49) at (8.1, 0.0) {};
 \\node [style=none, fill=white, right] (50) at (8.2, 1.15) {s.r};
 \\node [] (51) at (6.1, 2.5) {};
-\\node [] (52) at (7.1, 1.5) {};
+\\node [circle, fill=black, scale=0.351] (52) at (7.1, 1.5) {};
 \\node [] (53) at (4.85, 0.25) {};
 \\node [] (54) at (6.6, 0.25) {};
 \\node [] (55) at (6.35, 0.75) {};

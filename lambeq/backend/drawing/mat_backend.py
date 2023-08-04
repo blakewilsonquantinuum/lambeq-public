@@ -89,7 +89,7 @@ class MatBackend(DrawingBackend):
 
         nodes = [node for node in drawable.boxes if drawn_as_spider(node.obj)]
         for node in nodes:
-            if isinstance(node, Spider):
+            if isinstance(node.obj, Spider):
                 self.draw_node(*node.coordinates, **params)
             for wire in node.cod_wires:
                 self.draw_wire(node.coordinates,

@@ -157,7 +157,7 @@ class TikzBackend(DrawingBackend):
         spiders = [node for node in drawable.boxes
                    if drawn_as_spider(node.obj)]
         for node in spiders:
-            if isinstance(node, Spider):
+            if isinstance(node.obj, Spider):
                 i, j = node.coordinates
 
                 if self.use_tikzstyles:
