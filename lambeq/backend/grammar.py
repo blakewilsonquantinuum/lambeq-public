@@ -380,7 +380,7 @@ class Layer(Entity):
 
 class InterchangerError(Exception):
     """ This is raised when we try to interchange conected boxes. """
-    def __init__(self, box0, box1):
+    def __init__(self, box0: Box, box1: Box) -> None:
         super().__init__(f'Boxes {box0} and {box1} do not commute.')
 
 
@@ -680,7 +680,7 @@ class Diagram(Entity, Diagrammable):
     def permuted(self, permutation: Iterable[int]) -> Self:
         return self >> self.permutation(self.cod, permutation)
 
-    def interchange(self, i: int, j: int, left=False) -> Diagram:
+    def interchange(self, i: int, j: int, left: bool = False) -> Diagram:
         """
         Returns a new diagram with boxes i and j interchanged.
 
@@ -753,7 +753,7 @@ class Diagram(Entity, Diagrammable):
         layers = self.layers[:i] + [layer1, layer0] + self.layers[i + 2:]
         return Diagram(self.dom, self.cod, layers=layers)
 
-    def normalize(self, left=False) -> Iterator[Diagram]:
+    def normalize(self, left: bool = False) -> Iterator[Diagram]:
         """
         Implements normalization of diagrams,
         see arXiv:1804.07832.
@@ -793,19 +793,15 @@ class Diagram(Entity, Diagrammable):
                     yield diagram
                     no_more_moves = False
 
-    def normal_form(self, **params) -> Diagram:
+    def normal_form(self, left: bool = False) -> Diagram:
         """
         Returns the normal form of a connected diagram,
         see arXiv:1804.07832.
 
         Parameters
         ----------
-        normalizer : iterable of :class:`Diagram`, optional
-            Generator that yields rewrite steps, default is
-            :meth:`Diagram.normalize`.
-
-        params : any, optional
-            Passed to :code:`normalizer`.
+        left : bool, optional
+            Whether to apply left interchangers.
 
         Raises
         ------
@@ -814,14 +810,14 @@ class Diagram(Entity, Diagrammable):
             twice.
         """
         diagram, cache = self, set()
-        for _diagram in diagram.snake_removal(**params):
+        for _diagram in diagram.snake_removal(left=left):
             if _diagram in cache:
                 raise NotImplementedError(f'{str(self)} is not connected.')
             diagram = _diagram
             cache.add(diagram)
         return diagram
 
-    def snake_removal(self, left=False) -> Iterator[Diagram]:
+    def snake_removal(self, left: bool = False) -> Iterator[Diagram]:
         """
         Returns a generator which yields normalization steps.
 
@@ -910,7 +906,7 @@ class Diagram(Entity, Diagrammable):
                     cup: int,
                     cap: int,
                     obstructions: tuple[list[int], list[int]],
-                    left_snake=False) -> Iterator[Diagram]:
+                    left_snake: bool = False) -> Iterator[Diagram]:
             """
             Given a diagram and the indices for a cup and cap pair
             and a pair of lists of obstructions on the left and right,
@@ -958,8 +954,7 @@ class Diagram(Entity, Diagrammable):
         for _diagram in diagram.normalize(left=left):
             yield _diagram
 
-    def draw(self, **kwargs) -> None:
-
+    def draw(self, **kwargs: Any) -> None:
         from lambeq.backend.drawing import draw
         draw(self, **kwargs)
 
