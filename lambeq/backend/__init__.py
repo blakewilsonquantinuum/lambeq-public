@@ -17,6 +17,7 @@ __all__ = ['Box',
            'Category',
            'Cup',
            'Diagram',
+           'Functor',
            'Id',
            'Spider',
            'Swap',
@@ -27,6 +28,6 @@ __all__ = ['Box',
            'draw_equation',
            'to_gif']
 
-from lambeq.backend.grammar import (Box, Cap, Category, Cup, Diagram, Id,
-                                    Spider, Swap, Ty, Word)
+from lambeq.backend.grammar import (Box, Cap, Category, Cup, Diagram, Functor,
+                                    Id, Spider, Swap, Ty, Word)
 from lambeq.backend.drawing import draw, draw_equation, to_gif

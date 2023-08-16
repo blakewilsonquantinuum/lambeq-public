@@ -22,6 +22,7 @@ BSD 3-Clause "New" or "Revised" License.
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field, InitVar, replace
 from typing import Any, ClassVar, Type, TypeVar
@@ -169,7 +170,14 @@ class Ty(Entity):
         else:
             return cls(objects=objects)  # type: ignore[arg-type]
 
-    def tensor(self, *tys: Self) -> Self:
+    @overload
+    def tensor(self, other: Iterable[Self]) -> Self: ...
+
+    @overload
+    def tensor(self, other: Self, *rest: Self) -> Self: ...
+
+    def tensor(self, other: Self | Iterable[Self], *rest: Self) -> Self:
+        tys = [*other, *rest]
         if any(not isinstance(ty, type(self)) for ty in tys):
             return NotImplemented
 
@@ -211,15 +219,46 @@ class Ty(Entity):
 
     def repeat(self, times: int) -> Self:
         assert times >= 0
-        return type(self)().tensor(*[self] * times)
+        return type(self)().tensor([self] * times)
 
     def __pow__(self, times: int) -> Self:
         return self.repeat(times)
 
+    def apply_functor(self, functor: Functor) -> Ty:
+        assert not self.is_empty
+        if self.is_complex:
+            return functor.target_category.Ty().tensor(
+                functor(ob) for ob in self.objects
+            )
+        elif self.z != 0:
+            return functor(self.unwind()).rotate(self.z)
+        else:
+            return functor.ob(self)
+
+
+class Diagrammable(ABC):
+    cod: Ty
+    dom: Ty
+
+    @abstractmethod
+    def to_diagram(self) -> Diagram: ...
+
+    def __getattr__(self, name: str) -> Any:
+        if isinstance(self, Diagram):
+            raise AttributeError
+        else:
+            return getattr(self.to_diagram(), name)
+
+    @abstractmethod
+    def apply_functor(self, functor: Functor) -> Diagrammable: ...
+
+    @abstractmethod
+    def rotate(self, z: int) -> Diagrammable: ...
+
 
 @grammar
 @dataclass
-class Box(Entity):
+class Box(Entity, Diagrammable):
     """A box in the grammar category.
 
     Parameters
@@ -257,13 +296,10 @@ class Box(Entity):
                                                                  left=ID,
                                                                  right=ID)])
 
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self.to_diagram(), name)
-
-    def __matmul__(self, rhs: Box | Diagram) -> Diagram:
+    def __matmul__(self, rhs: Diagrammable) -> Diagram:
         return self.to_diagram().tensor(rhs.to_diagram())
 
-    def __rshift__(self, rhs: Box | Diagram) -> Diagram:
+    def __rshift__(self, rhs: Diagrammable) -> Diagram:
         return self.to_diagram().then(rhs.to_diagram())
 
     def rotate(self, z: int) -> Self:
@@ -286,6 +322,12 @@ class Box(Entity):
 
     def dagger(self) -> Daggered | Box:
         return Daggered(self)
+
+    def apply_functor(self, functor: Functor) -> Diagrammable:
+        if self.z != 0:
+            return functor(self.unwind()).rotate(self.z)
+        else:
+            return functor.ar(self)
 
 
 @grammar
@@ -342,9 +384,14 @@ class InterchangerError(Exception):
         super().__init__(f'Boxes {box0} and {box1} do not commute.')
 
 
+_DiagrammableFactory = Callable[..., Diagrammable]
+_DiagrammableFactoryT = TypeVar('_DiagrammableFactoryT',
+                                bound=_DiagrammableFactory)
+
+
 @grammar
 @dataclass
-class Diagram(Entity):
+class Diagram(Entity, Diagrammable):
     """A diagram in the grammar category.
 
     Parameters
@@ -361,6 +408,42 @@ class Diagram(Entity):
     cod: Ty
     layers: list[Layer]
 
+    special_boxes: ClassVar[dict[str, _DiagrammableFactory]] = {}
+
+    @classmethod
+    @overload
+    def register_special_box(
+        cls,
+        name: str,
+        diagram_factory: None = None
+    ) -> Callable[[_DiagrammableFactoryT], _DiagrammableFactoryT]: ...
+
+    @classmethod
+    @overload
+    def register_special_box(
+        cls,
+        name: str,
+        diagram_factory: _DiagrammableFactory
+    ) -> None: ...
+
+    @classmethod
+    def register_special_box(
+        cls,
+        name: str,
+        diagram_factory: _DiagrammableFactory | None = None
+    ) -> None | Callable[[_DiagrammableFactoryT], _DiagrammableFactoryT]:
+        def set_(
+            diagram_factory: _DiagrammableFactoryT
+        ) -> _DiagrammableFactoryT:
+            cls.special_boxes[name] = diagram_factory
+            return diagram_factory
+
+        if diagram_factory is None:
+            return set_
+        else:
+            set_(diagram_factory)
+            return None
+
     def __repr__(self) -> str:
         if self.is_id:
             return f'Id({repr(self.dom)})'
@@ -372,6 +455,10 @@ class Diagram(Entity):
 
     def to_diagram(self) -> Self:
         return self
+
+    @classmethod
+    def from_diagrammable(cls, entity: Diagrammable) -> Self:
+        return entity.to_diagram()  # type: ignore[return-value]
 
     @classmethod
     def id(cls, dom: Ty | None = None) -> Self:
@@ -454,10 +541,6 @@ class Diagram(Entity):
             diagram = diagram >> cls.id(left) @ box @ cls.id(right)
         return diagram
 
-    def cup(self, *pos: int):
-        """Apply a cup to the diagram."""
-        raise NotImplementedError  # TODO in new PR
-
     def is_pregroup(self) -> bool:
         """Check if a diagram is a pregroup diagram.
 
@@ -499,15 +582,13 @@ class Diagram(Entity):
 
         return type(self)(dom=dom, cod=left, layers=layers)
 
-    @property
-    def offsets(self) -> list[int]:
-        """
-        The offset of a box is the length of the type on its left.
-        """
-        return [len(layer.left) for layer in self.layers]
-
     def __matmul__(self, rhs: Self) -> Self:
         return self.tensor(rhs)
+
+    @property
+    def offsets(self) -> list[int]:
+        """The offset of a box is the length of the type on its left."""
+        return [len(layer.left) for layer in self.layers]
 
     def __iter__(self) -> Iterator[Layer]:
         yield from self.layers
@@ -535,6 +616,12 @@ class Diagram(Entity):
 
         return type(self)(dom=self.dom, cod=cod, layers=layers)
 
+    def then_at(self, diagram: Diagrammable, index: int) -> Self:
+        return (self
+                >> (self.id(self.cod[:index])
+                    @ self.from_diagrammable(diagram)
+                    @ self.id(self.cod[index+len(diagram.dom):])))
+
     def __rshift__(self, rhs: Self) -> Self:
         return self.then(rhs)
 
@@ -560,6 +647,38 @@ class Diagram(Entity):
                               cod=self.dom,
                               layers=[replace(layer, box=layer.box.dagger())
                                       for layer in reversed(self.layers)])
+
+    @classmethod
+    def permutation(cls, dom: Ty, permutation: Iterable[int]) -> Self:
+        """Create a layer of Swaps that permutes the wires."""
+        permutation = list(permutation)
+        if not (len(permutation) == len(dom)
+                and set(permutation) == set(range(len(dom)))):
+            raise ValueError('Invalid permutation for type of length '
+                             f'{len(dom)}: {permutation}')
+
+        wire_index = [*range(len(dom))]
+
+        diagram = cls.id(dom)
+        for out_index in range(len(dom) - 1):
+            in_index = wire_index[permutation[out_index]]
+            assert in_index >= out_index
+
+            for i in reversed(range(out_index, in_index)):
+                diagram >>= (
+                    cls.id(diagram.cod[:i])
+                    @ cls.from_diagrammable(
+                        cls.special_boxes['swap'](*diagram.cod[i:i+2])
+                    )
+                    @ cls.id(diagram.cod[i+2:])
+                )
+
+            for i in range(permutation[out_index]):
+                wire_index[i] += 1
+        return diagram
+
+    def permuted(self, permutation: Iterable[int]) -> Self:
+        return self >> self.permutation(self.cod, permutation)
 
     def interchange(self, i: int, j: int, left=False) -> Diagram:
         """
@@ -844,7 +963,18 @@ class Diagram(Entity):
         from lambeq.backend.drawing import draw
         draw(self, **kwargs)
 
+    def apply_functor(self, functor: Functor) -> Diagram:
+        assert not self.is_id
+        diagram = functor(self.id(self.dom))
+        for layer in self.layers:
+            left, box, right = layer.unpack()
+            diagram >>= (functor(self.id(left))
+                         @ functor(box).to_diagram()
+                         @ functor(self.id(right)))
+        return diagram
 
+
+@Diagram.register_special_box('cap')
 @dataclass
 class Cap(Box):
     """The unit of the adjunction for an atomic type.
@@ -877,18 +1007,43 @@ class Cap(Box):
     def __post_init__(self, is_reversed: bool) -> None:
         if not self.left.is_atomic or not self.right.is_atomic:
             raise ValueError('left and right need to be atomic types.')
-
-        if is_reversed:
-            if self.left != self.right.l:
-                raise ValueError('left and right need to be adjoints')
-        else:
-            if self.left != self.right.r:
-                raise ValueError('left and right need to be adjoints')
+        self._check_adjoint(self.left, self.right, is_reversed)
 
         self.name = 'CAP'
         self.dom = self.category.Ty()
         self.cod = self.left @ self.right
         self.z = int(is_reversed)
+
+    @staticmethod
+    def _check_adjoint(left: Ty, right: Ty, is_reversed: bool) -> None:
+        if is_reversed:
+            if left != right.l:
+                raise ValueError('left and right need to be adjoints')
+        else:
+            if left != right.r:
+                raise ValueError('left and right need to be adjoints')
+
+    def __new__(cls,  # type: ignore[misc]
+                left: Ty,
+                right: Ty,
+                is_reversed: bool = False) -> Diagrammable:
+        if left.is_atomic and right.is_atomic:
+            return super().__new__(cls)
+        else:
+            cls._check_adjoint(left, right, is_reversed)
+
+            diagram = cls.category.Diagram.id()
+            for i, (l_ob, r_ob) in enumerate(zip(left, reversed(right))):
+                diagram = diagram.then_at(cls(l_ob, r_ob), i)
+            return diagram
+
+    @classmethod
+    def to_right(cls, left: Ty, is_reversed: bool = False) -> Self | Diagram:
+        return cls(left, left.r if is_reversed else left.l)
+
+    @classmethod
+    def to_left(cls, right: Ty, is_reversed: bool = False) -> Self | Diagram:
+        return cls(right.l if is_reversed else right.r, right)
 
     def rotate(self, z: int) -> Self:
         """Rotate the cap."""
@@ -902,12 +1057,23 @@ class Cap(Box):
                           is_reversed=is_reversed)
 
     def dagger(self) -> Cup:
-        return Cup(self.left, self.right, is_reversed=not self.z)
+        Cup = self.category.Diagram.special_boxes['cup']
+        return Cup(self.left,  # type: ignore[return-value]
+                   self.right,
+                   is_reversed=not self.z)
+
+    def apply_functor(self, functor: Functor) -> Diagrammable:
+        return functor.target_category.Diagram.special_boxes['cap'](
+            functor(self.left),
+            functor(self.right),
+            is_reversed=bool(self.z)
+        )
 
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
 
 
+@Diagram.register_special_box('cup')
 @dataclass
 class Cup(Box):
     """The counit of the adjunction for an atomic type.
@@ -940,18 +1106,43 @@ class Cup(Box):
     def __post_init__(self, is_reversed: bool) -> None:
         if not self.left.is_atomic or not self.right.is_atomic:
             raise ValueError('left and right need to be atomic types.')
-
-        if is_reversed:
-            if self.left != self.right.r:
-                raise ValueError('left and right need to be adjoints')
-        else:
-            if self.left != self.right.l:
-                raise ValueError('left and right need to be adjoints')
+        self._check_adjoint(self.left, self.right, is_reversed)
 
         self.name = 'CUP'
         self.dom = self.left @ self.right
         self.cod = self.category.Ty()
         self.z = int(is_reversed)
+
+    @staticmethod
+    def _check_adjoint(left: Ty, right: Ty, is_reversed: bool) -> None:
+        if is_reversed:
+            if left != right.r:
+                raise ValueError('left and right need to be adjoints')
+        else:
+            if left != right.l:
+                raise ValueError('left and right need to be adjoints')
+
+    def __new__(cls,  # type: ignore[misc]
+                left: Ty,
+                right: Ty,
+                is_reversed: bool = False) -> Diagrammable:
+        if left.is_atomic and right.is_atomic:
+            return super().__new__(cls)
+        else:
+            cls._check_adjoint(left, right, is_reversed)
+
+            diagram = cls.category.Diagram.id(left @ right)
+            for i, (l_ob, r_ob) in enumerate(zip(reversed(left), right)):
+                diagram = diagram.then_at(cls(l_ob, r_ob), len(left) - 1 - i)
+            return diagram
+
+    @classmethod
+    def to_right(cls, left: Ty, is_reversed: bool = False) -> Self | Diagram:
+        return cls(left, left.l if is_reversed else left.r)
+
+    @classmethod
+    def to_left(cls, right: Ty, is_reversed: bool = False) -> Self | Diagram:
+        return cls(right.r if is_reversed else right.l, right)
 
     def rotate(self, z: int) -> Self:
         """Rotate the cup."""
@@ -965,7 +1156,19 @@ class Cup(Box):
                           is_reversed=is_reversed)
 
     def dagger(self) -> Cap:
-        return Cap(self.left, self.right, is_reversed=not self.z)
+        Cap = self.category.Diagram.special_boxes['cap']
+        return Cap(  # type: ignore[return-value]
+            self.left,
+            self.right,
+            is_reversed=not self.z
+        )
+
+    def apply_functor(self, functor: Functor) -> Diagrammable:
+        return functor.target_category.Diagram.special_boxes['cup'](
+            functor(self.left),
+            functor(self.right),
+            is_reversed=bool(self.z)
+        )
 
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
@@ -1004,6 +1207,7 @@ class Daggered(Box):
     __hash__ = Box.__hash__
 
 
+@Diagram.register_special_box('spider')
 @dataclass
 class Spider(Box):
     """A spider in the grammar category.
@@ -1034,6 +1238,32 @@ class Spider(Box):
         self.dom = self.type ** self.n_legs_in
         self.cod = self.type ** self.n_legs_out
 
+    def __new__(cls,  # type: ignore[misc]
+                type: Ty,
+                n_legs_in: int,
+                n_legs_out: int) -> Diagrammable:
+        if type.is_atomic:
+            return super().__new__(cls)
+        else:
+            size = len(type)
+            total_legs_in = size * n_legs_in
+            return (
+                cls.category.Diagram.permutation(
+                    type ** n_legs_in,
+                    [j
+                     for i in range(size)
+                     for j in range(i, total_legs_in, size)]
+                )
+                >> cls.category.Diagram.id().tensor(
+                    *(cls(ob, n_legs_in, n_legs_out)
+                      for ob in type)  # type: ignore[arg-type]
+                ).permuted([
+                    j
+                    for i in range(n_legs_out)
+                    for j in range(i, len(type) * n_legs_out, n_legs_out)
+                ])
+            )
+
     def rotate(self, z: int) -> Self:
         """Rotate the spider."""
         return type(self)(self.type.rotate(z), len(self.dom), len(self.cod))
@@ -1041,10 +1271,18 @@ class Spider(Box):
     def dagger(self) -> Self:
         return type(self)(self.type, self.n_legs_out, self.n_legs_in)
 
+    def apply_functor(self, functor: Functor) -> Diagrammable:
+        return functor.target_category.Diagram.special_boxes['spider'](
+            functor(self.type),
+            self.n_legs_in,
+            self.n_legs_out
+        )
+
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
 
 
+@Diagram.register_special_box('swap')
 @dataclass
 class Swap(Box):
     """A swap in the grammar category.
@@ -1075,6 +1313,18 @@ class Swap(Box):
         self.dom = self.left @ self.right
         self.cod = self.right @ self.left
 
+    def __new__(cls,  # type: ignore[misc]
+                left: Ty,
+                right: Ty) -> Swap | Diagram:
+        if left.is_atomic and right.is_atomic:
+            return super().__new__(cls)
+        else:
+            diagram = cls.category.Diagram.id(left @ right)
+            for start, ob in enumerate(right):
+                for i in reversed(range(len(left))):
+                    diagram = diagram.then_at(cls(left[i], ob), start + i)
+            return diagram
+
     def rotate(self, z: int) -> Self:
         """Rotate the swap."""
         if z % 2 == 1:
@@ -1085,6 +1335,12 @@ class Swap(Box):
 
     def dagger(self) -> Self:
         return type(self)(self.right, self.left)
+
+    def apply_functor(self, functor: Functor) -> Diagrammable:
+        return functor.target_category.Diagram.special_boxes['swap'](
+            functor(self.left),
+            functor(self.right)
+        )
 
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
@@ -1118,6 +1374,9 @@ class Word(Box):
     def __repr__(self) -> str:
         return f'Word({self.name}, {repr(self.cod), {repr(self.z)}})'
 
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
     def rotate(self, z: int) -> Self:
         """Rotate the Word box, changing the winding number."""
         return type(self)(self.name, self.cod.rotate(z))
@@ -1127,3 +1386,126 @@ class Word(Box):
 
 
 Id = Diagram.id
+
+
+@dataclass(init=False)
+class Functor:
+    """A functor that maps between categories.
+
+    Parameters
+    ----------
+    target_category : Category
+        The category to which the functor maps.
+    ob : callable, optional
+        A function that maps types to types, by default None
+    ar : callable, optional
+        A function that maps boxes to Diagrammables, by default None
+
+    Examples
+    --------
+
+    >>> n = Ty('n')
+    >>> diag = Cap(n, n.l) @ Id(n) >> Id(n) @ Cup(n.l, n)
+    >>> diag.draw(
+    ...     figsize=(2, 2), path='./docs/_static/images/snake.png')
+
+    .. image:: ./docs/_static/images/snake.png
+        :align: center
+
+    >>> F = Functor(grammar, lambda _, ty : ty @ ty)
+    >>> F(diag).draw(
+    ...     figsize=(2, 2), path='./docs/_static/images/snake-2.png')
+
+    .. image:: ./docs/_static/images/snake-2.png
+        :align: center
+
+    """
+    target_category: Category
+
+    def __init__(
+        self,
+        target_category: Category,
+        ob: Callable[[Functor, Ty], Ty],
+        ar: Callable[[Functor, Box], Diagrammable] | None = None
+    ) -> None:
+        self.target_category = target_category
+        self.custom_ob = ob
+        self.custom_ar = ar
+        self.ob_cache: dict[Ty, Ty] = {}
+        self.ar_cache: dict[Diagrammable, Diagrammable] = {}
+
+    @overload
+    def __call__(self, entity: Ty) -> Ty: ...
+
+    @overload
+    def __call__(self, entity: Box) -> Diagrammable: ...
+
+    @overload
+    def __call__(self, entity: Diagram) -> Diagram: ...
+
+    def __call__(self, entity: Ty | Diagrammable) -> Ty | Diagrammable:
+        """Apply the functor to a type or a box.
+
+        Parameters
+        ----------
+        entity : Ty or Diagrammable
+            The type or box to which the functor is applied.
+
+        """
+        if isinstance(entity, Ty):
+            return self.ob_with_cache(entity)
+        else:
+            return self.ar_with_cache(entity)
+
+    def ob_with_cache(self, ob: Ty) -> Ty:
+        """Apply the functor to a type, caching the result."""
+        try:
+            return self.ob_cache[ob]
+        except KeyError:
+            pass
+
+        if ob.is_empty:
+            ret = self.target_category.Ty()
+        else:
+            ret = ob.apply_functor(self)
+
+        self.ob_cache[ob] = ret
+        return ret
+
+    def ar_with_cache(self, ar: Diagrammable) -> Diagrammable:
+        """Apply the functor to a Diagrammable, caching the result."""
+        try:
+            return self.ar_cache[ar]
+        except KeyError:
+            pass
+
+        if not ar.is_id:
+            ret = ar.apply_functor(self)
+        else:
+            ret = self.target_category.Diagram.id(self.ob_with_cache(ar.dom))
+
+        self.ar_cache[ar] = ret
+
+        cod_check = self.ob_with_cache(ar.cod)
+        dom_check = self.ob_with_cache(ar.dom)
+        if ret.cod != cod_check or ret.dom != dom_check:
+            raise TypeError(f'The arrow is ill-defined. Applying the functor '
+                            f'to a box returns dom = {ret.dom}, cod = '
+                            f'{ret.cod} expected dom = {dom_check}, cod = '
+                            f'{cod_check}')
+        return ret
+
+    def ob(self, ob: Ty) -> Ty:
+        """Apply the functor to a type."""
+        if self.custom_ob is None:
+            raise AttributeError('Specify a custom ob function if you want to '
+                                 'use the functor on types.')
+        return self.custom_ob(self, ob)
+
+    def ar(self, ar: Box) -> Diagrammable:
+        """Apply the functor to a box."""
+        if self.custom_ar is None:
+            raise AttributeError('Specify a custom ar function if you want to '
+                                 'use the functor on boxes.')
+
+        return self.custom_ar(self, ar)

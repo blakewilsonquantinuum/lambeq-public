@@ -34,10 +34,7 @@ def test_Ty():
 
 def test_Cup_init():
     t = Ty('n')
-    with raises(ValueError):
-        Cup(t@t, (t@t).l)
-    with raises(ValueError):
-        Cup(Ty(), Ty())
+    assert Cup(Ty(), Ty()) == Diagram.id()
 
 def test_Box():
     a , b  = map(Ty, 'ab')
@@ -122,8 +119,6 @@ def test_Cup():
 
     # Errors when instantiating
     with raises(ValueError):
-        Cup(ab, ab.r)
-    with raises(ValueError):
         Cup(a, a)
     with raises(ValueError):
         Cup(a.r, a)
@@ -140,9 +135,6 @@ def test_Spider():
     a, b = map(Ty, 'ab')
     ab = a @ b
 
-    with raises(TypeError):
-        Spider(ab, 2, 2)
-
     spider = Spider(a, 2, 2)
     assert spider.r.l == spider
     assert spider.dagger().dagger() == spider
@@ -150,9 +142,6 @@ def test_Spider():
 def test_Swap():
     a, b = map(Ty, 'ab')
     ab = a @ b
-
-    with raises(ValueError):
-        Swap(ab, a)
 
     swap = Swap(a, b)
     assert swap.dagger().dagger() == swap
@@ -229,3 +218,90 @@ def test_Dagger():
     box = Box('bob', n, s)
 
     assert box.l.dagger().r.dagger() == box.dagger().l.dagger().r == box
+
+def test_register_special_box():
+
+    class Dummy(Box):
+        def __init__(self, name):
+            self.name = name
+
+    Diagram.register_special_box('dummy', Dummy)
+    assert Diagram.special_boxes['dummy'] == Dummy
+
+
+def test_Functor_on_type():
+    q, p, w = Ty('q'), Ty('p'), Ty('w')
+
+    func = Functor(grammar,
+                   ob=lambda _, x: q if x == p else x,
+                   ar=lambda _, x: x)
+
+    assert func(w) == w
+    assert func(p) == q
+    assert func(p @ p) == q @ q
+    assert func(p.r) == func(p).r == q.r
+    assert func(p @ p.r) == q @ q.r
+
+def test_permutation():
+
+    a,b,c,d = map(Ty, 'abcd')
+
+    diag = Id(a) @ Id(b) @ Id(c) @ Id(d)
+
+    assert diag.permuted([0,1,2,3]) == Id(a@b@c@d)
+    assert diag.permuted([0,2,1,3]) == diag >> Id(a) @ Swap(b,c) @ Id(d)
+
+    with raises(ValueError):
+        diag.permuted([0,1,2,2])
+    with raises(ValueError):
+        Diagram.permutation(a@b, [0,1,2])
+    with raises(ValueError):
+        diag.permuted([0,1,2])
+
+def test_Functor_on_box():
+    a, b, c, z = Ty('a'), Ty('b'), Ty('c'), Ty('z')
+    f = Box('f', a, b)
+    g = Box('g', b, c)
+
+    f_z = Box('f', a, z)
+    g_z = Box('g', z, c)
+
+    def ar(func, box):
+        return type(box)(box.name, func(box.dom), func(box.cod))
+
+    func = Functor(grammar,
+                   ob=lambda _, x: z if x == b else x,
+                   ar = ar)
+
+    assert func(f) == f_z
+    assert func(g.r) == func(g).r == g_z.r
+    assert func(f >> g) == f_z >> g_z
+    assert func(f @ g) == f_z @ g_z
+
+    def bad_ar(func, box):
+        return Box("BOX", a, c) if box.cod == b else box
+
+    func_bad = Functor(grammar,
+                       ob=lambda _, x: z if x == b else x,
+                       ar = bad_ar)
+    with raises(TypeError):
+        func_bad(Box('box', a, b))
+
+def test_special_boxes():
+    q, p = Ty('q'), Ty('p')
+
+    func = Functor(grammar,
+                   ob=lambda _, x: q @ q if x == p else x,
+                   ar=lambda _, x: x)
+
+    assert func(Cup(p, p.r)) == Cup(q@q, q.r@q.r)
+    assert func(Cap(p, p.l)) == Cap(q@q, q.l@q.l)
+    assert func(Swap(p, p.r)) == Swap(q@q, q.r@q.r)
+
+    func2 = Functor(grammar,
+                    ob=lambda _, x: q @ p,
+                    ar=lambda _, x: x)
+
+    assert func2(Spider(p, 2, 2)) == (Id(q@p@q@p).permuted([0,2,1,3])
+                                      >> Spider(q, 2, 2) @Spider(p, 2, 2)
+                                      >> Id(q@q@p@p).permuted([0,2,1,3]))
