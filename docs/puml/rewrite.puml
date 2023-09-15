@@ -20,8 +20,17 @@ class SimpleRewriteRule {
 class CoordinationRewriteRule {}
 class CurryRewriteRule {}
 class Rewriter {
-    apply_rewrites
+    apply_rewrites()
 }
+class UnknownWordsRewriteRule {
+  {static} from_diagrams()
+}
+
+abstract class DiagramRewriter {
+  matches()
+  rewrite()
+}
+class UnifyCodomainRewriter {}
 
 class discopy.monoidal.Diagram #back:lightblue;line:black
 class discopy.rigid.Diagram #back:lightblue;line:black
@@ -40,6 +49,9 @@ object subject_rp_rule
 RewriteRule <|-- SimpleRewriteRule
 RewriteRule <|-- CoordinationRewriteRule
 RewriteRule <|-- CurryRewriteRule
+RewriteRule <|-- UnknownWordsRewriteRule
+
+DiagramRewriter <|-- UnifyCodomainRewriter
 
 Rewriter *-d- RewriteRule
 SimpleRewriteRule::template *-- discopy.rigid.Diagram

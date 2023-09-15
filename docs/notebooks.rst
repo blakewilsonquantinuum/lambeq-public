@@ -6,6 +6,7 @@ Examples
 .. toctree::
 
     ../examples/tokenisation.ipynb
+    ../examples/unk_words.ipynb
     ../examples/parser.ipynb
     ../examples/reader.ipynb
     ../examples/tree_reader.ipynb

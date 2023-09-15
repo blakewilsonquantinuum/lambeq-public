@@ -95,9 +95,12 @@ Contains implementations of :term:`rewrite rules <rewrite rule>` for the transfo
 .. inheritance-diagram::
     lambeq.rewrite.CoordinationRewriteRule
     lambeq.rewrite.CurryRewriteRule
+    lambeq.rewrite.DiagramRewriter
     lambeq.rewrite.RewriteRule
     lambeq.rewrite.Rewriter
     lambeq.rewrite.SimpleRewriteRule
+    lambeq.rewrite.UnifyCodomainRewriter
+    lambeq.rewrite.UnknownWordsRewriteRule
    :parts: 1
 
 |
