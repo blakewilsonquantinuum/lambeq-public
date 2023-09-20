@@ -4,7 +4,7 @@ from discopy.grammar.pregroup import (Box, Cap, Cup, Diagram, Id, Ob, Spider,
                                       Swap, Ty, Word)
 
 from lambeq import (AtomicType, Rewriter, CoordinationRewriteRule,
-                    CurryRewriteRule, SimpleRewriteRule,
+                    CurryRewriteRule, SimpleRewriteRule, stairs_reader,
                     UnifyCodomainRewriter, UnknownWordsRewriteRule)
 
 N = AtomicType.NOUN
@@ -232,3 +232,13 @@ def test_handle_unknown_words(ignore_types):
                              >> Cup(N, N.r) @ Id(S) @ Cup(N.l, N))
     processed_test_diagram = rewrite_unknown_words(test_diagram)
     assert processed_test_diagram == expected_test_diagram
+
+
+def test_unknown_words_stairs():
+    sentence = 'This is a sentence'
+    diagram = stairs_reader.sentence2diagram(sentence)
+    rewrite_unknown_words = Rewriter([
+        UnknownWordsRewriteRule.from_diagrams([diagram])
+    ])
+
+    assert rewrite_unknown_words(diagram) == diagram

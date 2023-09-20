@@ -423,7 +423,8 @@ class UnknownWordsRewriteRule(RewriteRule):
         self.unk_token = unk_token
 
     def matches(self, box: Box) -> bool:
-        return ((box.name, box.cod) not in self.vocabulary
+        return (isinstance(box, Word)
+                and (box.name, box.cod) not in self.vocabulary
                 and box.name not in self.vocabulary)
 
     def rewrite(self, box: Box) -> Diagram:
