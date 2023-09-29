@@ -178,7 +178,8 @@ class Ty(Entity):
 
     def tensor(self, other: Self | Iterable[Self], *rest: Self) -> Self:
         tys = [*other, *rest]
-        if any(not isinstance(ty, type(self)) for ty in tys):
+        if any(not isinstance(ty, type(self))
+               or self.category != ty.category for ty in tys):
             return NotImplemented
 
         return self._fromiter(ob for ty in (self, *tys) for ob in ty)
@@ -208,12 +209,12 @@ class Ty(Entity):
         return self.rotate(1)
 
     def __lshift__(self, rhs: Self) -> Self:
-        if not isinstance(rhs, type(self)):
+        if not isinstance(rhs, type(self)) or self.category != rhs.category:
             return NotImplemented
         return self @ rhs.l
 
     def __rshift__(self, rhs: Self) -> Self:
-        if not isinstance(rhs, type(self)):
+        if not isinstance(rhs, type(self)) or self.category != rhs.category:
             return NotImplemented
         return self.r @ rhs
 
@@ -569,7 +570,8 @@ class Diagram(Entity, Diagrammable):
             diags = [diagram.to_diagram() for diagram in diagrams]
         except AttributeError:
             return NotImplemented
-        if any(not isinstance(diagram, type(self)) for diagram in diags):
+        if any(not isinstance(diagram, type(self))
+               or self.category != diagram.category for diagram in diags):
             return NotImplemented
 
         right = dom = self.dom.tensor(*[diagram.dom for diagram in diagrams])
@@ -601,7 +603,8 @@ class Diagram(Entity, Diagrammable):
             diags = [diagram.to_diagram() for diagram in diagrams]
         except AttributeError:
             return NotImplemented
-        if any(not isinstance(diagram, type(self)) for diagram in diags):
+        if any(not isinstance(diagram, type(self))
+               or self.category != diagram.category for diagram in diags):
             return NotImplemented
 
         layers = [*self.layers]
