@@ -38,6 +38,7 @@ def _import_spacy() -> None:
     global spacy
     import spacy
     import spacy.lang.en
+    import spacy.cli
 
 
 class SpacyTokeniser(Tokeniser):
