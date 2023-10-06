@@ -34,7 +34,7 @@ from lambeq.training.model import Model
 class PytorchModel(Model, torch.nn.Module):
     """A lambeq model for the classical pipeline using PyTorch."""
 
-    weights: torch.nn.ParameterList  # type: ignore[assignment]
+    weights: torch.nn.ParameterList
     symbols: list[Symbol]  # type: ignore[assignment]
 
     def __init__(self) -> None:
@@ -46,7 +46,7 @@ class PytorchModel(Model, torch.nn.Module):
         """Reinitialise all modules in the model."""
         for module in self.modules():
             try:
-                module.reset_parameters()  # type: ignore[operator]
+                module.reset_parameters()
             except (AttributeError, TypeError):
                 pass
 
