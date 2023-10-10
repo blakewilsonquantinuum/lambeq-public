@@ -339,6 +339,9 @@ def _draw_box(backend: DrawingBackend,
                      for wire in
                      drawable_box.cod_wires + drawable_box.dom_wires]
 
+    if not all_wires_pos:
+        all_wires_pos = [drawable_box.x]
+
     left = min(all_wires_pos) - 0.25
     right = max(all_wires_pos) + 0.25
     height = drawable_box.y - .25

@@ -246,7 +246,7 @@ class Diagrammable(ABC):
 
     def __getattr__(self, name: str) -> Any:
         if isinstance(self, Diagram):
-            raise AttributeError
+            raise AttributeError((self, name))
         else:
             return getattr(self.to_diagram(), name)
 
@@ -255,6 +255,9 @@ class Diagrammable(ABC):
 
     @abstractmethod
     def rotate(self, z: int) -> Diagrammable: ...
+
+    @abstractmethod
+    def __matmul__(self, rhs: Diagrammable) -> Diagram: ...
 
 
 @grammar
@@ -353,6 +356,10 @@ class Layer(Entity):
     def __repr__(self) -> str:
         return f'|{repr(self.left)} @ {repr(self.box)} @ {repr(self.right)}|'
 
+    def __iter__(self) -> Iterator[Ty | Box]:
+        iterable_res: Iterable[Ty | Box] = self.unpack()
+        yield from iterable_res
+
     def unpack(self) -> tuple[Ty, Box, Ty]:
         return self.left, self.box, self.right
 
@@ -411,6 +418,9 @@ class Diagram(Entity, Diagrammable):
 
     special_boxes: ClassVar[dict[str, _DiagrammableFactory]] = {}
 
+    def __init_subclass__(cls) -> None:
+        cls.special_boxes = {}
+
     @classmethod
     @overload
     def register_special_box(
@@ -456,10 +466,6 @@ class Diagram(Entity, Diagrammable):
 
     def to_diagram(self) -> Self:
         return self
-
-    @classmethod
-    def from_diagrammable(cls, entity: Diagrammable) -> Self:
-        return entity.to_diagram()  # type: ignore[return-value]
 
     @classmethod
     def id(cls, dom: Ty | None = None) -> Self:
@@ -565,26 +571,58 @@ class Diagram(Entity, Diagrammable):
                 in_words = False
         return True
 
-    def tensor(self, *diagrams: Self) -> Self:
+    @classmethod
+    def lift(cls, diagrams: Iterable[Diagrammable]) -> list[Self]:
+        """Lift diagrams to the current category.
+
+        Given a list of boxes or diagrams, call `to_diagram` on each,
+        then check all of the diagrams are in the same category as the
+        calling class.
+
+        Parameters
+        ----------
+        diagrams : iterable
+            The diagrams to lift and check.
+
+        Returns
+        -------
+        list of Diagram
+            The diagrams after calling `to_diagram` on each.
+
+        Raises
+        ------
+        ValueError
+            If any of the diagrams are not in the same category of the
+            calling class.
+
+        """
         try:
             diags = [diagram.to_diagram() for diagram in diagrams]
-        except AttributeError:
-            return NotImplemented
-        if any(not isinstance(diagram, type(self))
-               or self.category != diagram.category for diagram in diags):
+        except AttributeError as e:
+            raise ValueError from e
+        if any(not isinstance(diagram, cls)
+               or cls.category != diagram.category for diagram in diags):
+            raise ValueError
+
+        return diags  # type: ignore[return-value]
+
+    def tensor(self, *diagrams: Diagrammable) -> Self:
+        try:
+            diags = self.lift([self, *diagrams])
+        except ValueError:
             return NotImplemented
 
         right = dom = self.dom.tensor(*[diagram.dom for diagram in diagrams])
         left = self.category.Ty()
         layers = []
-        for diagram in (self, *diags):
+        for diagram in diags:
             right = right[len(diagram.dom):]
             layers += [layer.extend(left, right) for layer in diagram.layers]
             left @= diagram.cod
 
         return type(self)(dom=dom, cod=left, layers=layers)
 
-    def __matmul__(self, rhs: Self) -> Self:
+    def __matmul__(self, rhs: Diagrammable) -> Self:
         return self.tensor(rhs)
 
     @property
@@ -598,13 +636,10 @@ class Diagram(Entity, Diagrammable):
     def __len__(self) -> int:
         return len(self.layers)
 
-    def then(self, *diagrams: Self) -> Self:
+    def then(self, *diagrams: Diagrammable) -> Self:
         try:
-            diags = [diagram.to_diagram() for diagram in diagrams]
-        except AttributeError:
-            return NotImplemented
-        if any(not isinstance(diagram, type(self))
-               or self.category != diagram.category for diagram in diags):
+            diags = self.lift(diagrams)
+        except ValueError:
             return NotImplemented
 
         layers = [*self.layers]
@@ -622,10 +657,10 @@ class Diagram(Entity, Diagrammable):
     def then_at(self, diagram: Diagrammable, index: int) -> Self:
         return (self
                 >> (self.id(self.cod[:index])
-                    @ self.from_diagrammable(diagram)
+                    @ diagram
                     @ self.id(self.cod[index+len(diagram.dom):])))
 
-    def __rshift__(self, rhs: Self) -> Self:
+    def __rshift__(self, rhs: Diagrammable) -> Self:
         return self.then(rhs)
 
     def rotate(self, z: int) -> Self:
@@ -651,6 +686,49 @@ class Diagram(Entity, Diagrammable):
                               layers=[replace(layer, box=layer.box.dagger())
                                       for layer in reversed(self.layers)])
 
+    def transpose(self, left: bool = False) -> Self:
+        """Construct the diagrammatic transpose.
+
+        The transpose of any diagram in a category with cups and caps
+        can be constructed as follows:
+                                        (default)
+                Left transpose       Right transpose
+                      │╭╮                  ╭╮│
+                      │█│                  │█│
+                      ╰╯│                  │╰╯
+
+        The input and output types of the transposed diagram are the
+        adjoints of the respective types of the original diagram.
+        This means that for diagrams with composite types, the order of
+        the objects are reversed.
+
+        Parameters
+        ----------
+        left : bool, default: False
+            Whether to transpose to the diagram to the left.
+
+        Returns
+        -------
+        Diagram
+            The transposed diagram, constructed as shown above.
+
+        """
+        Cap = self.category.Diagram.special_boxes['cap']
+        Cup = self.category.Diagram.special_boxes['cup']
+        Id = self.id
+
+        if left:
+            top_layer = Id(self.cod.l) @ Cap(self.dom, self.dom.l)
+            mid_layer = Id(self.cod.l) @ self @ Id(self.dom.l)
+            bot_layer = Cup(self.cod.l, self.cod) @ Id(self.dom.l)
+        else:
+            top_layer = Cap(self.dom.r, self.dom)  # type: ignore[assignment]
+            top_layer @= Id(self.cod.r)
+            mid_layer = Id(self.dom.r) @ self @ Id(self.cod.r)
+            bot_layer = Id(self.dom.r) @ Cup(self.cod, self.cod.r)
+
+        return top_layer >> mid_layer >> bot_layer
+
     @classmethod
     def permutation(cls, dom: Ty, permutation: Iterable[int]) -> Self:
         """Create a layer of Swaps that permutes the wires."""
@@ -670,9 +748,7 @@ class Diagram(Entity, Diagrammable):
             for i in reversed(range(out_index, in_index)):
                 diagram >>= (
                     cls.id(diagram.cod[:i])
-                    @ cls.from_diagrammable(
-                        cls.special_boxes['swap'](*diagram.cod[i:i+2])
-                    )
+                    @ cls.special_boxes['swap'](*diagram.cod[i:i+2])
                     @ cls.id(diagram.cod[i+2:])
                 )
 
@@ -1254,7 +1330,7 @@ class Spider(Box):
                 )
                 >> cls.category.Diagram.id().tensor(
                     *(cls(ob, n_legs_in, n_legs_out)
-                      for ob in type)  # type: ignore[arg-type]
+                      for ob in type)
                 ).permuted([
                     j
                     for i in range(n_legs_out)
@@ -1364,7 +1440,6 @@ class Word(Box):
     cod: Ty
 
     dom: Ty = field(init=False)
-    z: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
         self.dom = self.category.Ty()
@@ -1377,7 +1452,7 @@ class Word(Box):
 
     def rotate(self, z: int) -> Self:
         """Rotate the Word box, changing the winding number."""
-        return type(self)(self.name, self.cod.rotate(z))
+        return type(self)(self.name, self.cod.rotate(z), self.z + z)
 
     def dagger(self) -> Daggered:
         return Daggered(self)
