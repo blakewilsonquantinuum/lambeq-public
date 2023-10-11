@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING
 
 from PIL import Image
 
-from lambeq.backend import grammar
+from lambeq.backend import grammar, quantum
 from lambeq.backend.drawing.drawable import (BoxNode, DrawableDiagram,
                                              DrawablePregroup,
                                              WireEndpointType)
@@ -47,8 +47,7 @@ if TYPE_CHECKING:
 
 
 def draw(diagram: Diagram, **params) -> None:
-    """
-    Draws a grammar diagram.
+    """Draw a grammar diagram.
 
     Parameters
     ----------
@@ -113,7 +112,15 @@ def draw(diagram: Diagram, **params) -> None:
     backend.draw_spiders(drawable, **params)
 
     for node in drawable.boxes:
-        if not drawn_as_spider(node.obj):
+        if isinstance(node.obj, (quantum.Ket, quantum.Bra)):
+            backend = _draw_brakets(backend, drawable, node, **params)
+        elif isinstance(node.obj, quantum.Discard):
+            backend = _draw_discard(backend, drawable, node, **params)
+        elif isinstance(node.obj, quantum.Measure):
+            backend = _draw_measure(backend, drawable, node, **params)
+        elif isinstance(node.obj, quantum.Controlled):
+            backend = _draw_controlled_gate(backend, drawable, node, **params)
+        elif not drawn_as_spider(node.obj):
             backend = _draw_box(backend, drawable, node, **params)
 
     backend.output(
@@ -126,8 +133,8 @@ def draw(diagram: Diagram, **params) -> None:
 
 
 def draw_pregroup(diagram: Diagram, **params) -> None:
-    """
-    Draws a pregroup grammar diagram.
+    """ Draw a pregroup grammar diagram.
+
     A pregroup diagram is structured as:
         (State @ State ... State) >> (Cups and Swaps)
 
@@ -192,8 +199,7 @@ def to_gif(diagrams: list[Diagram],
            timestep: int = 500,
            loop: bool = False,
            **params) -> str | HTML_ty:
-    """
-    Builds a GIF stepping through the given diagrams.
+    """Build a GIF stepping through the given diagrams.
 
     Parameters
     ----------
@@ -244,8 +250,7 @@ def draw_equation(*terms: grammar.Diagram,
                   space: float = 1,
                   path: str | None = None,
                   **params) -> None:
-    """
-    Draws an equation with multiple diagrams.
+    """Draw an equation with multiple diagrams.
 
     Parameters
     ----------
@@ -301,13 +306,27 @@ def draw_equation(*terms: grammar.Diagram,
         aspect=params.get('aspect', DEFAULT_ASPECT))
 
 
+def _get_box_frame_coordinates(drawable_diagram: DrawableDiagram,
+                               drawable_box: BoxNode) -> tuple[float, float]:
+    """Get the x coordinates of the left and right border of a box."""
+    all_wires_pos = [drawable_diagram.wire_endpoints[wire].x
+                     for wire in
+                     drawable_box.cod_wires + drawable_box.dom_wires]
+
+    if not all_wires_pos:  # scalar box
+        all_wires_pos = [drawable_box.x]
+
+    left = min(all_wires_pos) - 0.25
+    right = max(all_wires_pos) + 0.25
+    return left, right
+
+
 def _draw_box(backend: DrawingBackend,
               drawable_diagram: DrawableDiagram,
               drawable_box: BoxNode,
               asymmetry: float,
               **params) -> DrawingBackend:
-    """
-    Draws a box on a given backend.
+    """Draw a box on a given backend.
 
     Parameters
     ----------
@@ -335,27 +354,13 @@ def _draw_box(backend: DrawingBackend,
     if not box.dom and not box.cod:
         left, right = drawable_box.x, drawable_box.x
 
-    all_wires_pos = [drawable_diagram.wire_endpoints[wire].x
-                     for wire in
-                     drawable_box.cod_wires + drawable_box.dom_wires]
-
-    if not all_wires_pos:
-        all_wires_pos = [drawable_box.x]
-
-    left = min(all_wires_pos) - 0.25
-    right = max(all_wires_pos) + 0.25
+    left, right = _get_box_frame_coordinates(drawable_diagram, drawable_box)
     height = drawable_box.y - .25
 
     points = [[left, height], [right, height],
               [right, height + .5], [left, height + .5]]
 
-    # TODO: Update once this functionality is added to grammar
-    is_conjugate = getattr(box, 'is_conjugate', False)
-    is_transpose = getattr(box, 'is_transpose', False)
-
-    if is_transpose:
-        points[0][0] -= asymmetry
-    elif is_conjugate:
+    if box.z:
         points[3][0] -= asymmetry
     elif isinstance(box, grammar.Daggered):
         points[1][0] += asymmetry
@@ -364,8 +369,12 @@ def _draw_box(backend: DrawingBackend,
 
     backend.draw_polygon(*points)
 
+    box_label = box.name
+    if isinstance(box, quantum.Scalar):
+        box_label = f'{box.data:.3f}'
+
     if params.get('draw_box_labels', True):
-        backend.draw_text(box.name, drawable_box.x, drawable_box.y,
+        backend.draw_text(box_label, drawable_box.x, drawable_box.y,
                           ha='center', va='center',
                           fontsize=params.get('fontsize', None))
 
@@ -375,8 +384,7 @@ def _draw_box(backend: DrawingBackend,
 def _draw_pregroup_state(backend: DrawingBackend,
                          drawable_box: BoxNode,
                          **params) -> DrawingBackend:
-    """
-    Draws a pregroup word state on a given backend.
+    """Draw a pregroup word state on a given backend.
 
     Parameters
     ----------
@@ -415,8 +423,7 @@ def _draw_pregroup_state(backend: DrawingBackend,
 def _draw_wires(backend: DrawingBackend,
                 drawable_diagram: DrawableDiagram,
                 **params) -> DrawingBackend:
-    """
-    Draws all wires of a diagram on a given backend.
+    """Draw all wires of a diagram on a given backend.
 
     Parameters
     ----------
@@ -452,4 +459,258 @@ def _draw_wires(backend: DrawingBackend,
                 fontsize=params.get('fontsize_types',
                                     params.get('fontsize', None)),
                 verticalalignment='top')
+    return backend
+
+
+def _draw_brakets(backend: DrawingBackend,
+                  drawable_diagram: DrawableDiagram,
+                  drawable_box: BoxNode,
+                  **params) -> DrawingBackend:
+    """Draw Bras and Kets on a given backend.
+
+    Parameters
+    ----------
+    backend: DrawingBackend
+        A lambeq drawing backend.
+    drawable_diagram: DrawableDiagram
+        A drawable diagram.
+    drawable_box: BoxNode
+        A BoxNode to be drawn. Must be in `drawable_diagram`.
+    **params:
+        Additional drawing parameters. See `drawing.draw`.
+
+    Returns
+    -------
+    backend: DrawingBackend
+        Drawing backend updated with the box's graphic.
+
+    """
+
+    box = drawable_box.obj
+    assert isinstance(box, (quantum.Ket, quantum.Bra))
+    is_bra = isinstance(box, quantum.Bra)
+
+    factor = -1 if is_bra else 1
+
+    left, right = _get_box_frame_coordinates(drawable_diagram, drawable_box)
+    height = drawable_box.y - factor * .25
+
+    points = [[left, height], [right, height],
+              [(left+right) / 2, height + factor * .5]]
+
+    backend.draw_polygon(*points)
+    backend.draw_text(str(box.bit),
+                      drawable_box.x, drawable_box.y,
+                      ha='center', va='center',
+                      fontsize=params.get('fontsize', None))
+    return backend
+
+
+def _draw_discard(backend: DrawingBackend,
+                  drawable_diagram: DrawableDiagram,
+                  drawable_box: BoxNode,
+                  **params) -> DrawingBackend:
+    """Draw a Discards on a given backend.
+
+    Parameters
+    ----------
+    backend: DrawingBackend
+        A lambeq drawing backend.
+    drawable_diagram: DrawableDiagram
+        A drawable diagram.
+    drawable_box: BoxNode
+        A BoxNode to be drawn. Must be in `drawable_diagram`.
+    **params:
+        Additional drawing parameters. See `drawing.draw`.
+
+    Returns
+    -------
+    backend: DrawingBackend
+        Drawing backend updated with the box's graphic.
+
+    """
+
+    left, right = _get_box_frame_coordinates(drawable_diagram, drawable_box)
+    height = drawable_box.y + 0.25
+
+    for j in range(3):
+        source = (left + .1 * j, height - .1 * j)
+        target = (right - .1 * j, height - .1 * j)
+        backend.draw_wire(source, target)
+    return backend
+
+
+def _draw_measure(backend: DrawingBackend,
+                  drawable_diagram: DrawableDiagram,
+                  drawable_box: BoxNode,
+                  **params) -> DrawingBackend:
+    """Draw a Measure box.
+
+    Parameters
+    ----------
+    backend: DrawingBackend
+        A lambeq drawing backend.
+    drawable_diagram: DrawableDiagram
+        A drawable diagram.
+    drawable_box: BoxNode
+        A BoxNode to be drawn. Must be in `drawable_diagram`.
+    **params:
+        Additional drawing parameters. See `drawing.draw`.
+
+    Returns
+    -------
+    backend: DrawingBackend
+        Drawing backend updated with the box's graphic.
+
+    """
+
+    backend = _draw_box(backend,
+                        drawable_diagram,
+                        drawable_box,
+                        draw_box_labels=False,
+                        **params)
+
+    i, j = drawable_box.x, drawable_box.y
+    backend.draw_wire((i - .15, j - .1), (i, j + .1), bend_in=True)
+    backend.draw_wire((i, j + .1), (i + .15, j - .1), bend_out=True)
+    backend.draw_wire((i, j - .1), (i + .05, j + .15), style='->')
+    return backend
+
+
+def _draw_controlled_gate(backend: DrawingBackend,
+                          drawable_diagram: DrawableDiagram,
+                          drawable_box: BoxNode,
+                          **params) -> DrawingBackend:
+    """ Draw a Controlled gate.
+
+    Parameters
+    ----------
+    backend: DrawingBackend
+        A lambeq drawing backend.
+    drawable_diagram: DrawableDiagram
+        A drawable diagram.
+    drawable_box: BoxNode
+        A BoxNode to be drawn. Must be in `drawable_diagram`.
+    **params:
+        Additional drawing parameters. See `drawing.draw`.
+
+    Returns
+    -------
+    backend: DrawingBackend
+        Drawing backend updated with the box's graphic.
+
+    """
+
+    assert isinstance(drawable_box.obj, quantum.Controlled)
+    box = drawable_box.obj
+    distance = box.distance
+    c_size = len(box.controlled.dom)
+
+    all_wires_pos_x = sorted(set([
+        drawable_diagram.wire_endpoints[wire].x
+        for wire in drawable_box.cod_wires + drawable_box.dom_wires]))
+
+    all_wires_pos_y = sorted(set([
+        drawable_diagram.wire_endpoints[wire].y
+        for wire in drawable_box.cod_wires + drawable_box.dom_wires]))
+
+    middle_wire_pos_y = (min(all_wires_pos_y) + max(all_wires_pos_y)) / 2
+
+    # This is the index of the control location
+    index = 0 if distance > 0 else -1
+    sign = 1 if distance > 0 else -1
+
+    # Extract the location of the control and draw black dot
+    control_dot_coordinates = (all_wires_pos_x[index], middle_wire_pos_y)
+    backend.draw_node(*control_dot_coordinates,
+                      color='black',
+                      shape='circle',
+                      nodesize=params.get('nodesize', 1))
+
+    control_wire_endpoint_coordinates = (all_wires_pos_x[index + distance],
+                                         middle_wire_pos_y)
+
+    controlled_middle_coordinates = (
+        all_wires_pos_x[index + distance] + sign * (c_size - 1) / 2,
+        middle_wire_pos_y)
+
+    # The target boundary is the point where the wire hits the box
+    target_boundary = control_wire_endpoint_coordinates
+
+    if box.controlled == quantum.X:
+
+        # CX gets drawn as a circled plus sign.
+        backend.draw_node(
+            *controlled_middle_coordinates,
+            shape='circle', color='white', edgecolor='black',
+            nodesize=2 * params.get('nodesize', 1))
+        backend.draw_node(
+            *controlled_middle_coordinates, shape='plus',
+            nodesize=2 * params.get('nodesize', 1))
+        # Draw the vertical line through the controlled box
+        backend.draw_wire(
+            (controlled_middle_coordinates[0], min(all_wires_pos_y)),
+            (controlled_middle_coordinates[0], max(all_wires_pos_y)))
+
+    else:  # controlled box is not a CX gate
+
+        # If the controlled box is a regular box, we need to shift the
+        # endpoint controll wire to the left or right depending on the
+        # sign of the distance. This is indicated by shift_boundary
+        shift_boundary = True
+
+        # Get the connected wires of the controlled box
+        if sign > 0:
+            b_start = index + distance
+            new_dom_wires = drawable_box.dom_wires[b_start:b_start+c_size]
+            new_cod_wires = drawable_box.cod_wires[b_start:b_start+c_size]
+        elif sign < 0:
+            new_dom_wires = drawable_box.dom_wires[:c_size]
+            new_cod_wires = drawable_box.cod_wires[:c_size]
+
+        # Create a new box node for the controlled box
+        controlled_box_node = BoxNode(box.controlled,
+                                      *controlled_middle_coordinates,
+                                      new_dom_wires,
+                                      new_cod_wires)
+
+        if isinstance(box.controlled, quantum.Controlled):  # nested control
+            backend = _draw_controlled_gate(
+                backend, drawable_diagram, controlled_box_node, **params)
+
+            next_box: quantum.Controlled | quantum.Box = box.controlled
+            while isinstance(next_box, quantum.Controlled):
+                if box.distance * next_box.distance < 0:
+                    shift_boundary = False
+                    break
+                next_box = next_box.controlled
+            if next_box == quantum.X:
+                shift_boundary = False
+        else:
+            backend = _draw_box(backend,
+                                drawable_diagram,
+                                controlled_box_node,
+                                **params)
+
+        if shift_boundary:
+            target_boundary = (
+                control_wire_endpoint_coordinates[0] - sign * .25,
+                control_wire_endpoint_coordinates[1])
+
+    # draw vertical line through control dot
+    backend.draw_wire((all_wires_pos_x[index], all_wires_pos_y[0]),
+                      (all_wires_pos_x[index], all_wires_pos_y[-1]))
+
+    # draw all the other vertical wires
+    extra_offset = 1 if distance > 0 else len(box.controlled.dom)
+    for i in range(extra_offset, extra_offset + abs(distance) - 1):
+        backend.draw_wire((all_wires_pos_x[i], all_wires_pos_y[0]),
+                          (all_wires_pos_x[i], all_wires_pos_y[-1]))
+
+    # TODO change bend_in and bend_out for tikz backend
+    backend.draw_wire(control_dot_coordinates,
+                      target_boundary,
+                      bend_in=True,
+                      bend_out=True)
+
     return backend

@@ -26,8 +26,7 @@ def needs_asymmetry(diagram) -> bool:
 
     return any(
         isinstance(box, grammar.Daggered)
-        or getattr(box, 'is_conjugate', False)
-        or getattr(box, 'is_transpose', False)
+        or box.z
         for box in diagram.boxes)
 
 

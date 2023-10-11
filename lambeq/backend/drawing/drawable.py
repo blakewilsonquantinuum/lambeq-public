@@ -26,6 +26,7 @@ from enum import Enum
 from typing_extensions import Self
 
 from lambeq.backend import grammar
+from lambeq.backend.quantum import quantum
 
 
 class WireEndpointType(Enum):
@@ -222,7 +223,13 @@ class DrawableDiagram:
 
         # Create a node representing each element in the box's codomain
         for i, obj in enumerate(box.cod):
-            x = x_pos - len(box.cod[1:]) / 2 + i
+
+            # If the box is a quantum gate, retain x coordinate of wires
+            if box.category == quantum and len(box.dom) == len(box.cod):
+                nbr_idx = scan[off + i]
+                x = self.wire_endpoints[nbr_idx].x
+            else:
+                x = x_pos - len(box.cod[1:]) / 2 + i
             y = max_depth - depth - .75
 
             wire_end = WireEndpoint(WireEndpointType.COD,

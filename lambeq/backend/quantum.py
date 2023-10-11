@@ -71,6 +71,9 @@ class Ty(tensor.Dim):
         else:
             return ' @ '.join(d._repr_rec() for d in self.objects)
 
+    def __str__(self) -> str:
+        return self.label if self.label else ''
+
     def __repr__(self) -> str:
         return f'Ty({self._repr_rec()})'
 
