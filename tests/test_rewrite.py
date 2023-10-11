@@ -4,7 +4,8 @@ from discopy.grammar.pregroup import (Box, Cap, Cup, Diagram, Id, Ob, Spider,
                                       Swap, Ty, Word)
 
 from lambeq import (AtomicType, Rewriter, CoordinationRewriteRule,
-                    CurryRewriteRule, SimpleRewriteRule, stairs_reader,
+                    CurryRewriteRule, RemoveCupsRewriter,
+                    RemoveSwapsRewriter, SimpleRewriteRule, stairs_reader,
                     UnifyCodomainRewriter, UnknownWordsRewriteRule)
 
 N = AtomicType.NOUN
@@ -174,6 +175,7 @@ def test_curry_functor():
     rewriter = Rewriter([CurryRewriteRule()])
     assert rewriter(diagram).normal_form() == expected
 
+
 def test_merge_wires_rewriter():
     n, s = map(Ty, 'ns')
     take = Word('take', n.r @ s @ n.l)
@@ -186,6 +188,219 @@ def test_merge_wires_rewriter():
     rewriter = UnifyCodomainRewriter()
 
     assert rewriter(diagram) == expected_diagram
+
+
+def test_remove_cups_rewriter():
+    n, s = map(Ty, 'ns')
+
+    remove_cups = RemoveCupsRewriter()
+
+    d1 = (
+        Word("box1", n @ n @ s) @ Word("box2", (n @ s).r)
+        >> Id(n) @ Diagram.cups(n @ s, (n @ s).r))
+    expect_d1 = (
+        Word("box1", n @ n @ s) >> Id(n) @ Word("box2", (n @ s).r).l)
+    assert remove_cups(d1) == expect_d1
+
+    d2 = (
+        Word("box1", n @ s) @ Word("box2", s.r @ n) @ Word("box3", n.r @ n.r)
+        >> Id(n) @ Cup(s, s.r) @ Cup(n, n.r) @ Id(n.r) >> Cup(n, n.r))
+    expect_d2 = (
+        Word("box3", n.r @ n.r) >> Id(n.r) @ Cap(s.r.r, s.r) @ Id(n.r)
+        >> Word("box2", s.r @ n).r @ Word("box1", n @ s).r)
+    assert remove_cups(d2) == expect_d2
+
+    d3 = (
+        (Word("box1", n) >> Spider(1, 2, n)) @ Word("box2", n.r @ n.r @ n)
+        >> Diagram.cups(n @ n, n.r @ n.r) @ Id(n))
+    expect_d3 = (
+        Word("box2", n.r @ n.r @ n)
+        >> (Word("box1", n) >> Spider(1, 2, n)).r @ Id(n)
+    )
+    assert remove_cups(d3) == expect_d3
+
+    # test disconnected
+    assert (remove_cups(Id().tensor(d1, d2, d3))
+            == Id().tensor(*map(remove_cups, (d1, d2, d3))))
+
+    # test illegal cups
+    assert remove_cups(d1.r.dagger()) == remove_cups(d1).r.dagger()
+    assert remove_cups(d3.l.dagger()) == remove_cups(d3).l.dagger()
+
+    # scalars can be bent both ways
+    assert remove_cups(d2.r.dagger()) == remove_cups(d2).dagger().normal_form()
+
+    d4 = (
+        Word('box1', n) @ Word('box2', n) @ Word('box3', n.r @ n.r @ n)
+        >> Diagram.cups(n @ n, (n @ n).r) @ Id(n))
+    expect_d4 = (
+        Word('box3', n.r @ n.r @ n) >>
+        (Word('box1', n) @ Word('box2', n)).r @ Id(n))
+    assert remove_cups(d4) == expect_d4
+
+    assert remove_cups(d4 @ Id(n @ s) @ d4) == expect_d4 @ Id(n @ s) @ expect_d4
+
+    type_raised = (
+        Diagram.caps(s @ n @ s, (s @ n @ s).l) @ Word('w1', s) @ Word('w2', n @ s)
+        >> Id(s @ n @ s) @ Diagram.cups((s @ n @ s).l, s @ n @ s))
+
+    def remove_caps(diagram):
+        return remove_cups(diagram.dagger()).dagger()
+    assert remove_caps(remove_cups(type_raised)) == Word('w1', s) @ Word('w2', n @ s)
+
+
+def test_remove_swaps_rewriter():
+    n, s = map(Ty, 'ns')
+    remove_swaps = RemoveSwapsRewriter()
+
+    inp_diagr = Diagram.decode(
+        dom=Ty(),
+        cod=s,
+        boxes=[Word('I', Ty('n')), Word('do', Ty(Ob('n', z=1), 's', Ob('s', z=-1), 'n')),
+                Word('not', Ty(Ob('s', z=1), Ob('n', z=2), Ob('n', z=1), 's')),
+                Word('run', Ty(Ob('n', z=1), 's')), Swap(Ty('n'), Ty(Ob('s', z=1))),
+                Swap(Ty(Ob('s', z=-1)), Ty(Ob('s', z=1))), Cup(Ty('s'), Ty(Ob('s', z=1))),
+                Swap(Ty('n'), Ty(Ob('n', z=2))), Swap(Ty(Ob('s', z=-1)), Ty(Ob('n', z=2))),
+                Cup(Ty(Ob('n', z=1)), Ty(Ob('n', z=2))), Swap(Ty('n'), Ty(Ob('n', z=1))),
+                Swap(Ty(Ob('s', z=-1)), Ty(Ob('n', z=1))), Cup(Ty('n'), Ty(Ob('n', z=1))),
+                Swap(Ty('n'), Ty('s')), Swap(Ty(Ob('s', z=-1)), Ty('s')),
+                Cup(Ty('n'), Ty(Ob('n', z=1))), Cup(Ty(Ob('s', z=-1)), Ty('s'))],
+            offsets= [0, 1, 5, 9, 4, 3, 2, 3, 2, 1, 2, 1, 0, 1, 0, 2, 1]
+    )
+
+    out_diagr = Diagram.decode(
+        dom=Ty(),
+        cod=s,
+        boxes=[Word('I', Ty('n')),
+                Word('do not', Ty(Ob('n', z=1), 's', Ob('s', z=-1), 'n')),
+                Word('run', Ty(Ob('n', z=1), 's')),
+                Cup(Ty('n'), Ty(Ob('n', z=1))), Cup(Ty('n'),
+                Ty(Ob('n', z=1))),
+                Cup(Ty(Ob('s', z=-1)), Ty('s'))],
+        offsets=[0, 1, 5, 0, 2, 1]
+    )
+
+    assert remove_swaps(inp_diagr) == out_diagr
+
+
+def test_remove_swaps_rewriter_cross_composition():
+    n, s = map(Ty, 'ns')
+    remove_swaps = RemoveSwapsRewriter()
+
+    inp_diagr = Diagram.decode(
+        dom=Ty(),
+        cod=s,
+        boxes=[Word('I', Ty('n')), Word('do', Ty(Ob('n', z=1), 's', Ob('s', z=-1), 'n')),
+                Word('not', Ty(Ob('s', z=1), Ob('n', z=2), Ob('n', z=1), 's')),
+                Word('run', Ty(Ob('n', z=1), 's')), Swap(Ty('n'), Ty(Ob('s', z=1))),
+                Swap(Ty(Ob('s', z=-1)), Ty(Ob('s', z=1))), Cup(Ty('s'), Ty(Ob('s', z=1))),
+                Swap(Ty('n'), Ty(Ob('n', z=2))), Swap(Ty(Ob('s', z=-1)), Ty(Ob('n', z=2))),
+                Cup(Ty(Ob('n', z=1)), Ty(Ob('n', z=2))), Swap(Ty('n'), Ty(Ob('n', z=1))),
+                Swap(Ty(Ob('s', z=-1)), Ty(Ob('n', z=1))), Cup(Ty('n'), Ty(Ob('n', z=1))),
+                Swap(Ty('n'), Ty('s')), Swap(Ty(Ob('s', z=-1)), Ty('s')),
+                Cup(Ty('n'), Ty(Ob('n', z=1))), Cup(Ty(Ob('s', z=-1)), Ty('s'))],
+            offsets= [0, 1, 5, 9, 4, 3, 2, 3, 2, 1, 2, 1, 0, 1, 0, 2, 1]
+    )
+
+    out_diagr = Diagram.decode(
+        dom=Ty(),
+        cod=s,
+        boxes=[Word('I', Ty('n')),
+                Word('do not', Ty(Ob('n', z=1), 's', Ob('s', z=-1), 'n')),
+                Word('run', Ty(Ob('n', z=1), 's')),
+                Cup(Ty('n'), Ty(Ob('n', z=1))), Cup(Ty('n'),
+                Ty(Ob('n', z=1))),
+                Cup(Ty(Ob('s', z=-1)), Ty('s'))],
+        offsets=[0, 1, 5, 0, 2, 1]
+    )
+
+    assert remove_swaps(inp_diagr) == out_diagr
+
+
+def test_remove_swaps_rewriter_cross_comp_and_unary_rule():
+    n, s = map(Ty, 'ns')
+    remove_swaps = RemoveSwapsRewriter()
+
+    inp_diagr = Diagram.decode(
+        dom=Ty(),
+        cod=n,
+        boxes=[Word('The', Ty('n', Ob('n', z=-1))),
+               Word('best', Ty('n', Ob('n', z=-1))), Word('film', Ty('n')),
+               Word('I', Ty('n')), Word("'ve", Ty(Ob('n', z=1), 's', Ob('s', z=-1), 'n')),
+               Word('ever', Ty(Ob('s', z=1), Ob('n', z=2), Ob('n', z=1), 'n')),
+               Word('seen', Ty(Ob('n', z=1), 's', Ob('n', z=1))),
+               Cup(Ty(Ob('n', z=-1)), Ty('n')), Cup(Ty(Ob('n', z=-1)), Ty('n')),
+               Swap(Ty('n'), Ty(Ob('s', z=1))), Swap(Ty(Ob('s', z=-1)), Ty(Ob('s', z=1))),
+               Cup(Ty('s'), Ty(Ob('s', z=1))), Swap(Ty('n'), Ty(Ob('n', z=2))),
+               Swap(Ty(Ob('s', z=-1)), Ty(Ob('n', z=2))), Cup(Ty(Ob('n', z=1)), Ty(Ob('n', z=2))),
+               Swap(Ty('n'), Ty(Ob('n', z=1))), Swap(Ty(Ob('s', z=-1)), Ty(Ob('n', z=1))),
+               Cup(Ty('n'), Ty(Ob('n', z=1))), Swap(Ty('n'), Ty('n')), Swap(Ty(Ob('s', z=-1)), Ty('n')),
+               Cup(Ty('n'), Ty(Ob('n', z=1))), Cup(Ty(Ob('s', z=-1)), Ty('s')),
+               Swap(Ty('n'), Ty(Ob('n', z=1))), Cup(Ty('n'), Ty(Ob('n', z=1)))],
+        offsets=[0, 2, 4, 5, 6, 10, 14, 1, 1, 5, 4, 3, 4, 3, 2,
+                 3, 2, 1, 2, 1, 3, 2, 1, 0]
+    )
+
+    out_diagr = Diagram.decode(
+        dom=Ty(),
+        cod=n,
+        boxes=[Word('The', Ty('n', Ob('n', z=-1))), Word('best', Ty('n', Ob('n', z=-1))),
+                Word('film', Ty('n')), Word('I', Ty('n')),
+                Word("'ve ever", Ty(Ob('n', z=1), Ob('n', z=1), Ob('s', z=-1), 'n')),
+                Word('seen', Ty(Ob('n', z=1), 's', 'n')), Cup(Ty(Ob('n', z=-1)),
+                Ty('n')), Cup(Ty(Ob('n', z=-1)), Ty('n')), Cup(Ty('n'), Ty(Ob('n', z=1))),
+                Cup(Ty('n'), Ty(Ob('n', z=1))), Cup(Ty(Ob('s', z=-1)), Ty('s')),
+                Cup(Ty('n'), Ty(Ob('n', z=1)))],
+        offsets=[0, 2, 4, 5, 6, 10, 1, 1, 1, 3, 2, 0]
+    )
+
+    assert remove_swaps(inp_diagr) == out_diagr
+
+
+def test_remove_swaps_rewriter_shorten_type():
+    n, s = map(Ty, 'ns')
+    remove_swaps = RemoveSwapsRewriter()
+
+    inp_diagr = Diagram.decode(
+        dom=Ty(),
+        cod=n,
+        boxes=[Word('What', Ty('n', Ob('n', z=-2), Ob('s', z=-1))), Word('Alice', Ty('n')),
+               Word('is', Ty(Ob('n', z=1), 's', Ob('n', z=-1))),
+               Word('and', Ty('n', Ob('s', z=1), Ob('n', z=2), Ob('n', z=1), 's',
+                               Ob('n', z=-1), Ob('n', z=-2), Ob('s', z=-1), 'n')),
+               Word('is', Ty(Ob('n', z=1), 's', Ob('n', z=-1))),
+               Word('not', Ty(Ob('s', z=1), Ob('n', z=2), Ob('n', z=1), 's')),
+               Cup(Ty(Ob('n', z=-1)), Ty('n')), Cup(Ty('s'), Ty(Ob('s', z=1))),
+               Cup(Ty(Ob('n', z=1)), Ty(Ob('n', z=2))), Cup(Ty('n'), Ty(Ob('n', z=1))),
+               Cup(Ty(Ob('s', z=-1)), Ty('s')), Cup(Ty(Ob('n', z=-2)), Ty(Ob('n', z=-1))),
+               Swap(Ty(Ob('n', z=-1)), Ty(Ob('s', z=1))), Cup(Ty('s'), Ty(Ob('s', z=1))),
+               Swap(Ty(Ob('n', z=-1)), Ty(Ob('n', z=2))), Cup(Ty(Ob('n', z=1)), Ty(Ob('n', z=2))),
+               Swap(Ty(Ob('n', z=-1)), Ty(Ob('n', z=1))), Cup(Ty('n'), Ty(Ob('n', z=1))),
+               Swap(Ty(Ob('n', z=-1)), Ty('s')), Cup(Ty(Ob('s', z=-1)), Ty('s')),
+               Cup(Ty(Ob('n', z=-2)), Ty(Ob('n', z=-1)))],
+        offsets=[0, 3, 4, 7, 16, 19, 6, 5, 4, 9, 8, 7, 6, 5, 5, 4, 4,
+                 3, 3, 2, 1]
+    )
+
+    out_diagr = Diagram.decode(
+        dom=Ty(),
+        cod=n,
+        boxes=[Word('What', Ty('n', Ob('n', z=-2), Ob('s', z=-1))),
+               Word('Alice', Ty('n')), Word('is', Ty(Ob('n', z=1), 's', Ob('n', z=-1))),
+               Word('and', Ty('n', Ob('s', z=1), Ob('n', z=2), Ob('n', z=1),
+                              Ob('n', z=-2), Ob('s', z=-1), 'n')),
+               Word('is', Ty(Ob('n', z=1), 's', Ob('n', z=-1))),
+               Word('not', Ty(Ob('n', z=2), Ob('n', z=1), 's', Ob('n', z=-1))),
+               Cup(Ty(Ob('n', z=-1)), Ty('n')), Cup(Ty('s'), Ty(Ob('s', z=1))),
+               Cup(Ty(Ob('n', z=1)), Ty(Ob('n', z=2))), Cup(Ty('n'), Ty(Ob('n', z=1))),
+               Cup(Ty(Ob('s', z=-1)), Ty('s')), Cup(Ty(Ob('n', z=-2)), Ty(Ob('n', z=-1))),
+               Cup(Ty(Ob('n', z=1)), Ty(Ob('n', z=2))), Cup(Ty('n'), Ty(Ob('n', z=1))),
+               Cup(Ty(Ob('s', z=-1)), Ty('s')), Cup(Ty(Ob('n', z=-2)), Ty(Ob('n', z=-1)))],
+        offsets=[0, 3, 4, 7, 14, 17, 6, 5, 4, 7, 6, 5, 4, 3, 2, 1]
+    )
+
+    assert remove_swaps(inp_diagr) == out_diagr
+
 
 def test_unknown_words_rewrite_rule():
     diagram = (Word('Alice', N) @ Word('loves', N >> S << N) @ Word('Bob', N)
@@ -202,6 +417,7 @@ def test_unknown_words_rewrite_rule():
                         >> Cup(N, N.r) @ Id(S) @ Cup(N.l, N))
 
     assert rewritten_diagram == expected_diagram
+
 
 @pytest.mark.parametrize('ignore_types', [False, True])
 def test_handle_unknown_words(ignore_types):

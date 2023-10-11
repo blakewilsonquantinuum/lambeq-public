@@ -31,6 +31,8 @@ abstract class DiagramRewriter {
   rewrite()
 }
 class UnifyCodomainRewriter {}
+class RemoveCupsRewriter {}
+class RemoveSwapsRewriter {}
 
 class discopy.monoidal.Diagram #back:lightblue;line:black
 class discopy.rigid.Diagram #back:lightblue;line:black
@@ -52,6 +54,8 @@ RewriteRule <|-- CurryRewriteRule
 RewriteRule <|-- UnknownWordsRewriteRule
 
 DiagramRewriter <|-- UnifyCodomainRewriter
+DiagramRewriter <|-- RemoveCupsRewriter
+DiagramRewriter <|-- RemoveSwapsRewriter
 
 Rewriter *-d- RewriteRule
 SimpleRewriteRule::template *-- discopy.rigid.Diagram

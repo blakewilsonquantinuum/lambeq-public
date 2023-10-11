@@ -37,8 +37,9 @@ import lambeq
 from lambeq.ansatz import BaseAnsatz
 from lambeq.ansatz.circuit import CircuitAnsatz, IQPAnsatz
 from lambeq.ansatz.tensor import MPSAnsatz, SpiderAnsatz, TensorAnsatz
-from lambeq.pregroups import remove_swaps, text_printer
+from lambeq.pregroups import text_printer
 from lambeq.pregroups.utils import is_pregroup_diagram
+from lambeq.rewrite import RemoveSwapsRewriter
 from lambeq.text2diagram.base import Reader
 from lambeq.text2diagram.bobcat_parser import BobcatParser
 from lambeq.text2diagram.ccg_parser import CCGParser
@@ -446,6 +447,7 @@ class ParserModule(CLIModule):
         elif cl_args.mode == 'pregroups':
             diagrams = parser.sentences2diagrams(sentences,
                                                  tokenised=cl_args.tokenise)
+            remove_swaps = RemoveSwapsRewriter()
             return [
                 remove_swaps(discopy.grammar.pregroup.Diagram.normal_form(d))
                 for d in diagrams

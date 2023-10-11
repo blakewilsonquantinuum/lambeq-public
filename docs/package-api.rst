@@ -70,8 +70,6 @@ A collection of useful utilities for easier manipulation of :term:`pregroup <pre
 - :py:meth:`~lambeq.pregroups.create_pregroup_diagram`
 - :py:meth:`~lambeq.pregroups.diagram2str`
 - :py:meth:`~lambeq.pregroups.is_pregroup_diagram`
-- :py:meth:`~lambeq.pregroups.remove_cups`
-- :py:meth:`~lambeq.pregroups.remove_swaps`
 
 .. rubric:: Classes
 
@@ -96,6 +94,8 @@ Contains implementations of :term:`rewrite rules <rewrite rule>` for the transfo
     lambeq.rewrite.CoordinationRewriteRule
     lambeq.rewrite.CurryRewriteRule
     lambeq.rewrite.DiagramRewriter
+    lambeq.rewrite.RemoveCupsRewriter
+    lambeq.rewrite.RemoveSwapsRewriter
     lambeq.rewrite.RewriteRule
     lambeq.rewrite.Rewriter
     lambeq.rewrite.SimpleRewriteRule

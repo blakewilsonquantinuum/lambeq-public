@@ -57,8 +57,6 @@ __all__ = [
         'diagram2str',
         'create_pregroup_diagram',
         'is_pregroup_diagram',
-        'remove_cups',
-        'remove_swaps',
 
         'Reader',
         'LinearReader',
@@ -73,6 +71,8 @@ __all__ = [
         'CoordinationRewriteRule',
         'CurryRewriteRule',
         'DiagramRewriter',
+        'RemoveCupsRewriter',
+        'RemoveSwapsRewriter',
         'Rewriter',
         'RewriteRule',
         'SimpleRewriteRule',
@@ -116,9 +116,10 @@ from lambeq.ansatz import (BaseAnsatz, CircuitAnsatz, IQPAnsatz, MPSAnsatz,
 from lambeq.core.globals import VerbosityLevel
 from lambeq.core.types import AtomicType
 from lambeq.pregroups import (create_pregroup_diagram, diagram2str,
-                              is_pregroup_diagram, remove_cups, remove_swaps)
+                              is_pregroup_diagram)
 from lambeq.rewrite import (CoordinationRewriteRule, CurryRewriteRule,
-                            DiagramRewriter, Rewriter, RewriteRule,
+                            DiagramRewriter, RemoveCupsRewriter,
+                            RemoveSwapsRewriter, Rewriter, RewriteRule,
                             SimpleRewriteRule, UnifyCodomainRewriter,
                             UnknownWordsRewriteRule)
 from lambeq.text2diagram import (
