@@ -143,6 +143,9 @@ class CCGRule(str, Enum):
                     self, f'mismatched composing types - {left} != {right}')
 
     def __call__(self, dom: Ty, cod: Ty) -> Diagram:
+        return self.apply(dom, cod)
+
+    def apply(self, dom: Ty, cod: Ty) -> Diagram:
         """Produce a DisCoPy diagram for this rule.
 
         If it is not possible to produce a valid diagram with the given

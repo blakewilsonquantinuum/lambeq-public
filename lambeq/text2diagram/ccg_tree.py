@@ -478,11 +478,12 @@ class CCGTree:
             mid = mid_.discopy()
             right = right_.discopy()
 
-            this_layer = rule((left << mid) @ (mid << right), output.discopy())
+            this_layer = rule.apply((left << mid) @ (mid << right),
+                                    output.discopy())
         else:
             child_types = [child.biclosed_type.discopy()
                            for child in self.children]
-            this_layer = rule(Ty.tensor(*child_types), output.discopy())
+            this_layer = rule.apply(Ty.tensor(*child_types), output.discopy())
 
             if rule == CCGRule.CONJUNCTION:
                 if self.children[0].biclosed_type.is_conjoinable:
@@ -525,8 +526,8 @@ class CCGTree:
         else:
             child_types = [child.biclosed_type.discopy()
                            for child in self.children]
-            this_layer = self.rule(Ty.tensor(*child_types),
-                                   self.biclosed_type.discopy())
+            this_layer = self.rule.apply(Ty.tensor(*child_types),
+                                         self.biclosed_type.discopy())
 
         children = [child._to_biclosed_diagram(planar)
                     for i, child in enumerate(self.children)]
