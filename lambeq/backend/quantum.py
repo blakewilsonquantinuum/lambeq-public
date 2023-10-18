@@ -364,7 +364,7 @@ class Diagram(tensor.Diagram):
 
         return nodes, inputs + outputs
 
-    __hash__ = tensor.Diagram.__hash__
+    __hash__: Callable[[], int] = tensor.Diagram.__hash__
 
 
 class SelfConjugate(Box):
@@ -483,8 +483,8 @@ class Swap(tensor.Swap, SelfConjugate, Box):
                                [0, 0, 0, 1]]))
         tensor.Swap.__init__(self, left, right)
 
-    __hash__: Callable[[Box], int] = tensor.Swap.__hash__
-    __repr__: Callable[[Box], str] = tensor.Swap.__repr__
+    __hash__: Callable[[], int] = tensor.Swap.__hash__
+    __repr__: Callable[[], str] = tensor.Swap.__repr__
     dagger = tensor.Swap.dagger
 
 

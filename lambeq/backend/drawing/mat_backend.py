@@ -20,9 +20,9 @@ DrawingBackend to draw lambeq diagrams using matplotlib.
 
 from __future__ import annotations
 
-from matplotlib.patches import PathPatch  # type: ignore[import]
-from matplotlib.path import Path  # type: ignore[import]
-import matplotlib.pyplot as plt  # type: ignore[import]
+from matplotlib.patches import PathPatch  # type: ignore[import-not-found]
+from matplotlib.path import Path  # type: ignore[import-not-found]
+import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 
 from lambeq.backend.drawing.drawable import DrawableDiagram
 from lambeq.backend.drawing.drawing_backend import (COLORS, DEFAULT_ASPECT,
