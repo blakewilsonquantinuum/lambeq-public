@@ -112,7 +112,7 @@ def draw(diagram: Diagram, **params) -> None:
     backend.draw_spiders(drawable, **params)
 
     for node in drawable.boxes:
-        if isinstance(node.obj, (quantum.Ket, quantum.Bra)):
+        if isinstance(node.obj, (quantum.Ket, quantum.Bra,  quantum.Bit)):
             backend = _draw_brakets(backend, drawable, node, **params)
         elif isinstance(node.obj, quantum.Discard):
             backend = _draw_discard(backend, drawable, node, **params)
@@ -487,7 +487,7 @@ def _draw_brakets(backend: DrawingBackend,
     """
 
     box = drawable_box.obj
-    assert isinstance(box, (quantum.Ket, quantum.Bra))
+    assert isinstance(box, (quantum.Ket, quantum.Bra, quantum.Bit))
     is_bra = isinstance(box, quantum.Bra)
 
     factor = -1 if is_bra else 1
@@ -499,7 +499,7 @@ def _draw_brakets(backend: DrawingBackend,
               [(left+right) / 2, height + factor * .5]]
 
     backend.draw_polygon(*points)
-    backend.draw_text(str(box.bit),
+    backend.draw_text(box.name,
                       drawable_box.x, drawable_box.y,
                       ha='center', va='center',
                       fontsize=params.get('fontsize', None))

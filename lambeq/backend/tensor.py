@@ -382,8 +382,7 @@ class Diagram(grammar.Diagram):
         # nodes, input_edge_order, output_edge_order
         return nodes, inputs + scan
 
-    def __hash__(self) -> int:
-        return hash(repr(self))
+    __hash__ = grammar.Diagram.__hash__
 
 
 @Diagram.register_special_box('cap')

@@ -10,26 +10,28 @@ class Unitary(Box):
 U = Unitary('U', qubit, qubit)
 U2 = Unitary('U2', qubit**2, qubit**2)
 
-diagrams = [Ket(0,0,0) >> H @ Id(qubit** 2)  >> CX @ Id(qubit) >> Id(qubit) @ CX,  # GHZ
+diagrams = [
+    Ket(0,0,0) >> H @ Id(qubit** 2)  >> CX @ Id(qubit) >> Id(qubit) @ CX,  # GHZ
 
-            (Id(qubit) @ CX @ Id(qubit) >> Id(qubit) @ H @ Id(qubit) @ Id(qubit)
-             >> Id(qubit) @ Bra(0) @ Bra(0) @ Id(qubit) >> CX >>  H @ Id(qubit) >> Bra(0) @ Bra(0)),  # Nested cups
+    (Id(qubit) @ CX @ Id(qubit) >> Id(qubit) @ H @ Id(qubit) @ Id(qubit)
+        >> Id(qubit) @ Bra(0) @ Bra(0) @ Id(qubit) >> CX >>  H @ Id(qubit) >> Bra(0) @ Bra(0)),  # Nested cups
 
-            (Controlled(X, 1) @Id(qubit) >> Controlled(X, -1) @ Id(qubit) >>
-             Id(qubit) @ Controlled(X, 1)  >> Id(qubit) @ Controlled(X, -1) >>
-             Controlled(X, 2) >> Controlled(X, -2) >> Id(qubit) @ Controlled(U,-1) >>
-             Controlled(U,1) @ Id(qubit) >> Controlled(U,-2) >> Controlled(U,2) >>
-             Controlled(U2,-1) >> Controlled(U2,1)),  # 3-qubit circuit with controlled unitaries
+    (Controlled(X, 1) @Id(qubit) >> Controlled(X, -1) @ Id(qubit) >>
+        Id(qubit) @ Controlled(X, 1)  >> Id(qubit) @ Controlled(X, -1) >>
+        Controlled(X, 2) >> Controlled(X, -2) >> Id(qubit) @ Controlled(U,-1) >>
+        Controlled(U,1) @ Id(qubit) >> Controlled(U,-2) >> Controlled(U,2) >>
+        Controlled(U2,-1) >> Controlled(U2,1)),  # 3-qubit circuit with controlled unitaries
 
-            (Controlled(Controlled(X, 1), 1) >> Controlled(Controlled(X,-1), 1) >>
-             Controlled(Controlled(X, -1), -1)),  # Multi-controlled X
+    (Controlled(Controlled(X, 1), 1) >> Controlled(Controlled(X,-1), 1) >>
+        Controlled(Controlled(X, -1), -1)),  # Multi-controlled X
 
-            (Ket(0, 1) @ MixedState() @ Encode() >>
-             Measure() @ Bra(0, 1) @ Discard()),  # Initialisation and measurement
+    (Ket(0, 1) @ MixedState() @ Encode() >>
+        Measure() @ Bra(0, 1) @ Discard()),  # Initialisation and measurement
 
-            (Ket(0,0,0,0) >> S @ X @ Y @ Z >>
-             Rx(0.3) @ Ry(0.2) @ Scalar(0.5) @ Rz(0.1) @ H >> Bra(0,0,0,0))  # Random gates and scalar
-            ]
+    (Ket(0,0,0,0) >> S @ X @ Y @ Z >>
+        Rx(0.3) @ Ry(0.2) @ Scalar(0.5) @ Rz(0.1) @ H >> Bra(0,0,0,0))  # Random gates and scalar
+
+]
 
 
 tikz_outputs = [

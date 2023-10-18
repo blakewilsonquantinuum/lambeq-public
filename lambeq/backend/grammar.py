@@ -170,6 +170,10 @@ class Ty(Entity):
         else:
             return cls(objects=objects)  # type: ignore[arg-type]
 
+    def count(self, other: Self) -> int:
+        assert other.is_atomic
+        return sum(1 for ob in self if ob == other)
+
     @overload
     def tensor(self, other: Iterable[Self]) -> Self: ...
 
@@ -360,6 +364,14 @@ class Layer(Entity):
         iterable_res: Iterable[Ty | Box] = self.unpack()
         yield from iterable_res
 
+    @property
+    def dom(self) -> Ty:
+        return self.left @ self.box.dom @ self.right
+
+    @property
+    def cod(self) -> Ty:
+        return self.left @ self.box.cod @ self.right
+
     def unpack(self) -> tuple[Ty, Box, Ty]:
         return self.left, self.box, self.right
 
@@ -384,6 +396,12 @@ class Layer(Entity):
                        left=left.rotate(z),
                        box=self.box.rotate(z),
                        right=right.rotate(z))
+
+    def dagger(self) -> Self:
+        return replace(self,
+                       left=self.left,
+                       box=self.box.dagger(),
+                       right=self.right)
 
 
 class InterchangerError(Exception):
@@ -636,6 +654,30 @@ class Diagram(Entity, Diagrammable):
     def __len__(self) -> int:
         return len(self.layers)
 
+    def __getitem__(self, key: int | slice) -> Self:
+        if isinstance(key, slice):
+            if key.step == -1:
+                layers = [layer.dagger() for layer in self.layers[key]]
+                return type(self)(self.cod, self.dom, layers)
+            if (key.step or 1) != 1:
+                raise IndexError
+            layers = self.layers[key]
+            if not layers:
+                if (key.start or 0) >= len(self):
+                    return self.id(self.cod)
+                if (key.start or 0) <= -len(self):
+                    return self.id(self.dom)
+                return self.id(self.layers[key.start or 0].dom)
+            return type(self)(
+                layers[0].dom, layers[-1].cod, layers)
+        if isinstance(key, int):
+            if key >= len(self) or key < -len(self):
+                raise IndexError
+            if key < 0:
+                return self[len(self) + key]
+            return self[key:key + 1]
+        raise TypeError
+
     def then(self, *diagrams: Diagrammable) -> Self:
         try:
             diags = self.lift(diagrams)
@@ -728,6 +770,14 @@ class Diagram(Entity, Diagrammable):
             bot_layer = Id(self.dom.r) @ Cup(self.cod, self.cod.r)
 
         return top_layer >> mid_layer >> bot_layer
+
+    @classmethod
+    def swap(cls, left: Ty, right: Ty) -> Self:
+        """Create a layer of Swaps."""
+        dom = left @ right
+        idx1 = list(range(len(left)))
+        idx2 = list(range(len(left), len(dom)))
+        return cls.id(dom).permuted(idx2 + idx1)
 
     @classmethod
     def permutation(cls, dom: Ty, permutation: Iterable[int]) -> Self:

@@ -23,7 +23,7 @@ BSD 3-Clause 'New' or 'Revised' License.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 import tensornetwork as tn
@@ -161,6 +161,9 @@ class Box(tensor.Box):
     def __rshift__(self, rhs: grammar.Diagrammable) -> Diagram:
         return super().__rshift__(rhs)  # type: ignore[return-value]
 
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
 
 @dataclass
 @quantum
@@ -238,6 +241,24 @@ class Diagram(tensor.Diagram):
         """
 
         return contractor(*self.to_tn(mixed=mixed)).tensor
+
+    def init_and_discard(self):
+        """Return circuit with empty domain and only bits as codomain. """
+        circuit = self
+        if circuit.dom:
+            init = Id().tensor(*(Ket(0) if x == qubit else Bit(0)
+                                 for x in circuit.dom))
+            circuit = init >> circuit
+        if circuit.cod != bit ** len(circuit.cod):
+            discards = Id().tensor(*(
+                Discard() if x == qubit
+                else Id(bit) for x in circuit.cod))
+            circuit = circuit >> discards
+        return circuit
+
+    def to_tk(self):
+        from lambeq.backend.tk import to_tk
+        return to_tk(self)
 
     def to_tn(self, mixed=False):
         """Convert the circuit to a tensor network."""
@@ -342,6 +363,8 @@ class Diagram(tensor.Diagram):
         outputs = c_scan + q_scan1 + q_scan2
 
         return nodes, inputs + outputs
+
+    __hash__ = tensor.Diagram.__hash__
 
 
 class SelfConjugate(Box):
@@ -450,7 +473,14 @@ class Swap(tensor.Swap, SelfConjugate, Box):
 
         """
 
-        Box.__init__(self, 'SWAP', left @ right, right @ left)
+        Box.__init__(self,
+                     'SWAP',
+                     left @ right,
+                     right @ left,
+                     np.array([[1, 0, 0, 0],
+                               [0, 0, 1, 0],
+                               [0, 1, 0, 0],
+                               [0, 0, 0, 1]]))
         tensor.Swap.__init__(self, left, right)
 
     __hash__: Callable[[Box], int] = tensor.Swap.__hash__
@@ -581,6 +611,10 @@ class Rotation(Parametrized):
         super().__init__(
             f'{type(self).__name__}({phase})', qubit, qubit, phase)
 
+    @property
+    def phase(self) -> float:
+        return self.data
+
     def dagger(self) -> Self:
         return type(self)(-self.data)
 
@@ -651,6 +685,16 @@ class Controlled(Box):
                          qubit ** width,
                          controlled.data,
                          controlled.is_mixed)
+
+    def __hash__(self) -> int:
+        return hash((self.controlled, self.distance))
+
+    @property
+    def phase(self) -> float:
+        if isinstance(self.controlled, Rotation):
+            return self.controlled.phase
+        else:
+            raise AttributeError('Controlled gate has no phase.')
 
     def decompose(self) -> Diagram | Box:
         """Split a box (distance >1) into distance 1 box + swaps."""
@@ -760,6 +804,11 @@ class Scalar(Box):
     self_adjoint: bool = field(default=False, init=False)
     z: int = field(default=0, init=False)
 
+    __hash__: Callable[[Box], int] = Box.__hash__
+
+    def dagger(self):
+        return replace(self, data=self.data.conjugate())
+
 
 @dataclass
 class Daggered(tensor.Daggered, Box):
@@ -795,12 +844,96 @@ class Daggered(tensor.Daggered, Box):
     __repr__: Callable[[Box], str] = Box.__repr__
 
 
-H = SelfConjugate('H', qubit, qubit,
-                  (2 ** -0.5) * np.array([[1, 1], [1, -1]]), self_adjoint=True)
+class Bit(Box):
+    """Classical state for a given bit."""
+
+    def __new__(cls, *bitstring: int):
+        if len(bitstring) <= 1:
+            return super(Bit, cls).__new__(cls)
+
+        return Id().tensor(* [cls(bit) for bit in bitstring])
+
+    def __init__(self, bit_value: int) -> None:
+        """Initialise a ket box.
+
+        Parameters
+        ----------
+        bit_value : int
+            The state of the qubit (either 0 or 1).
+
+        """
+
+        assert bit_value in {0, 1}
+        self.bit = bit_value
+
+        super().__init__(str(bit_value), Ty(), bit, np.eye(2)[bit_value].T)
+
+
+SWAP = Swap(qubit, qubit)
+H = Box('H', qubit, qubit,
+        (2 ** -0.5) * np.array([[1, 1], [1, -1]]), self_adjoint=True)
 S = Box('S', qubit, qubit, np.array([[1, 0], [0, 1j]]))
+T = Box('T', qubit, qubit, np.array([[1, 0], [0, np.e ** (1j * np.pi / 4)]]))
 X = SelfConjugate('X', qubit, qubit,
                   np.array([[0, 1], [1, 0]]), self_adjoint=True)
 Y = Box('Y', qubit, qubit, np.array([[0, 1j], [-1j, 0]]), self_adjoint=True)
 Z = SelfConjugate('Z', qubit, qubit,
                   np.array([[1, 0], [0, -1]]), self_adjoint=True)
+
+
+# TODO: The following needs to be replaced by syntactic sugar
+# e.g Ket(0,0).H.CX(0,1)
 CX = Controlled(X)
+CY = Controlled(Y)
+CZ = Controlled(Z)
+CRx = lambda phi, distance = 1: Controlled(Rx(phi), distance)  # noqa: E731
+CRy = lambda phi, distance = 1: Controlled(Ry(phi), distance)  # noqa: E731
+CRz = lambda phi, distance = 1: Controlled(Rz(phi), distance)  # noqa: E731
+
+
+def CCX(control1, control2, target):
+    dist1 = target - control1
+    dist2 = target - control2
+
+    if dist1 * dist2 < 0:  # sign flip
+        return Controlled(Controlled(X, dist1), dist2)
+    else:
+        dists = np.array([dist1, dist2])
+        idx = np.argmin(np.abs(dists)), np.argmax(np.abs(dists))
+        return Controlled(Controlled(X, dists[idx[0]]),
+                          dists[idx[1]]-dists[idx[0]])
+
+
+def CCZ(control1, control2, target):
+    dist1 = target - control1
+    dist2 = target - control2
+
+    if dist1 * dist2 < 0:  # sign flip
+        return Controlled(Controlled(Z, dist1), dist2)
+    else:
+        dists = np.array([dist1, dist2])
+        idx = np.argmin(np.abs(dists)), np.argmax(np.abs(dists))
+        return Controlled(Controlled(Z, dists[idx[0]]),
+                          dists[idx[1]]-dists[idx[0]])
+
+
+GATES = {
+    'SWAP': SWAP,
+    'H': H,
+    'S': S,
+    'T': T,
+    'X': X,
+    'Y': Y,
+    'Z': Z,
+    'CZ': CZ,
+    'CY': CY,
+    'CX': CX,
+    'CCX': CCX,
+    'CCZ': CCZ,
+    'Rx': Rx,
+    'Ry': Ry,
+    'Rz': Rz,
+    'CRx': CRx,
+    'CRy': CRy,
+    'CRz': CRz,
+}
