@@ -18,6 +18,13 @@ Lambeq's internal representation of the quantum category. This work is
 based on DisCoPy (https://discopy.org/) which is released under the
 BSD 3-Clause 'New' or 'Revised' License.
 
+Notes
+-----
+
+In lambeq, gates are represented as the transpose of their matrix
+according to the standard convention in quantum computing. This makes
+composition of gates using the tensornetwork library easier.
+
 """
 
 from __future__ import annotations
@@ -257,11 +264,107 @@ class Diagram(tensor.Diagram):
         return circuit
 
     def to_tk(self):
+        """Export to t|ket>.
+
+        Returns
+        -------
+        tk_circuit : lambeq.backend.tk.Circuit
+            A :class:`lambeq.backend.tk.Circuit`.
+
+        Note
+        ----
+        * No measurements are performed.
+        * SWAP gates are treated as logical swaps.
+        * If the circuit contains scalars or a :class:`Bra`,
+          then :code:`tk_circuit` will hold attributes
+          :code:`post_selection` and :code:`scalar`.
+
+        Examples
+        --------
+        >>> from lambeq.backend.quantum import *
+
+        >>> bell_test = H @ Id(qubit) >> CX >> Measure() @ Measure()
+        >>> bell_test.to_tk()
+        tk.Circuit(2, 2).H(0).CX(0, 1).Measure(0, 0).Measure(1, 1)
+
+        >>> circuit0 = (Sqrt(2) @ H @ Rx(0.5) >> CX >>
+        ...             Measure() @ Discard())
+        >>> circuit0.to_tk()
+        tk.Circuit(2, 1).H(0).Rx(1.0, 1).CX(0, 1).Measure(0, 0).scale(2)
+
+        >>> circuit1 = Ket(1, 0) >> CX >> Id(qubit) @ Ket(0) @ Id(qubit)
+        >>> circuit1.to_tk()
+        tk.Circuit(3).X(0).CX(0, 2)
+
+        >>> circuit2 = X @ Id(qubit ** 2) \\
+        ...     >> Id(qubit) @ SWAP >> CX @ Id(qubit) >> Id(qubit) @ SWAP
+        >>> circuit2.to_tk()
+        tk.Circuit(3).X(0).CX(0, 2)
+
+        >>> circuit3 = Ket(0, 0)\\
+        ...     >> H @ Id(qubit)\\
+        ...     >> CX\\
+        ...     >> Id(qubit) @ Bra(0)
+        >>> print(repr(circuit3.to_tk()))
+        tk.Circuit(2, 1).H(0).CX(0, 1).Measure(1, 0).post_select({0: 0})
+
+        """
         from lambeq.backend.tk import to_tk
         return to_tk(self)
 
+    def to_pennylane(self, probabilities=False, backend_config=None,
+                     diff_method='best'):
+        """
+        Export lambeq circuit to PennylaneCircuit.
+
+        Parameters
+        ----------
+        probabilties : bool, default: False
+            If True, the PennylaneCircuit will return the normalized
+            probabilties of measuring the computational basis states
+            when run. If False, it returns the unnormalized quantum
+            states in the computational basis.
+        backend_config : dict, default: None
+            A dictionary of PennyLane backend configration options,
+            including the provider (e.g. IBM or Honeywell), the device,
+            the number of shots, etc. See the `PennyLane plugin
+            documentation <https://pennylane.ai/plugins/>`_
+            for more details.
+        diff_method : str, default: "best"
+            The differentiation method to use to obtain gradients for the
+            PennyLane circuit. Some gradient methods are only compatible
+            with simulated circuits. See the `PennyLane documentation
+            <https://docs.pennylane.ai/en/stable/introduction/interfaces.html>`_
+            for more details.
+
+        Returns
+        -------
+        :class:`lambeq.backend.pennylane.PennylaneCircuit`
+
+        """
+        from lambeq.backend.pennylane import to_pennylane
+        return to_pennylane(self, probabilities=probabilities,
+                            backend_config=backend_config,
+                            diff_method=diff_method)
+
     def to_tn(self, mixed=False):
-        """Convert the circuit to a tensor network."""
+        """Send a diagram to a mixed :code:`tensornetwork`.
+
+        Parameters
+        ----------
+        mixed : bool, default: False
+            Whether to perform mixed (also known as density matrix)
+            evaluation of the circuit.
+
+        Returns
+        -------
+        nodes : :class:`tensornetwork.Node`
+            Nodes of the network.
+
+        output_edge_order : list of :class:`tensornetwork.Edge`
+            Output edges of the network.
+
+        """
 
         if not mixed and not self.is_mixed:
             return super().to_tn()
@@ -642,7 +745,7 @@ class Ry(SelfConjugate, Rotation):
         sin = self.modules.sin(half_theta)
         cos = self.modules.cos(half_theta)
 
-        return np.array([[cos, -sin], [sin, cos]])
+        return np.array([[cos, sin], [-sin, cos]])
 
 
 class Rz(AntiConjugate, Rotation):
@@ -797,17 +900,45 @@ class Scalar(Box):
     """A scalar amplifies a quantum state by a given factor."""
     data: float | np.ndarray
 
-    name: str = field(default='SCALAR', init=False)
+    name: str = field(init=False)
     dom: Ty = field(default=Ty(), init=False)
     cod: Ty = field(default=Ty(), init=False)
     is_mixed: bool = field(default=False, init=False)
     self_adjoint: bool = field(default=False, init=False)
     z: int = field(default=0, init=False)
 
+    def __post_init__(self) -> None:
+        self.name = f'{self.data:.3f}'
+
     __hash__: Callable[[Box], int] = Box.__hash__
 
     def dagger(self):
         return replace(self, data=self.data.conjugate())
+
+
+@dataclass
+class Sqrt(Scalar):
+    """A Square root."""
+    data: float | np.ndarray
+
+    name: str = field(init=False)
+    dom: Ty = field(default=Ty(), init=False)
+    cod: Ty = field(default=Ty(), init=False)
+    is_mixed: bool = field(default=False, init=False)
+    self_adjoint: bool = field(default=False, init=False)
+    z: int = field(default=0, init=False)
+
+    def __post_init__(self) -> None:
+        self.name = f'√({self.data})'
+
+    @property
+    def array(self):
+        return np.array(self.data ** .5)
+
+    __hash__: Callable[[], int] = Scalar.__hash__
+
+    def dagger(self):
+        return replace(self, data=np.conjugate(self.data))
 
 
 @dataclass

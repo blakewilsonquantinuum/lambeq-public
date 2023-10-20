@@ -369,12 +369,8 @@ def _draw_box(backend: DrawingBackend,
 
     backend.draw_polygon(*points)
 
-    box_label = box.name
-    if isinstance(box, quantum.Scalar):
-        box_label = f'{box.data:.3f}'
-
     if params.get('draw_box_labels', True):
-        backend.draw_text(box_label, drawable_box.x, drawable_box.y,
+        backend.draw_text(box.name, drawable_box.x, drawable_box.y,
                           ha='center', va='center',
                           fontsize=params.get('fontsize', None))
 

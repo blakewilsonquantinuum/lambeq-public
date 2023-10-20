@@ -191,7 +191,7 @@ class Circuit(tk.Circuit):
 
 def to_tk(circuit: Diagram):
     """
-    Takes a :class:`discopy.quantum.Circuit`, returns a :class:`Circuit`.
+    Takes a :class:`lambeq.quantum.Diagram`, returns a :class:`Circuit`.
     """
     # bits and qubits are lists of register indices, at layer i we want
     # len(bits) == circuit[:i].cod.count(bit) and same for qubits

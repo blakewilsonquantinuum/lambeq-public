@@ -482,6 +482,19 @@ class Diagram(Entity, Diagrammable):
     def __hash__(self) -> int:
         return hash(repr(self))
 
+    @classmethod
+    def caps(cls,
+             left: Ty,
+             right: Ty,
+             is_reversed=False) -> Diagrammable:
+        return cls.special_boxes['cap'](left, right, is_reversed)
+
+    @classmethod
+    def cups(cls,
+             left: Ty,
+             right: Ty, is_reversed=False) -> Diagrammable:
+        return cls.special_boxes['cup'](left, right, is_reversed)
+
     def to_diagram(self) -> Self:
         return self
 

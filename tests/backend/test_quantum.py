@@ -44,6 +44,8 @@ def test_dagger():
     assert Swap(qubit, qubit).dagger() == Swap(qubit, qubit)
     assert Swap(qubit, bit).dagger() == Swap(bit, qubit)
 
+    assert Scalar(0.5 - 0.5j).dagger() == Scalar(0.5 + 0.5j)
+
 
 def test_transpose():
 
