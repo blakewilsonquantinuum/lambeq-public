@@ -273,12 +273,6 @@ class Box(grammar.Box):
     def __hash__(self) -> int:
         return hash(repr(self))
 
-    def __matmul__(self, rhs: grammar.Diagrammable) -> Diagram:
-        return super().__matmul__(rhs)  # type: ignore[return-value]
-
-    def __rshift__(self, rhs: grammar.Diagrammable) -> Diagram:
-        return super().__rshift__(rhs)  # type: ignore[return-value]
-
 
 @dataclass
 @tensor

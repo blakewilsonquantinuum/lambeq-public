@@ -97,7 +97,6 @@ qubit = Ty('qubit')
 bit = Ty('bit')
 
 
-@dataclass(init=False)
 @quantum
 class Box(tensor.Box):
     """A box in the quantum category."""
@@ -162,14 +161,8 @@ class Box(tensor.Box):
                 and self.cod == other.cod
                 and np.equal(self.data, other.data).all())
 
-    def __matmul__(self, rhs: grammar.Diagrammable) -> Diagram:
-        return super().__matmul__(rhs)  # type: ignore[return-value]
-
-    def __rshift__(self, rhs: grammar.Diagrammable) -> Diagram:
-        return super().__rshift__(rhs)  # type: ignore[return-value]
-
     def __hash__(self) -> int:
-        return hash(repr(self))
+        return super().__hash__()
 
 
 @dataclass

@@ -22,10 +22,9 @@ BSD 3-Clause "New" or "Revised" License.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field, InitVar, replace
-from typing import Any, ClassVar, Type, TypeVar
+from typing import Any, ClassVar, Protocol, Type, TypeVar
 from typing import cast, overload, TYPE_CHECKING
 
 from typing_extensions import Self
@@ -241,32 +240,47 @@ class Ty(Entity):
             return functor.ob(self)
 
 
-class Diagrammable(ABC):
-    cod: Ty
-    dom: Ty
+class Diagrammable(Protocol):
+    """An abstract base class describing the behavior of a diagram.
 
-    @abstractmethod
-    def to_diagram(self) -> Diagram: ...
+    This is used by static type checkers that recognize structural
+    sub-typing (duck-typing) and does not need to be explicitly
+    subclassed.
 
-    def __getattr__(self, name: str) -> Any:
-        if isinstance(self, Diagram):
-            raise AttributeError((self, name))
-        else:
-            return getattr(self.to_diagram(), name)
+    """
+    @property
+    def dom(self) -> Ty:
+        """The domain of the diagram."""
 
-    @abstractmethod
-    def apply_functor(self, functor: Functor) -> Diagrammable: ...
+    @property
+    def cod(self) -> Ty:
+        """The co-domain of the diagram."""
 
-    @abstractmethod
-    def rotate(self, z: int) -> Diagrammable: ...
+    def to_diagram(self) -> Diagram:
+        """Transform the current object into an actual Diagram object."""
 
-    @abstractmethod
-    def __matmul__(self, rhs: Diagrammable) -> Diagram: ...
+    @property
+    def is_id(self) -> bool:
+        """Whether the current diagram is an identity diagram."""
+
+    def apply_functor(self, functor: Functor) -> Diagrammable:
+        """Apply a functor to the current object."""
+
+    def rotate(self, z: int) -> Diagrammable:
+        """Apply the adjoint operation `z` times.
+
+        If `z` is positive, apply the right adjoint `z` times.
+        If `z` is negative, apply the left adjoint `-z` times.
+
+        """
+
+    def __matmul__(self, rhs: Diagrammable) -> Diagrammable:
+        """Implements the tensor operator `@` with another diagram."""
 
 
 @grammar
 @dataclass
-class Box(Entity, Diagrammable):
+class Box(Entity):
     """A box in the grammar category.
 
     Parameters
@@ -285,6 +299,9 @@ class Box(Entity, Diagrammable):
     dom: Ty
     cod: Ty
     z: int = 0
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.to_diagram(), name)
 
     def __repr__(self) -> str:
         return (f'[{self.name}{".l"*(-self.z)}{".r"*self.z}; '
@@ -417,7 +434,7 @@ _DiagrammableFactoryT = TypeVar('_DiagrammableFactoryT',
 
 @grammar
 @dataclass
-class Diagram(Entity, Diagrammable):
+class Diagram(Entity):
     """A diagram in the grammar category.
 
     Parameters
