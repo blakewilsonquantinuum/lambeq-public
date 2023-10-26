@@ -330,8 +330,12 @@ class BobcatParser(CCGParser):
         """Transform a Bobcat parse tree into a `CCGTree`."""
         children = [BobcatParser._build_ccgtree(child)
                     for child in filter(None, (tree.left, tree.right))]
+        if tree.rule.name == 'ADJ_CONJ':
+            rule = CCGRule.FORWARD_APPLICATION
+        else:
+            rule = CCGRule(tree.rule.name)
         return CCGTree(text=tree.word if tree.is_leaf else None,
-                       rule=CCGRule(tree.rule.name),
+                       rule=rule,
                        biclosed_type=BobcatParser._to_biclosed(tree.cat),
                        children=children,
                        metadata={'original': tree})
