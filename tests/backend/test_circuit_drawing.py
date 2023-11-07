@@ -11,15 +11,15 @@ U = Unitary('U', qubit, qubit)
 U2 = Unitary('U2', qubit**2, qubit**2)
 
 diagrams = [
-    Ket(0,0,0) >> H @ Id(qubit** 2)  >> CX @ Id(qubit) >> Id(qubit) @ CX,  # GHZ
+    Ket(0,0,0) >> H @ qubit**2  >> CX @ qubit >> qubit @ CX,  # GHZ
 
-    (Id(qubit) @ CX @ Id(qubit) >> Id(qubit) @ H @ Id(qubit) @ Id(qubit)
-        >> Id(qubit) @ Bra(0) @ Bra(0) @ Id(qubit) >> CX >>  H @ Id(qubit) >> Bra(0) @ Bra(0)),  # Nested cups
+    (qubit @ CX @ qubit >> qubit @ H @ qubit @ qubit
+        >> qubit @ Bra(0) @ Bra(0) @ qubit >> CX >>  H @ qubit >> Bra(0) @ Bra(0)),  # Nested cups
 
-    (Controlled(X, 1) @Id(qubit) >> Controlled(X, -1) @ Id(qubit) >>
-        Id(qubit) @ Controlled(X, 1)  >> Id(qubit) @ Controlled(X, -1) >>
-        Controlled(X, 2) >> Controlled(X, -2) >> Id(qubit) @ Controlled(U,-1) >>
-        Controlled(U,1) @ Id(qubit) >> Controlled(U,-2) >> Controlled(U,2) >>
+    (Controlled(X, 1) @Id(qubit) >> Controlled(X, -1) @ qubit >>
+        qubit @ Controlled(X, 1) >> qubit @ Controlled(X, -1) >>
+        Controlled(X, 2) >> Controlled(X, -2) >> qubit @ Controlled(U,-1) >>
+        Controlled(U,1) @ qubit >> Controlled(U,-2) >> Controlled(U,2) >>
         Controlled(U2,-1) >> Controlled(U2,1)),  # 3-qubit circuit with controlled unitaries
 
     (Controlled(Controlled(X, 1), 1) >> Controlled(Controlled(X,-1), 1) >>
@@ -780,4 +780,3 @@ def test_circuit_tikz_drawing(diagram, tikz, capsys):
     tikz_op, _ = capsys.readouterr()
 
     assert tikz_op == tikz
-

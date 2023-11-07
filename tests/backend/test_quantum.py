@@ -49,7 +49,7 @@ def test_dagger():
 
 def test_transpose():
 
-    id_transpose_l = generate_cap(qubit, qubit) @ Id(qubit) >> Id(qubit) @ generate_cup(qubit, qubit)
+    id_transpose_l = generate_cap(qubit, qubit) @ qubit >> qubit @ generate_cup(qubit, qubit)
 
     assert Id(qubit).transpose() == id_transpose_l
     assert Id(qubit).transpose().eval() == pytest.approx(np.eye(2))
@@ -134,7 +134,7 @@ def test_mixed_eval():
     assert (MixedState() >> Discard()).eval() == 2
     assert (generate_cap(qubit, qubit) >> (Discard() @ Discard())).eval() == pytest.approx(np.array(2))
 
-    assert (generate_cap(qubit, qubit) >> (Discard() @ Id(qubit))).eval().reshape(2, 2) == pytest.approx(np.eye(2))
+    assert (generate_cap(qubit, qubit) >> (Discard() @ qubit)).eval().reshape(2, 2) == pytest.approx(np.eye(2))
 
     assert Ket(0).eval(mixed=True).reshape(4) == pytest.approx(np.array([1, 0, 0, 0]))
     assert Ket(1).eval(mixed=True).reshape(4) == pytest.approx(np.array([0, 0, 0, 1]))

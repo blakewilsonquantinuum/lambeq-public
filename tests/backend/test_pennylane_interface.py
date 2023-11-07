@@ -11,7 +11,7 @@ from lambeq.backend.quantum import *
 def test_circuit_to_pennylane(capsys):
     bell_state = Diagram.caps(qubit, qubit)
     bell_effect = bell_state[::-1]
-    snake = (bell_state @ Id(qubit) >> Bra(0) @ bell_effect)[::-1]
+    snake = (bell_state @ qubit >> Bra(0) @ bell_effect)[::-1]
     p_snake = snake.to_pennylane()
     p_snake.draw()
 
@@ -52,15 +52,15 @@ def test_circuit_to_pennylane(capsys):
     weights = [torch.tensor(1.), torch.tensor(2.), torch.tensor(3.)]
     symbol_weight_map = dict(zip(symbols, weights))
 
-    var_circ = (Ket(0) >> Rx(0.552) >> Rz(x) >> Rx(0.917) >> Ket(0, 0, 0) @ Id(qubit) >>
-                H @ Id(qubit) @ Id(qubit) @ Id(qubit) >> Id(qubit) @ H @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ Id(qubit) @ H @ Id(qubit) >> CRz(0.18) @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ CRz(y) @ Id(qubit) >> Id(qubit) @ Id(qubit) @ CX >>
-                Id(qubit) @ Id(qubit) @ H @ Id(qubit) >> Id(qubit) @ Id(qubit) @ Id(qubit) @ Sqrt(2) @ Id(qubit) >>
-                Id(qubit) @ Id(qubit) @ Bra(0, 0) >> Ket(0) @ Id(qubit) @ Id(qubit) >>
-                Rx(0.446) @ Id(qubit) @ Id(qubit) >> Rz(0.256) @ Id(qubit) @ Id(qubit) >>
-                Rx(z) @ Id(qubit) @ Id(qubit) >> CX @ Id(qubit) >> H @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ Sqrt(2) @ Id(qubit) @ Id(qubit) >> Bra(0, 0) @ Id(qubit))
+    var_circ = (Ket(0) >> Rx(0.552) >> Rz(x) >> Rx(0.917) >> Ket(0, 0, 0) @ qubit >>
+                H @ qubit @ qubit @ qubit >> qubit @ H @ qubit @ qubit >>
+                qubit @ qubit @ H @ qubit >> CRz(0.18) @ qubit @ qubit >>
+                qubit @ CRz(y) @ qubit >> qubit @ qubit @ CX >>
+                qubit @ qubit @ H @ qubit >> qubit @ qubit @ qubit @ Sqrt(2) @ qubit >>
+                qubit @ qubit @ Bra(0, 0) >> Ket(0) @ qubit @ qubit >>
+                Rx(0.446) @ qubit @ qubit >> Rz(0.256) @ qubit @ qubit >>
+                Rx(z) @ qubit @ qubit >> CX @ qubit >> H @ qubit @ qubit >>
+                qubit @ Sqrt(2) @ qubit @ qubit >> Bra(0, 0) @ qubit)
 
     p_var_circ = var_circ.to_pennylane()
     p_var_circ.initialise_concrete_params(symbol_weight_map)
@@ -91,7 +91,7 @@ def test_circuit_to_pennylane(capsys):
 def test_pennylane_circuit_mixed_error():
     bell_state = Diagram.caps(qubit, qubit)
     bell_effect = bell_state[::-1]
-    snake = (bell_state @ Id(qubit) >> Bra(0) @ bell_effect)[::-1]
+    snake = (bell_state @ qubit >> Bra(0) @ bell_effect)[::-1]
     snake = (snake >> Measure())
     with raises(ValueError):
         snake.to_pennylane()
@@ -100,7 +100,7 @@ def test_pennylane_circuit_mixed_error():
 def test_pennylane_circuit_draw(capsys):
     bell_state = Diagram.caps(qubit, qubit)
     bell_effect = bell_state[::-1]
-    snake = (bell_state @ Id(qubit) >> Bra(0) @ bell_effect)[::-1]
+    snake = (bell_state @ qubit >> Bra(0) @ bell_effect)[::-1]
     p_circ = snake.to_pennylane()
     p_circ.draw()
 
@@ -135,7 +135,7 @@ def test_pennylane_parameterized_ops():
 def test_pennylane_devices():
     bell_state = Diagram.caps(qubit, qubit)
     bell_effect = bell_state[::-1]
-    snake = (bell_state @ Id(qubit) >> Bra(0) @ bell_effect)[::-1]
+    snake = (bell_state @ qubit >> Bra(0) @ bell_effect)[::-1]
 
     # Honeywell backend only compatible when `probabilities=True`
     h_backend = {'backend': 'honeywell.hqs', 'device': 'H1-1E'}
@@ -163,15 +163,15 @@ def test_pennylane_devices():
 
 def test_pennylane_uninitialized():
     x, y, z = sympy.symbols('x y z')
-    var_circ = (Ket(0) >> Rx(0.552) >> Rz(x) >> Rx(0.917) >> Ket(0, 0, 0) @ Id(qubit) >>
-                H @ Id(qubit) @ Id(qubit) @ Id(qubit) >> Id(qubit) @ H @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ Id(qubit) @ H @ Id(qubit) >> CRz(0.18) @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ CRz(y) @ Id(qubit) >> Id(qubit) @ Id(qubit) @ CX >>
-                Id(qubit) @ Id(qubit) @ H @ Id(qubit) >> Id(qubit) @ Id(qubit) @ Id(qubit) @ Sqrt(2) @ Id(qubit) >>
-                Id(qubit) @ Id(qubit) @ Bra(0, 0) >> Ket(0) @ Id(qubit) @ Id(qubit) >>
-                Rx(0.446) @ Id(qubit) @ Id(qubit) >> Rz(0.256) @ Id(qubit) @ Id(qubit) >>
-                Rx(z) @ Id(qubit) @ Id(qubit) >> CX @ Id(qubit) >> H @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ Sqrt(2) @ Id(qubit) @ Id(qubit) >> Bra(0, 0) @ Id(qubit))
+    var_circ = (Ket(0) >> Rx(0.552) >> Rz(x) >> Rx(0.917) >> Ket(0, 0, 0) @ qubit >>
+                H @ qubit @ qubit @ qubit >> qubit @ H @ qubit @ qubit >>
+                qubit @ qubit @ H @ qubit >> CRz(0.18) @ qubit @ qubit >>
+                qubit @ CRz(y) @ qubit >> qubit @ qubit @ CX >>
+                qubit @ qubit @ H @ qubit >> qubit @ qubit @ qubit @ Sqrt(2) @ qubit >>
+                qubit @ qubit @ Bra(0, 0) >> Ket(0) @ qubit @ qubit >>
+                Rx(0.446) @ qubit @ qubit >> Rz(0.256) @ qubit @ qubit >>
+                Rx(z) @ qubit @ qubit >> CX @ qubit >> H @ qubit @ qubit >>
+                qubit @ Sqrt(2) @ qubit @ qubit >> Bra(0, 0) @ qubit)
     p_var_circ = var_circ.to_pennylane()
 
     with raises(ValueError):
@@ -205,15 +205,15 @@ def test_pennylane_gradient_methods():
     x, y, z = sympy.symbols('x y z')
     symbols = [x, y, z]
 
-    var_circ = (Ket(0) >> Rx(0.552) >> Rz(x) >> Rx(0.917) >> Ket(0, 0, 0) @ Id(qubit) >>
-                H @ Id(qubit) @ Id(qubit) @ Id(qubit) >> Id(qubit) @ H @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ Id(qubit) @ H @ Id(qubit) >> CRz(0.18) @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ CRz(y) @ Id(qubit) >> Id(qubit) @ Id(qubit) @ CX >>
-                Id(qubit) @ Id(qubit) @ H @ Id(qubit) >> Id(qubit) @ Id(qubit) @ Id(qubit) @ Sqrt(2) @ Id(qubit) >>
-                Id(qubit) @ Id(qubit) @ Bra(0, 0) >> Ket(0) @ Id(qubit) @ Id(qubit) >>
-                Rx(0.446) @ Id(qubit) @ Id(qubit) >> Rz(0.256) @ Id(qubit) @ Id(qubit) >>
-                Rx(z) @ Id(qubit) @ Id(qubit) >> CX @ Id(qubit) >> H @ Id(qubit) @ Id(qubit) >>
-                Id(qubit) @ Sqrt(2) @ Id(qubit) @ Id(qubit) >> Bra(0, 0) @ Id(qubit))
+    var_circ = (Ket(0) >> Rx(0.552) >> Rz(x) >> Rx(0.917) >> Ket(0, 0, 0) @ qubit >>
+                H @ qubit @ qubit @ qubit >> qubit @ H @ qubit @ qubit >>
+                qubit @ qubit @ H @ qubit >> CRz(0.18) @ qubit @ qubit >>
+                qubit @ CRz(y) @ qubit >> qubit @ qubit @ CX >>
+                qubit @ qubit @ H @ qubit >> qubit @ qubit @ qubit @ Sqrt(2) @ qubit >>
+                qubit @ qubit @ Bra(0, 0) >> Ket(0) @ qubit @ qubit >>
+                Rx(0.446) @ qubit @ qubit >> Rz(0.256) @ qubit @ qubit >>
+                Rx(z) @ qubit @ qubit >> CX @ qubit >> H @ qubit @ qubit >>
+                qubit @ Sqrt(2) @ qubit @ qubit >> Bra(0, 0) @ qubit)
 
     for diff_method in ['backprop', 'parameter-shift', 'finite-diff']:
 

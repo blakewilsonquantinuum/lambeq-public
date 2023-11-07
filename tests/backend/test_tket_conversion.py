@@ -7,12 +7,12 @@ from lambeq.backend.tk import from_tk, to_tk, Circuit
 
 
 diagrams = [
-    (Ket(0,0,0) >> H @ Id(qubit** 2)  >> CX @ Id(qubit) >>
-     Id(qubit) @ CX >> Discard() @ Discard() @ Discard()),  # G
+    (Ket(0,0,0) >> H @ qubit**2  >> CX @ qubit >>
+     qubit @ CX >> Discard() @ Discard() @ Discard()),  # G
 
-    (Id(qubit) @ CX @ Id(qubit) >> Id(qubit) @ H @ Id(qubit) @
-     Id(qubit) >> Id(qubit) @ Bra(0) @ Bra(0) @ Id(qubit) >> CX >>
-     H @ Id(qubit) >> Bra(0) @ Bra(0)),  # Nested cups
+    (qubit @ CX @ qubit >> qubit @ H @ qubit @
+     Id(qubit) >> qubit @ Bra(0) @ Bra(0) @ qubit >> CX >>
+     H @ qubit >> Bra(0) @ Bra(0)),  # Nested cups
 
     (Ket(0,0,0) >>Controlled(Controlled(X, 1), 1) >>
      Controlled(Controlled(X,-1), 1) >>
@@ -33,11 +33,11 @@ tket_circuits = [
 ]
 
 reverse_conversions = [
-    (Ket(0,0,0) >> H @ Id(qubit** 2)  >> CX @ Id(qubit) >>
-     Id(qubit) @ CX >> Discard() @ Discard() @ Discard()),
+    (Ket(0,0,0) >> H @ qubit**2  >> CX @ qubit >>
+     qubit @ CX >> Discard() @ Discard() @ Discard()),
 
-    (Ket(0,0,0,0) >> Controlled(X, 3) >> Id(qubit) @ CX @ Id(qubit) >>
-    H @ H @ Id(qubit**2)>> Bra(0, 0, 0, 0)),  # Nested cups
+    (Ket(0,0,0,0) >> Controlled(X, 3) >> qubit @ CX @ qubit >>
+    H @ H @ qubit**2>> Bra(0, 0, 0, 0)),  # Nested cups
 
     (Ket(0, 0, 0) >>
      Controlled(Controlled(X, 1), 1) >>
@@ -68,7 +68,7 @@ def test_tk_tp(tket_circuit, reverse_conversion):
 def test_hybrid_circs():
     bell_state = generate_cap(qubit, qubit)
     bell_effect = bell_state[::-1]
-    snake = (bell_state @ Id(qubit) >> Id(qubit) @ bell_effect)[::-1]
+    snake = (bell_state @ qubit >> qubit @ bell_effect)[::-1]
     tk_circ = snake.to_tk()
     assert repr(tk_circ) ==\
         'tk.Circuit(3, 2)'\

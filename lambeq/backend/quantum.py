@@ -92,6 +92,11 @@ class Ty(tensor.Dim):
                 and self.name == other.name
                 and self.objects == other.objects)
 
+    def to_diagram(self) -> Diagram:
+        """Transform the current object into an actual Diagram object
+        using the `Id` in this category."""
+        return Id(self).to_diagram()
+
 
 qubit = Ty('qubit')
 bit = Ty('bit')

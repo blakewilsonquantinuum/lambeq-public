@@ -121,6 +121,11 @@ class Ty(Entity):
     def is_complex(self) -> bool:
         return bool(self.objects)
 
+    def to_diagram(self) -> Diagram:
+        """Transform the current object into an actual Diagram object
+        using the `Id` in this category."""
+        return self.category.Diagram.id(self)
+
     def __repr__(self) -> str:
         if self.is_empty:
             return 'Ty()'
@@ -180,7 +185,11 @@ class Ty(Entity):
     def tensor(self, other: Self, *rest: Self) -> Self: ...
 
     def tensor(self, other: Self | Iterable[Self], *rest: Self) -> Self:
-        tys = [*other, *rest]
+        try:
+            tys = [*other, *rest]
+        except TypeError:
+            return NotImplemented
+
         if any(not isinstance(ty, type(self))
                or self.category != ty.category for ty in tys):
             return NotImplemented
@@ -323,6 +332,9 @@ class Box(Entity):
 
     def __matmul__(self, rhs: Diagrammable) -> Diagram:
         return self.to_diagram().tensor(rhs.to_diagram())
+
+    def __rmatmul__(self, rhs: Diagrammable) -> Diagram:
+        return rhs.to_diagram().tensor(self.to_diagram())
 
     def __rshift__(self, rhs: Diagrammable) -> Diagram:
         return self.to_diagram().then(rhs.to_diagram())
@@ -660,7 +672,9 @@ class Diagram(Entity):
         except ValueError:
             return NotImplemented
 
-        right = dom = self.dom.tensor(*[diagram.dom for diagram in diagrams])
+        right = dom = self.dom.tensor(*[
+            diagram.to_diagram().dom for diagram in diagrams
+        ])
         left = self.category.Ty()
         layers = []
         for diagram in diags:
@@ -672,6 +686,9 @@ class Diagram(Entity):
 
     def __matmul__(self, rhs: Diagrammable) -> Self:
         return self.tensor(rhs)
+
+    def __rmatmul__(self, rhs: Diagrammable) -> Diagram:
+        return rhs.to_diagram().tensor(self)
 
     @property
     def offsets(self) -> list[int]:
