@@ -165,6 +165,8 @@ def draw_pregroup(diagram: Diagram, **params) -> None:
         Whether to output tikz code instead of matplotlib.
 
     """
+    if not diagram.is_pregroup:
+        raise ValueError('Diagram is not a valid pregroup diagram.')
 
     drawable = DrawablePregroup.from_diagram(diagram)
     drawable.scale_and_pad(params.get('scale', (1, 1)),
@@ -270,7 +272,7 @@ def draw_equation(*terms: grammar.Diagram,
     def height(term):
         if hasattr(term, 'terms'):
             return max(height(d) for d in term.terms)
-        return len(term) or 1
+        return len(term.to_diagram()) or 1
 
     params['asymmetry'] = params.get(
         'asymmetry', .25 * any(needs_asymmetry(d) for d in terms))
@@ -360,9 +362,15 @@ def _draw_box(backend: DrawingBackend,
     points = [[left, height], [right, height],
               [right, height + .5], [left, height + .5]]
 
-    if box.z:
+    conjd = bool(box.z)
+    daggd = isinstance(box, grammar.Daggered)
+    trand = conjd and daggd
+
+    if trand:
+        points[0][0] -= asymmetry
+    elif conjd:
         points[3][0] -= asymmetry
-    elif isinstance(box, grammar.Daggered):
+    elif daggd:
         points[1][0] += asymmetry
     else:
         points[2][0] += asymmetry

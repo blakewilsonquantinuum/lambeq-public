@@ -33,6 +33,7 @@ import tensornetwork as tn
 from typing_extensions import Self
 
 from lambeq.backend import grammar
+from lambeq.backend.numerical_backend import get_backend
 
 
 tensor = grammar.Category('tensor')
@@ -170,7 +171,7 @@ class Box(grammar.Box):
             if self.z % 2:
                 ret_arr = self._conjugate_array()
             else:
-                ret_arr = np.array(self.data)
+                ret_arr = get_backend().array(self.data)
 
             return ret_arr.reshape(self.dom.dim + self.cod.dim)
 
@@ -305,13 +306,19 @@ class Diagram(grammar.Diagram):
 
         return lambda_diagram
 
-    def eval(self, contractor=tn.contractors.auto):
+    @property
+    def free_symbols(self) -> set[sympy.Symbol]:
+        return set().union(*(box.free_symbols for box in self.boxes))
+
+    def eval(self, contractor=tn.contractors.auto, dtype: type | None = None):
         """Evaluate the tensor diagram.
 
         Parameters
         ----------
         contractor : tn contractor
             `tensornetwork` contractor for chosen contraction algorithm.
+        dtype : type, optional
+            Data type of the resulting array. Defaults to `np.float32`.
 
         Returns
         -------
@@ -320,10 +327,15 @@ class Diagram(grammar.Diagram):
 
         """
 
-        return contractor(*self.to_tn()).tensor
+        return contractor(*self.to_tn(dtype=dtype)).tensor
 
-    def to_tn(self):
+    def to_tn(self, dtype: type | None = None):
         """Convert the diagram to a `tensornetwork` TN.
+
+        Parameters
+        ----------
+        dtype : type, optional
+            Data type of the resulting array. Defaults to `np.float32`.
 
         Returns
         -------
@@ -333,13 +345,20 @@ class Diagram(grammar.Diagram):
 
         """
 
-        nodes = [tn.CopyNode(2, dim) for dim in self.dom.dim]
+        if dtype is None:
+            dtype = np.float32
+
+        backend = get_backend().name
+
+        nodes = [tn.CopyNode(2, dim, dtype=dtype,
+                             backend=backend) for dim in self.dom.dim]
         inputs = [node[0] for node in nodes]
         scan = [node[1] for node in nodes]
 
         diag = self.category.Diagram.id(self.dom)
 
-        for left, box, right in self.layers:
+        for layer in self.layers:
+            left, box, right = layer.unpack()
             subdiag = box
 
             if hasattr(box, 'decompose'):
@@ -360,9 +379,12 @@ class Diagram(grammar.Diagram):
             else:
                 if isinstance(box, Spider):
                     node = tn.CopyNode(box.n_legs_in + box.n_legs_out,
-                                       str(box.name))
+                                       box.type.product, dtype=dtype,
+                                       backend=backend)
                 else:
-                    node = tn.Node(box.array, str(box.name))
+                    node = tn.Node(box.array,
+                                   str(box.name),
+                                   backend=backend)
 
                 nodes.append(node)
 
@@ -520,8 +542,8 @@ class Spider(grammar.Spider, Box):
             Number of input legs of the spider.
 
         """
-
-        super().__init__(type, n_legs_in, n_legs_out)
+        Box.__init__(self, 'SPIDER', type ** n_legs_in, type ** n_legs_out)
+        grammar.Spider.__init__(self, type, n_legs_in, n_legs_out)
 
     def dagger(self) -> Self:
         return type(self)(self.type, self.n_legs_out, self.n_legs_in)

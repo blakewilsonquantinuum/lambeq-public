@@ -33,7 +33,7 @@ Pregroup grammars
     p \cdot p^r \to 1 \to p^r \cdot p
 
 .. note::
-   In ``lambeq`` and :term:`DisCoPy`, the adjoints of a type ``p`` are represented as ``p.l`` and ``p.r``, while the tensor product is the symbol ``@``.
+   In ``lambeq``, the adjoints of a type ``p`` are represented as ``p.l`` and ``p.r``, while the tensor product is the symbol ``@``.
 
 When annotated with pregroup types, the diagram in :numref:`fig-stringdiagram` takes the following form:
 
@@ -46,8 +46,5 @@ Note that each wire in the sentence is labelled with an atomic type or an :term:
 The transition from pregroups to vector space semantics is achieved by a mapping that sends atomic types to vector spaces (:math:`n` to :math:`N` and :math:`s` to :math:`S`) and composite types to tensor product spaces (e.g. :math:`n^r \cdot s \cdot n^l \cdot n^l` to :math:`N \otimes S \otimes N \otimes N`). Therefore, each word can be seen as a specific state in the corresponding space defined by its grammatical type, i.e. a tensor, the order of which is determined by the number of wires emanating from the corresponding box. The :term:`cups <cup>` denote tensor contractions. A concrete instantiation of the diagram requires the assignment of dimensions (which in the quantum case amounts to fixing the number of :term:`qubits <qubit>`) for each vector space corresponding to an atomic type.
 
 .. note::
-   ``lambeq``'s string diagrams are objects of the class :py:class:`discopy.grammar.pregroup.Diagram`.
+   ``lambeq``'s string diagrams are objects of the class :py:class:`lambeq.backend.grammar.Diagram`.
 
-.. rubric:: See also:
-
-- :ref:`Pregroup grammars in DisCoPy </tutorials/discocat.ipynb#Pregroup-grammars>`

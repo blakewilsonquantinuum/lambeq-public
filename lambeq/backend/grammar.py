@@ -23,6 +23,7 @@ BSD 3-Clause "New" or "Revised" License.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator
+from copy import deepcopy
 from dataclasses import dataclass, field, InitVar, replace
 from typing import Any, ClassVar, Protocol, Type, TypeVar
 from typing import cast, overload, TYPE_CHECKING
@@ -122,8 +123,6 @@ class Ty(Entity):
         return bool(self.objects)
 
     def to_diagram(self) -> Diagram:
-        """Transform the current object into an actual Diagram object
-        using the `Id` in this category."""
         return self.category.Diagram.id(self)
 
     def __repr__(self) -> str:
@@ -283,8 +282,11 @@ class Diagrammable(Protocol):
 
         """
 
-    def __matmul__(self, rhs: Diagrammable) -> Diagrammable:
+    def __matmul__(self, rhs: Diagrammable | Ty) -> Diagrammable:
         """Implements the tensor operator `@` with another diagram."""
+
+    def __rshift__(self, rhs: Diagrammable) -> Diagrammable:
+        """Implements composition `>>` with another diagram."""
 
 
 @grammar
@@ -324,16 +326,18 @@ class Box(Entity):
 
     def to_diagram(self) -> Diagram:
         ID = self.category.Ty()
-        return self.category.Diagram(dom=self.dom,
-                                     cod=self.cod,
+        dom = super().__getattribute__('dom')
+        cod = super().__getattribute__('cod')
+        return self.category.Diagram(dom=dom,
+                                     cod=cod,
                                      layers=[self.category.Layer(box=self,
                                                                  left=ID,
                                                                  right=ID)])
 
-    def __matmul__(self, rhs: Diagrammable) -> Diagram:
+    def __matmul__(self, rhs: Diagrammable | Ty) -> Diagram:
         return self.to_diagram().tensor(rhs.to_diagram())
 
-    def __rmatmul__(self, rhs: Diagrammable) -> Diagram:
+    def __rmatmul__(self, rhs: Diagrammable | Ty) -> Diagram:
         return rhs.to_diagram().tensor(self.to_diagram())
 
     def __rshift__(self, rhs: Diagrammable) -> Diagram:
@@ -512,6 +516,32 @@ class Diagram(Entity):
         return hash(repr(self))
 
     @classmethod
+    def fa(cls, left, right) -> Self:
+        return cls.id(left) @ cls.cups(right.l, right)
+
+    @classmethod
+    def ba(cls, left, right) -> Self:
+        return cls.id().tensor(cls.cups(left, left.r), cls.id(right))
+
+    @classmethod
+    def fc(cls, left, middle, right) -> Self:
+        return cls.id(left) @ cls.cups(middle.l, middle) @ cls.id(right.l)
+
+    @classmethod
+    def bc(cls, left, middle, right) -> Self:
+        return cls.id(left.r) @ cls.cups(middle, middle.r) @ cls.id(right)
+
+    @classmethod
+    def fx(cls, left, middle, right) -> Self:
+        return (cls.id(left) @ cls.swap(middle.l, right.r) @ cls.id(middle)
+                >> cls.swap(left, right.r) @ cls.cups(middle.l, middle))
+
+    @classmethod
+    def bx(cls, left, middle, right) -> Self:
+        return (cls.id(middle) @ cls.swap(left.l, middle.r) @ cls.id(right)
+                >> cls.cups(middle, middle.r) @ cls.swap(left.l, right))
+
+    @classmethod
     def caps(cls,
              left: Ty,
              right: Ty,
@@ -523,6 +553,12 @@ class Diagram(Entity):
              left: Ty,
              right: Ty, is_reversed=False) -> Diagrammable:
         return cls.special_boxes['cup'](left, right, is_reversed)
+
+    @classmethod
+    def swap(cls,
+             left: Ty,
+             right: Ty) -> Diagrammable:
+        return cls.special_boxes['swap'](left, right)
 
     def to_diagram(self) -> Self:
         return self
@@ -608,6 +644,7 @@ class Diagram(Entity):
             diagram = diagram >> cls.id(left) @ box @ cls.id(right)
         return diagram
 
+    @property
     def is_pregroup(self) -> bool:
         """Check if a diagram is a pregroup diagram.
 
@@ -619,6 +656,10 @@ class Diagram(Entity):
             Whether the diagram is a pregroup diagram.
 
         """
+
+        if self.dom:
+            # pregroup diagrams must have empty domain
+            return False
 
         in_words = True
         for layer in self.layers:
@@ -632,7 +673,7 @@ class Diagram(Entity):
         return True
 
     @classmethod
-    def lift(cls, diagrams: Iterable[Diagrammable]) -> list[Self]:
+    def lift(cls, diagrams: Iterable[Diagrammable | Ty]) -> list[Self]:
         """Lift diagrams to the current category.
 
         Given a list of boxes or diagrams, call `to_diagram` on each,
@@ -666,7 +707,7 @@ class Diagram(Entity):
 
         return diags  # type: ignore[return-value]
 
-    def tensor(self, *diagrams: Diagrammable) -> Self:
+    def tensor(self, *diagrams: Diagrammable | Ty) -> Self:
         try:
             diags = self.lift([self, *diagrams])
         except ValueError:
@@ -684,10 +725,10 @@ class Diagram(Entity):
 
         return type(self)(dom=dom, cod=left, layers=layers)
 
-    def __matmul__(self, rhs: Diagrammable) -> Self:
+    def __matmul__(self, rhs: Diagrammable | Ty) -> Self:
         return self.tensor(rhs)
 
-    def __rmatmul__(self, rhs: Diagrammable) -> Diagram:
+    def __rmatmul__(self, rhs: Diagrammable | Ty) -> Diagram:
         return rhs.to_diagram().tensor(self)
 
     @property
@@ -818,13 +859,24 @@ class Diagram(Entity):
 
         return top_layer >> mid_layer >> bot_layer
 
-    @classmethod
-    def swap(cls, left: Ty, right: Ty) -> Self:
-        """Create a layer of Swaps."""
-        dom = left @ right
-        idx1 = list(range(len(left)))
-        idx2 = list(range(len(left), len(dom)))
-        return cls.id(dom).permuted(idx2 + idx1)
+    def curry(self, n: int = 1, left: bool = True) -> Self:
+        """
+
+        """
+
+        Cap = self.category.Diagram.special_boxes['cap']
+        Id = self.id
+
+        if left:
+            base, exponent = self.dom[:-n], self.dom[-n:]
+
+            return (Id(base) @ Cap(exponent, exponent.l)
+                    >> self @ Id(exponent.l))
+        else:
+            base, exponent = self.dom[n:], self.dom[:n]
+
+            return (Cap(exponent.r, exponent) @ Id(base)  # type: ignore[return-value] # noqa: E501
+                    >> Id(exponent.r) @ self)
 
     @classmethod
     def permutation(cls, dom: Ty, permutation: Iterable[int]) -> Self:
@@ -927,7 +979,7 @@ class Diagram(Entity):
         else:
             raise InterchangerError(box0, box1)
         layers = self.layers[:i] + [layer1, layer0] + self.layers[i + 2:]
-        return Diagram(self.dom, self.cod, layers=layers)
+        return self.category.Diagram(self.dom, self.cod, layers=layers)
 
     def normalize(self, left: bool = False) -> Iterator[Diagram]:
         """
@@ -968,6 +1020,36 @@ class Diagram(Entity):
                     diagram = diagram.interchange(i, i + 1, left=left)
                     yield diagram
                     no_more_moves = False
+
+    def pregroup_normal_form(self):
+        """
+        Applies normal form to a pregroup diagram of the form
+        ``word @ ... @ word >> wires`` by normalising words and wires
+        seperately before combining them, so it can be drawn with
+        :meth:`draw`.
+        """
+
+        words = Id()
+        is_pregroup = True
+
+        for _, box, right in self:
+            if isinstance(box, Word):
+                if right:  # word boxes should be tensored left to right.
+                    is_pregroup = False
+                    break
+                words = words @ box
+            else:
+                break
+
+        wires = self[len(words):]
+
+        is_pregroup = is_pregroup and all(
+            isinstance(box, (Cup, Cap, Swap)) for box in wires.boxes)
+
+        if not is_pregroup or not words.cod:
+            return self.normal_form()
+
+        return words.normal_form() >> wires.normal_form()
 
     def normal_form(self, left: bool = False) -> Diagram:
         """
@@ -1117,7 +1199,7 @@ class Diagram(Entity):
                     yield diagram
                     cap += 1
             layers = diagram.layers[:cap] + diagram.layers[cup + 1:]
-            yield Diagram(diagram.dom, diagram.cod, layers)
+            yield diagram.category.Diagram(diagram.dom, diagram.cod, layers)
 
         diagram = self
         while True:
@@ -1130,9 +1212,52 @@ class Diagram(Entity):
         for _diagram in diagram.normalize(left=left):
             yield _diagram
 
-    def draw(self, **kwargs: Any) -> None:
-        from lambeq.backend.drawing import draw
-        draw(self, **kwargs)
+    def draw(self, draw_as_pregroup=True, **kwargs: Any) -> None:
+        """Draw the diagram.
+
+        Parameters
+        ----------
+        draw_as_pregroup : bool, optional
+            Whether to try drawing the diagram as a pregroup diagram,
+            default is `True`.
+        draw_as_nodes : bool, optional
+            Whether to draw boxes as nodes, default is `False`.
+        color : string, optional
+            Color of the box or node, default is white (`'#ffffff'`) for
+            boxes and red (`'#ff0000'`) for nodes.
+        textpad : pair of floats, optional
+            Padding between text and wires, default is `(0.1, 0.1)`.
+        draw_type_labels : bool, optional
+            Whether to draw type labels, default is `False`.
+        draw_box_labels : bool, optional
+            Whether to draw box labels, default is `True`.
+        aspect : string, optional
+            Aspect ratio, one of `['auto', 'equal']`.
+        margins : tuple, optional
+            Margins, default is `(0.05, 0.05)`.
+        nodesize : float, optional
+            BoxNode size for spiders and controlled gates.
+        fontsize : int, optional
+            Font size for the boxes, default is `12`.
+        fontsize_types : int, optional
+            Font size for the types, default is `12`.
+        figsize : tuple, optional
+            Figure size.
+        path : str, optional
+            Where to save the image, if `None` we call `plt.show()`.
+        to_tikz : bool, optional
+            Whether to output tikz code instead of matplotlib.
+        asymmetry : float, optional
+            Make a box and its dagger mirror images, default is
+            `.25 * any(box.is_dagger for box in diagram.boxes)`.
+
+        """
+        if draw_as_pregroup and self.is_pregroup:
+            from lambeq.backend.drawing import draw_pregroup
+            draw_pregroup(self, **kwargs)
+        else:
+            from lambeq.backend.drawing import draw
+            draw(self, **kwargs)
 
     def apply_functor(self, functor: Functor) -> Diagram:
         assert not self.is_id
@@ -1207,6 +1332,15 @@ class Cap(Box):
             for i, (l_ob, r_ob) in enumerate(zip(left, reversed(right))):
                 diagram = diagram.then_at(cls(l_ob, r_ob), i)
             return diagram
+
+    def __reduce__(self):
+        return (self.__class__, (self.left, self.right, self.is_reversed))
+
+    def __deepcopy__(self, memo) -> Self:
+        left_copy = deepcopy(self.left, memo)
+        right_copy = deepcopy(self.right, memo)
+        is_reversed_copy = deepcopy(self.is_reversed)
+        return type(self)(left_copy, right_copy, is_reversed_copy)
 
     @classmethod
     def to_right(cls, left: Ty, is_reversed: bool = False) -> Self | Diagram:
@@ -1307,6 +1441,15 @@ class Cup(Box):
                 diagram = diagram.then_at(cls(l_ob, r_ob), len(left) - 1 - i)
             return diagram
 
+    def __reduce__(self):
+        return (self.__class__, (self.left, self.right, self.is_reversed))
+
+    def __deepcopy__(self, memo) -> Self:
+        left_copy = deepcopy(self.left, memo)
+        right_copy = deepcopy(self.right, memo)
+        is_reversed_copy = deepcopy(self.is_reversed)
+        return type(self)(left_copy, right_copy, is_reversed_copy)
+
     @classmethod
     def to_right(cls, left: Ty, is_reversed: bool = False) -> Self | Diagram:
         return cls(left, left.l if is_reversed else left.r)
@@ -1365,7 +1508,7 @@ class Daggered(Box):
         self.name = self.box.name + '†'
         self.dom = self.box.cod
         self.cod = self.box.dom
-        self.z = 0
+        self.z = self.box.z
 
     def rotate(self, z: int) -> Self:
         """Rotate the daggered box."""
@@ -1435,6 +1578,15 @@ class Spider(Box):
                 ])
             )
 
+    def __reduce__(self):
+        return (self.__class__, (self.type, self.n_legs_in, self.n_legs_out))
+
+    def __deepcopy__(self, memo) -> Self:
+        typ = deepcopy(self.type, memo)
+        n_legs_in = deepcopy(self.n_legs_in, memo)
+        n_legs_out = deepcopy(self.n_legs_out)
+        return type(self)(typ, n_legs_in, n_legs_out)
+
     def rotate(self, z: int) -> Self:
         """Rotate the spider."""
         return type(self)(self.type.rotate(z), len(self.dom), len(self.cod))
@@ -1495,6 +1647,14 @@ class Swap(Box):
                 for i in reversed(range(len(left))):
                     diagram = diagram.then_at(cls(left[i], ob), start + i)
             return diagram
+
+    def __reduce__(self):
+        return (self.__class__, (self.left, self.right))
+
+    def __deepcopy__(self, memo) -> Self:
+        left_copy = deepcopy(self.left, memo)
+        right_copy = deepcopy(self.right, memo)
+        return type(self)(left_copy, right_copy)
 
     def rotate(self, z: int) -> Self:
         """Rotate the swap."""
@@ -1613,13 +1773,16 @@ class Functor:
     @overload
     def __call__(self, entity: Diagram) -> Diagram: ...
 
+    @overload
+    def __call__(self, entity: Diagrammable) -> Diagrammable: ...
+
     def __call__(self, entity: Ty | Diagrammable) -> Ty | Diagrammable:
-        """Apply the functor to a type or a box.
+        """Apply the functor to a type or a diagrammable.
 
         Parameters
         ----------
         entity : Ty or Diagrammable
-            The type or box to which the functor is applied.
+            The type or diagrammable to which the functor is applied.
 
         """
         if isinstance(entity, Ty):
@@ -1643,7 +1806,7 @@ class Functor:
         return ret
 
     def ar_with_cache(self, ar: Diagrammable) -> Diagrammable:
-        """Apply the functor to a Diagrammable, caching the result."""
+        """Apply the functor to a diagrammable, caching the result."""
         try:
             return self.ar_cache[ar]
         except KeyError:

@@ -18,7 +18,6 @@ __all__ = [
 
         'ansatz',
         'core',
-        'pregroups',
         'rewrite',
         'text2diagram',
         'tokeniser',
@@ -55,8 +54,6 @@ __all__ = [
         'VerbosityLevel',
 
         'diagram2str',
-        'create_pregroup_diagram',
-        'is_pregroup_diagram',
 
         'Reader',
         'LinearReader',
@@ -108,15 +105,13 @@ __all__ = [
         'MSELoss',
 ]
 
-from lambeq import (ansatz, core, pregroups, rewrite,
-                    text2diagram, tokeniser, training)
+from lambeq import ansatz, core, rewrite, text2diagram, tokeniser, training
 from lambeq.ansatz import (BaseAnsatz, CircuitAnsatz, IQPAnsatz, MPSAnsatz,
                            Sim14Ansatz, Sim15Ansatz, SpiderAnsatz,
                            StronglyEntanglingAnsatz, Symbol, TensorAnsatz)
 from lambeq.core.globals import VerbosityLevel
 from lambeq.core.types import AtomicType
-from lambeq.pregroups import (create_pregroup_diagram, diagram2str,
-                              is_pregroup_diagram)
+from lambeq.backend.drawing.text_printer import diagram2str
 from lambeq.rewrite import (CoordinationRewriteRule, CurryRewriteRule,
                             DiagramRewriter, RemoveCupsRewriter,
                             RemoveSwapsRewriter, Rewriter, RewriteRule,

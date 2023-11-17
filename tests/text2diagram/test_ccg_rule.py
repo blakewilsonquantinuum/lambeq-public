@@ -1,6 +1,6 @@
 import pytest
 
-from discopy.grammar.pregroup import Cap, Cup, Diagram, Id, Swap, Word
+from lambeq.backend.grammar import Cap, Cup, Diagram, Id, Swap, Word
 
 from lambeq import AtomicType, CCGType, CCGTree, CCGRule, CCGRuleUseError
 
@@ -161,7 +161,7 @@ class TestGeneralizedBackwardCrossedComposition(CCGRuleTester):
 
     words = Word('have', N >> S << N) @ Word('not', S >> S)
     diagram = (words >>
-               Id(N >> S) @ Diagram.swap(N.l, S >> S) >>
+               Id(N >> S) @ Swap(N.l, S >> S) >>
                Id(N.r) @ Cup(S, S.r) @ Id(S << N))
 
     have_word, not_word = words.boxes
@@ -184,7 +184,7 @@ class TestGeneralizedForwardCrossedComposition(CCGRuleTester):
 
     words = Word('do', S << S) @ Word('have', N >> S << N)
     diagram = (words >>
-               Diagram.swap(S << S, N.r) @ Id(S << N) >>
+               Swap(S << S, N.r) @ Id(S << N) >>
                Id(N >> S) @ Cup(S.l, S) @ Id(N.l))
 
     do_word, have_word = words.boxes
@@ -195,7 +195,7 @@ class TestGeneralizedForwardCrossedComposition(CCGRuleTester):
 
 class TestLexical(CCGRuleTester):
     tree = it
-    diagram = Word('it', N)
+    diagram = Word('it', N).to_diagram()
 
     def test_rule_use_error(self):
         with pytest.raises(CCGRuleUseError):
@@ -204,27 +204,27 @@ class TestLexical(CCGRuleTester):
 
 class TestRemovePunctuationLeft(CCGRuleTester):
     tree = CCGTree(rule='LP', biclosed_type=n, children=(comma, it))
-    diagram = Word('it', N)
+    diagram = Word('it', N).to_diagram()
 
 
 class TestRemovePunctuationRight(CCGRuleTester):
     tree = CCGTree(rule='RP', biclosed_type=n, children=(it, comma))
-    diagram = Word('it', N)
+    diagram = Word('it', N).to_diagram()
 
 
 class TestRemovePunctuationRightWithConjunction(CCGRuleTester):
     tree = CCGTree(rule='LP', biclosed_type=conj, children=(comma, and_))
-    diagram = Word('and', CONJ)
+    diagram = Word('and', CONJ).to_diagram()
 
 
 class TestRemovePunctuationLeftWithConjunction(CCGRuleTester):
     tree = CCGTree(rule='RP', biclosed_type=conj, children=(and_, comma))
-    diagram = Word('and', CONJ)
+    diagram = Word('and', CONJ).to_diagram()
 
 
 class TestUnary(CCGRuleTester):
     tree = CCGTree(rule='U', biclosed_type=s, children=(be,))
-    diagram = Word('be', S)
+    diagram = Word('be', S).to_diagram()
 
 
 class TestUnarySwap(CCGRuleTester):

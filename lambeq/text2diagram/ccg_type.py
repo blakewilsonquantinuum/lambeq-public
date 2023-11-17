@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from typing import Any, ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from discopy.grammar import pregroup
+    from lambeq.backend import grammar
 
 
 class CCGParseError(Exception):
@@ -502,27 +502,27 @@ class CCGType:
 
         return new.slash(self.direction, self.argument), old
 
-    def to_discopy(self, Ty: type | None = None) -> pregroup.Ty | Any:
-        """Turn the CCG type into a DisCoPy pregroup type."""
+    def to_grammar(self, Ty: type | None = None) -> grammar.Ty | Any:
+        """Turn the CCG type into a lambeq grammar type."""
         if Ty is None:
-            from discopy.grammar.pregroup import Ty  # type: ignore[no-redef]
+            from lambeq.backend.grammar import Ty
             assert Ty is not None
 
         if self.is_over:
-            return self.left.to_discopy(Ty) << self.right.to_discopy(Ty)
+            return self.left.to_grammar(Ty) << self.right.to_grammar(Ty)
         elif self.is_under:
-            return self.left.to_discopy(Ty) >> self.right.to_discopy(Ty)
+            return self.left.to_grammar(Ty) >> self.right.to_grammar(Ty)
         elif self.is_atomic:
             return Ty(self.name)
         else:
             return Ty()
 
-    def split(self, base: CCGType) -> tuple[pregroup.Ty,
-                                            pregroup.Ty,
-                                            pregroup.Ty]:
-        r"""Isolate the inner type of a CCG type, in DisCoPy.
+    def split(self, base: CCGType) -> tuple[grammar.Ty,
+                                            grammar.Ty,
+                                            grammar.Ty]:
+        r"""Isolate the inner type of a CCG type, in lambeq.
 
-        For example, if the input is `T = (X\Y)/Z`, the DisCoPy type
+        For example, if the input is `T = (X\Y)/Z`, the lambeq type
         would be `Y.r @ X @ Z.l` so:
 
         >>> T = CCGType.parse(r'(X\Y)/Z')
@@ -535,17 +535,17 @@ class CCGType:
         Ty()  +  Y.r @ X  +  Z.l
 
         """
-        from discopy.grammar.pregroup import Ty
+        from lambeq.backend.grammar import Ty
         cat = self
         left = right = Ty()
         while cat != base:
             if cat.is_over:
-                right = cat.right.to_discopy().l @ right
+                right = cat.right.to_grammar().l @ right
                 cat = cat.left
             else:
-                left @= cat.left.to_discopy().r
+                left @= cat.left.to_grammar().r
                 cat = cat.right
-        return left, cat.to_discopy(), right
+        return left, cat.to_grammar(), right
 
 
 CCGType.NOUN = CCGType('n')

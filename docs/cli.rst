@@ -227,7 +227,7 @@ For the classical case, applying a :py:class:`.SpiderAnsatz` with 2 dimensions a
 Other options
 -------------
 
-To store the :term:`DisCoPy` (for string diagrams) or the :py:class:`.CCGTree` objects (for the CCG trees) in ``json`` or ``pickle`` format, type:
+To store the :py:class:`lambeq.backend.grammar.Diagram` (for string diagrams) or the :py:class:`.CCGTree` objects (for the CCG trees) in ``json`` or ``pickle`` format, type:
 
 .. code-block:: console
 

@@ -20,8 +20,7 @@ from collections.abc import Sequence
 from enum import Enum
 from typing import Any
 
-from discopy.grammar.pregroup import Diagram, Id
-
+from lambeq.backend.grammar import Diagram, Id
 from lambeq.text2diagram.ccg_type import CCGType
 
 
@@ -177,7 +176,7 @@ class CCGRule(str, Enum):
     def apply(self,
               dom: Sequence[CCGType],
               cod: CCGType | None = None) -> Diagram:
-        """Produce a DisCoPy diagram for this rule.
+        """Produce a lambeq diagram for this rule.
 
         This is primarily used by CCG trees that have been resolved.
         This means, for example, that diagrams cannot be produced for
@@ -193,7 +192,7 @@ class CCGRule(str, Enum):
 
         Returns
         -------
-        discopy.pregroup.Diagram
+        :py:class:`lambeq.backend.grammar.Diagram`
             The resulting diagram.
 
         Raises
@@ -221,7 +220,7 @@ class CCGRule(str, Enum):
                 )
 
             if self == CCGRule.UNARY:
-                return Id(dom[0].to_discopy())
+                return Id(dom[0].to_grammar())
 
             # else type-raising rule
             if cod is None:
@@ -230,11 +229,11 @@ class CCGRule(str, Enum):
                     'The codomain is required for type-raising rules.'
                 )
 
-            result = cod.result.to_discopy()
+            result = cod.result.to_grammar()
             if self == CCGRule.BACKWARD_TYPE_RAISING:
-                return Id(dom[0].to_discopy()) @ Diagram.caps(result.r, result)
+                return Id(dom[0].to_grammar()) @ Diagram.caps(result.r, result)
             else:
-                return Diagram.caps(result, result.l) @ Id(dom[0].to_discopy())
+                return Diagram.caps(result, result.l) @ Id(dom[0].to_grammar())
 
         # binary rules
         if len(dom) != 2:
@@ -244,45 +243,45 @@ class CCGRule(str, Enum):
         left, right = dom
         if self == CCGRule.FORWARD_APPLICATION:
             # X/Y + Y -> X
-            return Diagram.fa(left.result.to_discopy(), right.to_discopy())
+            return Diagram.fa(left.result.to_grammar(), right.to_grammar())
         elif self == CCGRule.BACKWARD_APPLICATION:
             # Y + X\Y -> X
-            return Diagram.ba(left.to_discopy(), right.result.to_discopy())
+            return Diagram.ba(left.to_grammar(), right.result.to_grammar())
         elif self == CCGRule.FORWARD_COMPOSITION:
             # X/Y + Y/Z -> X/Z
-            return Diagram.fc(left.left.to_discopy(),
-                              left.right.to_discopy(),
-                              right.right.to_discopy())
+            return Diagram.fc(left.left.to_grammar(),
+                              left.right.to_grammar(),
+                              right.right.to_grammar())
         elif self == CCGRule.BACKWARD_COMPOSITION:
             # Z\Y + X\Y -> X\Z
-            return Diagram.bc(left.left.to_discopy(),
-                              left.right.to_discopy(),
-                              right.right.to_discopy())
+            return Diagram.bc(left.left.to_grammar(),
+                              left.right.to_grammar(),
+                              right.right.to_grammar())
         elif self == CCGRule.FORWARD_CROSSED_COMPOSITION:
             # X/Y + Y\Z -> X\Z
-            return Diagram.fx(left.left.to_discopy(),
-                              left.right.to_discopy(),
-                              right.left.to_discopy())
+            return Diagram.fx(left.left.to_grammar(),
+                              left.right.to_grammar(),
+                              right.left.to_grammar())
         elif self == CCGRule.BACKWARD_CROSSED_COMPOSITION:
             # Y/Z + X\Y -> X/Z
-            return Diagram.bx(left.right.to_discopy(),
-                              left.left.to_discopy(),
-                              right.left.to_discopy())
+            return Diagram.bx(left.right.to_grammar(),
+                              left.left.to_grammar(),
+                              right.left.to_grammar())
         elif self == CCGRule.GENERALIZED_FORWARD_COMPOSITION:
             # X/Y + (Y/Z)/... -> (X/Z)/...
-            mid = left.argument.to_discopy()
-            return (Id(left.result.to_discopy())
+            mid = left.argument.to_grammar()
+            return (Id(left.result.to_grammar())
                     @ Diagram.cups(mid.l, mid)
-                    @ Id(right.to_discopy()[len(mid):]))
+                    @ Id(right.to_grammar()[len(mid):]))
         elif self == CCGRule.GENERALIZED_BACKWARD_COMPOSITION:
             # (Y\Z)\... + X\Y -> (X\Z)\...
-            mid = right.argument.to_discopy()
-            return (Id(left.to_discopy()[:-len(mid)])
+            mid = right.argument.to_grammar()
+            return (Id(left.to_grammar()[:-len(mid)])
                     @ Diagram.cups(mid, mid.r)
-                    @ Id(right.result.to_discopy()))
+                    @ Id(right.result.to_grammar()))
         elif self == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
             # X/Y + (Y\Z)|... -> (X\Z)|...
-            mid = left.left.to_discopy()
+            mid = left.left.to_grammar()
             l, join, r = right.split(left.right)
             return (
                 Diagram.swap(mid << join, l) @ Id(join)
@@ -290,7 +289,7 @@ class CCGRule(str, Enum):
             ) @ Id(r)
         elif self == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
             # (Y/Z)|... + X\Y -> (X/Z)|...
-            mid = right.right.to_discopy()
+            mid = right.right.to_grammar()
             l, join, r = left.split(right.left)
             return Id(l) @ (
                 Id(join) @ Diagram.swap(r, join >> mid)
@@ -298,10 +297,11 @@ class CCGRule(str, Enum):
             )
         elif self == CCGRule.REMOVE_PUNCTUATION_LEFT:
             # punc + X -> X
-            return Id(right.to_discopy())
+            return Id(right.to_grammar())
         elif self == CCGRule.REMOVE_PUNCTUATION_RIGHT:
             # X + punc -> X
-            return Id(left.to_discopy())
+            return Id(left.to_grammar())
+        raise AssertionError('unreachable code')
 
     @classmethod
     def infer_rule(cls, dom: Sequence[CCGType], cod: CCGType) -> CCGRule:

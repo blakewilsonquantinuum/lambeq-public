@@ -31,12 +31,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
+from functools import partial
+from typing import cast
 
 import numpy as np
 import tensornetwork as tn
-from typing_extensions import Self
+from typing_extensions import Any, Self
 
 from lambeq.backend import grammar, tensor
+from lambeq.backend.numerical_backend import backend, get_backend
 
 
 quantum = grammar.Category('quantum')
@@ -91,11 +94,6 @@ class Ty(tensor.Dim):
         return (self.label == other.label
                 and self.name == other.name
                 and self.objects == other.objects)
-
-    def to_diagram(self) -> Diagram:
-        """Transform the current object into an actual Diagram object
-        using the `Id` in this category."""
-        return Id(self).to_diagram()
 
 
 qubit = Ty('qubit')
@@ -211,6 +209,53 @@ class Diagram(tensor.Diagram):
     cod: Ty
     layers: list[Layer]  # type: ignore[assignment]
 
+    def __getattr__(self, name: str) -> Any:
+        try:
+            gate = GATES[name]
+            if callable(gate):
+                return partial(self.apply_parametrized_gate, gate)
+            return partial(self.apply_gate, gate)
+        except KeyError:
+            return super().__getattr__(name)  # type: ignore[misc]
+
+    def apply_parametrized_gate(self,
+                                gate: Callable[[float], Parametrized],
+                                param: float,
+                                *qubits: int) -> Self:
+        return self.apply_gate(gate(param), *qubits)
+
+    def apply_gate(self, gate: Box, *qubits: int) -> Self:
+        if isinstance(gate, Controlled):
+            min_idx = min(qubits)
+            final_gate: Box
+
+            if isinstance(gate.controlled, Controlled):
+                assert len(qubits) == 3
+                atomic = gate.controlled.controlled
+                dist1 = qubits[2] - qubits[0]
+                dist2 = qubits[2] - qubits[1]
+
+                if dist1 * dist2 < 0:  # sign flip
+                    final_gate = Controlled(Controlled(atomic, dist1), dist2)
+                else:
+                    dists = np.array([dist1, dist2])
+                    idx = np.argmin(np.abs(dists)), np.argmax(np.abs(dists))
+                    final_gate = Controlled(Controlled(atomic, dists[idx[0]]),
+                                            dists[idx[1]]-dists[idx[0]])
+
+            else:
+                # Singly controlled
+                assert len(qubits) == 2
+                dist = qubits[1] - qubits[0]
+
+                final_gate = Controlled(gate.controlled, dist)
+
+            return self.then_at(final_gate, min_idx)
+
+        else:
+            assert len(qubits) == len(gate.dom)
+            return self.then_at(gate, min(qubits))
+
     @property
     def is_mixed(self) -> bool:
         """Whether the diagram is mixed.
@@ -225,7 +270,12 @@ class Diagram(tensor.Diagram):
 
         return mixed_boundary or any(box.is_mixed for box in self.boxes)
 
-    def eval(self, mixed=False, contractor=tn.contractors.auto):
+    def eval(self,
+             *others,
+             backend=None,
+             mixed=False,
+             contractor=tn.contractors.auto,
+             **params):
         """Evaluate the circuit represented by the diagram.
 
         Be aware that this method is only suitable for small circuits with
@@ -233,6 +283,11 @@ class Diagram(tensor.Diagram):
 
         Parameters
         ----------
+        others : :class:`lambeq.backend.quantum.Diagram`
+            Other circuits to process in batch if backend is set to tket.
+        backend : pytket.Backend, optional
+            Backend on which to run the circuit, if none then we apply
+            tensor contraction.
         mixed : bool, optional
             Whether the circuit is mixed, by default False
         contractor : Callable, optional
@@ -240,12 +295,31 @@ class Diagram(tensor.Diagram):
 
         Returns
         -------
-        np.ndarray
+        np.ndarray or list of np.ndarray
             The result of the circuit simulation.
 
         """
+        if backend is None:
+            return contractor(*self.to_tn(mixed=mixed)).tensor
 
-        return contractor(*self.to_tn(mixed=mixed)).tensor
+        circuits = [circuit.to_tk() for circuit in (self, ) + others]
+        results, counts = [], circuits[0].get_counts(
+            *circuits[1:], backend=backend, **params)
+
+        for i, circuit in enumerate(circuits):
+            n_bits = len(circuit.post_processing.dom)
+            result = np.zeros(*(n_bits * (2, )))
+            for bitstring, count in counts[i].items():
+                result[bitstring] = count
+            if circuit.post_processing:
+                post_result = circuit.post_processing.eval().astype(float)
+
+                if result.shape and post_result.shape:
+                    result = np.tensordot(result, post_result, -1)
+                else:
+                    result * post_result
+            results.append(result)
+        return results if len(results) > 1 else results[0]
 
     def init_and_discard(self):
         """Return circuit with empty domain and only bits as codomain. """
@@ -365,7 +439,7 @@ class Diagram(tensor.Diagram):
         """
 
         if not mixed and not self.is_mixed:
-            return super().to_tn()
+            return super().to_tn(dtype=complex)
 
         diag = Id(self.dom)
 
@@ -507,8 +581,7 @@ def generate_cap(left: Ty, right: Ty, is_reversed=False) -> Diagram:
 
     assert left == right
 
-    atomic_cap = (Scalar(2 ** 0.5) >> Ket(0) @ Ket(0)
-                  >> H @ Id(qubit) >> Controlled(X))
+    atomic_cap = Ket(0) @ Ket(0) >> H @ Sqrt(2) @ qubit >> Controlled(X)
 
     d = Id()
 
@@ -540,8 +613,7 @@ def generate_cup(left: Ty, right: Ty, is_reversed=False) -> Diagram:
 
     assert left == right
 
-    atomic_cup = (Controlled(X) >> H @ Id(qubit)
-                  >> Bra(0) @ Bra(0) >> Scalar(2 ** 0.5))
+    atomic_cup = Controlled(X) >> H @ Sqrt(2) @ qubit >> Bra(0) @ Bra(0)
 
     d = Id(left @ right)
 
@@ -549,6 +621,30 @@ def generate_cup(left: Ty, right: Ty, is_reversed=False) -> Diagram:
         d = d.then_at(atomic_cup, len(left) - i - 1)
 
     return d
+
+
+@Diagram.register_special_box('spider')
+def generate_spider(type: Ty, n_legs_in: int, n_legs_out: int) -> Diagram:
+
+    i, o = n_legs_in, n_legs_out
+    if i == o == 1:
+        return Id(type)
+
+    if (i, o) == (1, 0):
+        return cast(Diagram, Sqrt(2) >> H >> Bra(0))
+    if (i, o) == (2, 1):
+        return cast(Diagram, CX >> Id(qubit) @ Bra(0))
+    if o > i:
+        return generate_spider(type, o, i).dagger()
+
+    if o != 1:
+        return generate_spider(type, i, 1) >> generate_spider(type, 1, o)
+    if i % 2:
+        return (generate_spider(type, i - 1, 1) @ Id(type)
+                >> generate_spider(type, 2, 1))
+
+    half_spiders = generate_spider(type, i // 2, 1)
+    return half_spiders @ half_spiders >> generate_spider(type, 2, 1)
 
 
 @Diagram.register_special_box('swap')
@@ -589,7 +685,10 @@ class Swap(tensor.Swap, SelfConjugate, Box):
     dagger = tensor.Swap.dagger
 
 
-Id = Diagram.id
+def Id(ty: Ty | int | None = None) -> Diagram:
+    if isinstance(ty, int):
+        ty = qubit ** ty
+    return Diagram.id(ty)
 
 
 class Ket(SelfConjugate, Box):
@@ -701,7 +800,7 @@ class Parametrized(Box):
             import sympy
             return sympy
         else:
-            return np
+            return get_backend()
 
 
 class Rotation(Parametrized):
@@ -725,12 +824,12 @@ class Rx(AntiConjugate, Rotation):
 
     @property
     def array(self):
+        with backend() as np:
+            half_theta = np.pi * self.data
+            sin = self.modules.sin(half_theta)
+            cos = self.modules.cos(half_theta)
 
-        half_theta = np.pi * self.data
-        sin = self.modules.sin(half_theta)
-        cos = self.modules.cos(half_theta)
-
-        return np.array([[cos, -1j * sin], [-1j * sin, cos]])
+            return np.array([[cos, -1j * sin], [-1j * sin, cos]])
 
 
 class Ry(SelfConjugate, Rotation):
@@ -738,12 +837,12 @@ class Ry(SelfConjugate, Rotation):
 
     @property
     def array(self):
+        with backend() as np:
+            half_theta = np.pi * self.data
+            sin = self.modules.sin(half_theta)
+            cos = self.modules.cos(half_theta)
 
-        half_theta = np.pi * self.data
-        sin = self.modules.sin(half_theta)
-        cos = self.modules.cos(half_theta)
-
-        return np.array([[cos, sin], [-sin, cos]])
+            return np.array([[cos, sin], [-sin, cos]])
 
 
 class Rz(AntiConjugate, Rotation):
@@ -751,15 +850,15 @@ class Rz(AntiConjugate, Rotation):
 
     @property
     def array(self):
+        with backend() as np:
+            half_theta = self.modules.pi * self.data
+            exp1 = np.e ** (-1j * half_theta)
+            exp2 = np.e ** (1j * half_theta)
 
-        half_theta = np.pi * self.data
-        exp1 = np.e ** (-1j * half_theta)
-        exp2 = np.e ** (1j * half_theta)
-
-        return np.array([[exp1, 0], [0, exp2]])
+            return np.array([[exp1, 0], [0, exp2]])
 
 
-class Controlled(Box):
+class Controlled(Parametrized):
     """A gate that applies a unitary controlled by a qubit's state."""
 
     def __init__(self, controlled: Box, distance=1):
@@ -829,19 +928,20 @@ class Controlled(Box):
 
     @property
     def array(self):
-        controlled, distance = self.controlled, self.distance
+        with backend() as np:
+            controlled, distance = self.controlled, self.distance
 
-        n_qubits = len(self.dom)
-        if distance == 1:
-            d = 1 << n_qubits - 1
-            part1 = np.array([[1, 0], [0, 0]])
-            part2 = np.array([[0, 0], [0, 1]])
-            array = (np.kron(part1, np.eye(d))
-                     + np.kron(part2,
-                               np.array(controlled.array.reshape(d, d))))
-        else:
-            array = self.decompose().eval()
-        return array.reshape(*[2] * 2 * n_qubits)
+            n_qubits = len(self.dom)
+            if distance == 1:
+                d = 1 << n_qubits - 1
+                part1 = np.array([[1, 0], [0, 0]])
+                part2 = np.array([[0, 0], [0, 1]])
+                array = (np.kron(part1, np.eye(d))
+                         + np.kron(part2,
+                                   np.array(controlled.array.reshape(d, d))))
+            else:
+                array = self.decompose().eval()
+            return array.reshape(*[2] * 2 * n_qubits)
 
     def dagger(self):
         """Return the dagger of the box."""
@@ -908,6 +1008,11 @@ class Scalar(Box):
     def __post_init__(self) -> None:
         self.name = f'{self.data:.3f}'
 
+    @property
+    def array(self):
+        with backend() as np:
+            return np.array(self.data)
+
     __hash__: Callable[[Box], int] = Box.__hash__
 
     def dagger(self):
@@ -931,7 +1036,8 @@ class Sqrt(Scalar):
 
     @property
     def array(self):
-        return np.array(self.data ** .5)
+        with backend() as np:
+            return np.array(self.data ** .5)
 
     __hash__: Callable[[], int] = Scalar.__hash__
 
@@ -1008,43 +1114,14 @@ X = SelfConjugate('X', qubit, qubit,
 Y = Box('Y', qubit, qubit, np.array([[0, 1j], [-1j, 0]]), self_adjoint=True)
 Z = SelfConjugate('Z', qubit, qubit,
                   np.array([[1, 0], [0, -1]]), self_adjoint=True)
-
-
-# TODO: The following needs to be replaced by syntactic sugar
-# e.g Ket(0,0).H.CX(0,1)
 CX = Controlled(X)
 CY = Controlled(Y)
 CZ = Controlled(Z)
+CCX = Controlled(CX)
+CCZ = Controlled(CZ)
 CRx = lambda phi, distance = 1: Controlled(Rx(phi), distance)  # noqa: E731
 CRy = lambda phi, distance = 1: Controlled(Ry(phi), distance)  # noqa: E731
 CRz = lambda phi, distance = 1: Controlled(Rz(phi), distance)  # noqa: E731
-
-
-def CCX(control1, control2, target):
-    dist1 = target - control1
-    dist2 = target - control2
-
-    if dist1 * dist2 < 0:  # sign flip
-        return Controlled(Controlled(X, dist1), dist2)
-    else:
-        dists = np.array([dist1, dist2])
-        idx = np.argmin(np.abs(dists)), np.argmax(np.abs(dists))
-        return Controlled(Controlled(X, dists[idx[0]]),
-                          dists[idx[1]]-dists[idx[0]])
-
-
-def CCZ(control1, control2, target):
-    dist1 = target - control1
-    dist2 = target - control2
-
-    if dist1 * dist2 < 0:  # sign flip
-        return Controlled(Controlled(Z, dist1), dist2)
-    else:
-        dists = np.array([dist1, dist2])
-        idx = np.argmin(np.abs(dists)), np.argmax(np.abs(dists))
-        return Controlled(Controlled(Z, dists[idx[0]]),
-                          dists[idx[1]]-dists[idx[0]])
-
 
 GATES = {
     'SWAP': SWAP,

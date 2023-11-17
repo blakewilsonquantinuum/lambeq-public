@@ -34,13 +34,13 @@ import socket
 import sys
 from typing import Any, Callable, TYPE_CHECKING
 
-import discopy
 from tqdm.auto import tqdm, trange
 
 if TYPE_CHECKING:
     from torch.utils.tensorboard.writer import SummaryWriter
 
 
+from lambeq.backend.numerical_backend import backend
 from lambeq.core.globals import VerbosityLevel
 from lambeq.training.checkpoint import Checkpoint
 from lambeq.training.dataset import Dataset
@@ -443,7 +443,7 @@ class Trainer(ABC):
                           position=0)
 
         # start training loop
-        with discopy.tensor.backend(self.backend):
+        with backend(self.backend):
             early_stopping = False
             best_val_loss = float('inf')
             for epoch in trange(self.start_epoch,

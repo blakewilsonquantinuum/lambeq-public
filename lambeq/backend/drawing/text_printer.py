@@ -14,7 +14,7 @@
 """
 Text printer
 ============
-Module that allows printing of DisCoPy pregroup diagrams in text form,
+Module that allows printing of lambeq pregroup diagrams in text form,
 e.g. for the purpose of outputting them graphically in a terminal.
 
 """
@@ -24,14 +24,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from discopy.grammar.pregroup import Cup, Diagram, Word
-
-from lambeq.pregroups.utils import is_pregroup_diagram
+from lambeq.backend.grammar import Cup, Diagram, Word
 
 
 def diagram2str(diagram: Diagram,
                 word_spacing: int = 2,
-                discopy_types: bool = False,
+                use_at_separator: bool = False,
                 compress_layers: bool = True,
                 use_ascii: bool = False) -> str:
     """Produces a string that graphically represents the input diagram
@@ -39,7 +37,7 @@ def diagram2str(diagram: Diagram,
     For specific arguments, see the constructor of the
     :py:class:`.TextDiagramPrinter` class."""
     printer = TextDiagramPrinter(word_spacing,
-                                 discopy_types,
+                                 use_at_separator,
                                  compress_layers,
                                  use_ascii)
     return printer.diagram2str(diagram)
@@ -87,7 +85,7 @@ class TextDiagramPrinter:
 
     def __init__(self,
                  word_spacing: int = 2,
-                 discopy_types: bool = False,
+                 use_at_separator: bool = False,
                  compress_layers: bool = True,
                  use_ascii: bool = False) -> None:
         """Initialise a text diagram printer.
@@ -96,9 +94,9 @@ class TextDiagramPrinter:
         ----------
         word_spacing : int, default: 2
             The number of spaces between the words of the diagrams.
-        discopy_types : bool, default: False
-            Whether to represent types in DisCoPy form (using @ as the
-            monoidal product).
+        use_at_separator : bool, default: False
+            Whether to represent types using @ as the monoidal product.
+            Otherwise, use the unicode dot character.
         compress_layers : bool, default: True
             Whether to draw boxes in the same layer when they can occur
             simultaneously, otherwise, draw one box per layer.
@@ -108,7 +106,7 @@ class TextDiagramPrinter:
 
         """
         self.word_spacing = word_spacing
-        self.discopy_types = discopy_types
+        self.use_at_separator = use_at_separator
         self.compress_layers = compress_layers
         self.chr_set = (self.UNICODE_CHAR_SET if not use_ascii
                         else self.ASCII_CHAR_SET)
@@ -120,7 +118,7 @@ class TextDiagramPrinter:
 
         Parameters
         ----------
-        diagram: :py:class:`discopy.grammar.pregroup.Diagram`
+        diagram: :py:class:`lambeq.backend.grammar.Diagram`
             The diagram to be printed.
 
         Returns
@@ -136,7 +134,7 @@ class TextDiagramPrinter:
 
         """
 
-        if not (isinstance(diagram, Diagram) and is_pregroup_diagram(diagram)):
+        if not (isinstance(diagram, Diagram) and diagram.is_pregroup):
             raise ValueError('The input is not a pregroup diagram.')
 
         # create headers
@@ -156,7 +154,7 @@ class TextDiagramPrinter:
 
             word = box.name
             types = [str(ob) for ob in box.cod]
-            type_sep = ' @ ' if self.discopy_types else self.chr_set['DOT']
+            type_sep = ' @ ' if self.use_at_separator else self.chr_set['DOT']
             type_str = type_sep.join(types)
             width = max(len(word), len(type_str))
 

@@ -1,4 +1,4 @@
-.. _sec-manual_training:
+.. _sec-manual-training:
 
 Advanced: Manual training
 =========================

@@ -31,15 +31,13 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import overload
 
-from discopy.grammar import pregroup
-from discopy.grammar.pregroup import (Box, Cup, Diagram, Id, Swap, Ty,
-                                      Word)
-
+from lambeq.backend.grammar import (Box, Cup, Diagram, Id, Swap,
+                                    Ty, Word)
 from lambeq.core.types import AtomicType
-from lambeq.pregroups.utils import CUP_TOKEN, is_pregroup_diagram
 
 N = AtomicType.NOUN
 S = AtomicType.SENTENCE
+CUP_TOKEN = '**CUP**'
 
 
 class DiagramRewriter(ABC):
@@ -67,12 +65,13 @@ class DiagramRewriter(ABC):
 
         Parameters
         ----------
-        diagram : :py:class:`discopy.pregroup.Diagram` or list of Diagram
+        diagram : :py:class:`lambeq.backend.grammar.Diagram`
+                  or list of Diagram
             The candidate diagram(s) to be rewritten.
 
         Returns
         -------
-        :py:class:`discopy.pregroup.Diagram` or list of Diagram
+        :py:class:`lambeq.backend.gramar.Diagram` or list of Diagram
             The rewritten diagram. If the rule does not apply, the
             original diagram is returned.
 
@@ -92,7 +91,7 @@ class UnifyCodomainRewriter(DiagramRewriter):
 
     Attributes
     ----------
-    output_type : :py:class:`discopy.grammar.pregroup.Ty`, default ``S``
+    output_type : :py:class:`lambeq.backend.grammar.Ty`, default ``S``
         The output type of the appended box.
 
     """
@@ -129,12 +128,15 @@ class RemoveCupsRewriter(DiagramRewriter):
                 layers[-1] = (Box(CUP_TOKEN, dom, Ty()), offset)
             else:
                 layers.append((box, offset))
-        boxes, offsets = zip(*layers)
-        return Diagram.decode(
-            dom=diagram.dom, cod=diagram.cod, boxes=boxes, offsets=offsets)
+
+        compressed_diag = Id(diagram.dom)
+        for box, offset in layers:
+            compressed_diag = compressed_diag.then_at(box, offset)
+
+        return compressed_diag
 
     def _remove_cups(self, diagram: Diagram) -> Diagram:
-        diags: list[Diagram] = [Id(diagram.dom)]
+        diags: list[Diagram | Box] = [Id(diagram.dom)]
         for box, offset in zip(diagram.boxes, diagram.offsets):
             i = 0
             off = offset
@@ -164,17 +166,19 @@ class RemoveCupsRewriter(DiagramRewriter):
                     pg_type1, pg_type2 = box.dom[:pg_len], box.dom[pg_len:]
                     if len(left.cod) == pg_len and not left.dom:
                         if pg_type1.r == pg_type2:
-                            new_diag = right >> (left.r @ wires_r)
+                            new_diag = right >> (left.dagger().r @ wires_r)
                         else:  # illegal cup
-                            new_diag = right >> (left.l @ wires_r)
+                            new_diag = right >> (left.dagger().l @ wires_r)
                     elif len(right.cod) == pg_len and not right.dom:
                         if pg_type1.r == pg_type2:
-                            new_diag = left >> (wires_l @ right.l)
+                            new_diag = left >> (wires_l @ right.dagger().l)
                         else:
-                            new_diag = left >> (wires_l @ right.r)
+                            new_diag = left >> (wires_l @ right.dagger().r)
                     else:
-                        box = Diagram.cups(pg_type1, pg_type2)
-                        new_diag = left @ right >> wires_l @ box @ wires_r
+                        nbox = Diagram.cups(pg_type1,
+                                            pg_type2,
+                                            is_reversed=pg_type2 != pg_type1.r)
+                        new_diag = left @ right >> wires_l @ nbox @ wires_r
                 else:
                     new_diag = left @ right >> wires_l @ box @ wires_r
                 diags[i:i+j] = [new_diag]
@@ -205,18 +209,18 @@ class RemoveSwapsRewriter(DiagramRewriter):
 
     Parameters
     ----------
-    diagram : :py:class:`discopy.grammar.pregroup.Diagram`
+    diagram : :py:class:`lambeq.backend.grammar.Diagram`
         The input diagram.
 
     Returns
     -------
-    :py:class:`discopy.grammar.pregroup.Diagram`
+    :py:class:`lambeq.backend.grammar.Diagram`
         A copy of the input diagram without swaps.
 
     Raises
     ------
     ValueError
-        If the input diagram is not in DisCoPy's "pregroup" form,
+        If the input diagram is not in "pregroup" form,
         i.e. when words do not strictly precede the morphisms.
 
     Notes
@@ -285,9 +289,9 @@ class RemoveSwapsRewriter(DiagramRewriter):
         deleted: bool = False
 
     def matches(self, diagram: Diagram) -> bool:
-        if not is_pregroup_diagram(diagram):
+        if not diagram.is_pregroup:
             try:
-                diagram = pregroup.normal_form(diagram)
+                diagram = diagram.normal_form()
             except ValueError as e:
                 raise ValueError('Not a valid pregroup diagram.') from e
         return True
@@ -300,11 +304,11 @@ class RemoveSwapsRewriter(DiagramRewriter):
 
         """
 
-        if not is_pregroup_diagram(diagram):
+        if not diagram.is_pregroup:
             raise ValueError('Not a valid pregroup diagram.')
 
         atomic_types = [ob for b in diagram.boxes
-                        for ob in b.cod.inside if isinstance(b, Word)]
+                        for ob in b.cod if isinstance(b, Word)]
         scan = list(range(len(atomic_types)))
 
         # Create lists with offset info for words and morphisms
@@ -337,7 +341,7 @@ class RemoveSwapsRewriter(DiagramRewriter):
                 new_words.append(wrd.word)
             elif len(scan) > 0:
                 # word type has been reduced in length
-                typ = Ty(*[atomic_types[i] for i in scan])
+                typ = Ty().tensor(*[atomic_types[i] for i in scan])
                 new_words.append(Word(wrd.word.name, typ))
             else:
                 # word type has been eliminated, merge word label
@@ -369,14 +373,20 @@ class RemoveSwapsRewriter(DiagramRewriter):
                             and morphisms[j].start > morphisms[m_idx].start):
                         mor_offsets[j] -= 2
 
-        return Diagram.decode(dom=diagram.dom,
-                              cod=diagram.cod,
-                              boxes=new_words+new_morphisms,
-                              offsets=wrd_offsets+mor_offsets)
+        new_diag = Id(diagram.dom)
+        for box, offset in zip(new_words+new_morphisms,
+                               wrd_offsets+mor_offsets):
+            new_diag = new_diag.then_at(box, offset)
+
+        return new_diag
+        # return Diagram.decode(dom=diagram.dom,
+        #                       cod=diagram.cod,
+        #                       boxes=new_words+new_morphisms,
+        #                       offsets=wrd_offsets+mor_offsets)
 
     def rewrite(self, diagram: Diagram) -> Diagram:
         atomic_types = [ob for b in diagram.boxes
-                        for ob in b.cod.inside if isinstance(b, Word)]
+                        for ob in b.cod if isinstance(b, Word)]
         scan = list(range(len(atomic_types)))
 
         # Create lists with offset info for words and morphisms
@@ -399,23 +409,17 @@ class RemoveSwapsRewriter(DiagramRewriter):
             elif isinstance(box, Cup):
                 del scan[ofs: ofs + 2]
 
-        # Prepare new boxes and offsets
-        new_boxes: list[Box] = []
-        new_offsets: list[int] = []
+        new_diagr = Id(diagram.dom)
+
         for wrd, ofs in words:
-            new_boxes.append(Word(
-                wrd.name,
-                Ty(*atomic_types[ofs:ofs+len(wrd.cod)])
-            ))
-            new_offsets.append(ofs)
+            new_diagr = new_diagr.then_at(
+                Word(wrd.name,
+                     Ty().tensor(*atomic_types[ofs:ofs+len(wrd.cod)])),
+                ofs
+            )
 
         for mor, ofs in morphisms:
             if not isinstance(mor, Swap):
-                new_boxes.append(mor)
-                new_offsets.append(ofs)
-
-        new_diagr = Diagram.decode(
-            dom=diagram.dom, cod=diagram.cod,
-            boxes=new_boxes, offsets=new_offsets)
+                new_diagr = new_diagr.then_at(mor, ofs)
 
         return self._remove_detached_cups(new_diagr)

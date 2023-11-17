@@ -90,8 +90,8 @@ def test_pregroup():
     f, g, h = Box('f', n, n), Box('g', s @ n, n), Box('h', n, n @ s)
     diagram = g @ cap >> f.dagger() @ Id(n.r) @ f >> cup @ h
 
-    assert sentence.is_pregroup()
-    assert not diagram.is_pregroup()
+    assert sentence.is_pregroup
+    assert not diagram.is_pregroup
 
 def test_Cap():
     a, b = map(Ty, 'ab')
@@ -175,7 +175,7 @@ def test_Diagram():
     assert diagram.offsets == [0, 1, 0, 2, 0, 0]
     assert diagram.l.r == diagram
     assert diagram.dagger().dagger() == diagram
-    assert diagram.is_pregroup() == False
+    assert diagram.is_pregroup == False
 
     assert diagram.rotate(5) == diagram.rotate(7).rotate(-2)
     assert diagram.rotate(5).dom == diagram.dom.rotate(5)
@@ -305,3 +305,35 @@ def test_special_boxes():
     assert func2(Spider(p, 2, 2)) == (Id(q@p@q@p).permuted([0,2,1,3])
                                       >> Spider(q, 2, 2) @Spider(p, 2, 2)
                                       >> Id(q@q@p@p).permuted([0,2,1,3]))
+
+def test_deepcopy():
+    from copy import deepcopy
+    import pickle
+
+    s = Ty('s')
+
+    cases = [s,
+             s@s,
+             Id(s),
+             Box('copy', s, s, 1),
+             Box('copy1', s, s, 1) >> Box('copy2', s, s, 1),
+             Spider(s, 2, 2),
+             Swap(s, s),
+             Swap(s @ s, s @ s),
+             Cup(s, s.r),
+             Cap(s, s.l),
+             Word('Alice', s) @ Word('runs', s.r @ s) >> \
+                Cup(s, s.r) @ Id(s)]
+
+    for case in cases:
+        assert deepcopy(case) == pickle.loads(pickle.dumps(case)) == case
+
+
+def test_normal_form():
+    n = Ty('n')
+    w1, w2 = Word('a', n), Word('b', n)
+    diagram = w1 @ w2 >>\
+        Id(n) @ Cap(n, n.l) @ Id(n) >> Id(n @ n) @ Cup(n.l, n)
+    expected_result = w1 @ w2
+    assert expected_result == diagram.normal_form()\
+        == (w2 >> w1 @ Id(n)).normal_form()

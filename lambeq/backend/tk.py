@@ -117,7 +117,7 @@ class Circuit(tk.Circuit):
             self.post_processing @= Id(bit)
             self.post_processing >>= (
                 Id(bit ** offset)
-                @ Diagram.swap(self.post_processing.cod[offset:-1], bit))
+                @ Swap(self.post_processing.cod[offset:-1], bit))
         super().add_bit(unit)
 
     def rename_units(self, renaming):
@@ -334,7 +334,7 @@ def to_tk(circuit: Diagram):
 
 
 def from_tk(tk_circuit: tk.Circuit) -> Diagram:
-    """Translates from tket to discopy."""
+    """Translates from tket to a lambeq Diagram."""
     tk_circ: Circuit = Circuit.upgrade(tk_circuit)
     n_qubits = tk_circ.n_qubits
 
@@ -387,10 +387,11 @@ def from_tk(tk_circuit: tk.Circuit) -> Diagram:
         if len(tk_gate.args) == 3:  # three qubit gate
             controls = (tk_gate.args[0].index[0], tk_gate.args[1].index[0])
             target = tk_gate.args[2].index[0]
+            span = max(controls + (target,)) - min(controls + (target,)) + 1
             if name == 'CCX':
-                box = CCX(*controls, target)
+                box = Id(qubit**span).apply_gate(CCX, *controls, target)
             elif name == 'CCZ':
-                box = CCZ(*controls, target)
+                box = Id(qubit**span).apply_gate(CCZ, *controls, target)
             offset = min(controls + (target,))
 
         if box is None:
@@ -407,13 +408,13 @@ def from_tk(tk_circuit: tk.Circuit) -> Diagram:
             if bit_index in tk_circ.post_selection:
                 bras[offset] = tk_circ.post_selection[bit_index]
                 continue  # post selection happens at the end
-            left = Id(circuit.cod[:offset])
-            right = Id(circuit.cod[offset + 1:])
+            left = circuit.cod[:offset]
+            right = circuit.cod[offset + 1:]
             circuit = circuit >> left @ Measure() @ right
         else:
             box, offset = box_and_offset_from_tk(tk_gate)
-            left = Id(circuit.cod[:offset])
-            right = Id(circuit.cod[offset + len(box.dom):])
+            left = circuit.cod[:offset]
+            right = circuit.cod[offset + len(box.dom):]
             circuit = circuit >> left @ box @ right
     circuit = circuit >> Id().tensor(*(  # type: ignore[arg-type]
         Bra(bras[i]) if i in bras

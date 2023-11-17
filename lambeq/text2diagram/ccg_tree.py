@@ -22,8 +22,7 @@ import json
 from typing import Any, Dict
 from typing import overload
 
-from discopy.grammar.pregroup import Diagram, Id, Word
-
+from lambeq.backend.grammar import Diagram, Id, Word
 from lambeq.text2diagram.ccg_rule import CCGRule
 from lambeq.text2diagram.ccg_type import CCGType
 
@@ -431,8 +430,9 @@ class CCGTree:
             if self.biclosed_type == CCGType.PUNCTUATION:
                 return Id(), Id()
             else:
-                output_type = self.biclosed_type.to_discopy()
-                return Word(self.text, output_type), Id(output_type)
+                output_type = self.biclosed_type.to_grammar()
+                return (Word(self.text, output_type).to_diagram(),
+                        Id(output_type))
 
         this_layer: Diagram
         if self.rule == CCGRule.UNARY:
@@ -442,12 +442,12 @@ class CCGTree:
                                  'unary swap.')
             else:
                 if self.biclosed_type.is_over:
-                    left = self.biclosed_type.left.to_discopy()
-                    right = self.biclosed_type.right.to_discopy().l
+                    left = self.biclosed_type.left.to_grammar()
+                    right = self.biclosed_type.right.to_grammar().l
                 else:
-                    left = self.biclosed_type.left.to_discopy().r
-                    right = self.biclosed_type.right.to_discopy()
-                this_layer = Diagram.swap(right, left)
+                    left = self.biclosed_type.left.to_grammar().r
+                    right = self.biclosed_type.right.to_grammar()
+                this_layer = Diagram.swap(right, left).to_diagram()
         else:
             child_types = [child.biclosed_type
                            for child in self.children]
@@ -457,18 +457,18 @@ class CCGTree:
 
         if planar and self.rule == CCGRule.BACKWARD_CROSSED_COMPOSITION:
             (words, left_diag), (right_words, right_diag) = children
-            left = self.biclosed_type.left.to_discopy()
-            join = self.left.biclosed_type.left.to_discopy()
-            right = self.biclosed_type.right.to_discopy().l
+            left = self.biclosed_type.left.to_grammar()
+            join = self.left.biclosed_type.left.to_grammar()
+            right = self.biclosed_type.right.to_grammar().l
             diag = (left_diag
                     >> Id(join) @ (right_words >> right_diag) @ Id(right)
                     >> Diagram.cups(join, join.r) @ Id(left @ right))
         elif planar and self.rule == CCGRule.FORWARD_CROSSED_COMPOSITION:
             (left_words, left_diag), (words, right_diag) = children
 
-            left = self.biclosed_type.left.to_discopy().r
-            join = self.right.biclosed_type.right.to_discopy()
-            right = self.biclosed_type.right.to_discopy()
+            left = self.biclosed_type.left.to_grammar().r
+            join = self.right.biclosed_type.right.to_grammar()
+            right = self.biclosed_type.right.to_grammar()
             diag = (right_diag
                     >> Id(left) @ (left_words >> left_diag) @ Id(join)
                     >> Id(left @ right) @ Diagram.cups(join.l, join))
@@ -495,7 +495,7 @@ class CCGTree:
             mid = (inner @ Id(join)) >> (Id(inner.cod[:-len(join)]) @ cups)
             diag = Id(left) @ mid @ Id(right)
         else:
-            words, diag = [Diagram.tensor(*d) for d in zip(*children)]
+            words, diag = [Id().tensor(*d) for d in zip(*children)]
             diag >>= this_layer
 
         return words, diag

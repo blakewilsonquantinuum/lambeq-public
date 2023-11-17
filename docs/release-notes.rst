@@ -1,4 +1,4 @@
-.. _sec-release_notes:
+.. _sec-release-notes:
 
 Release notes
 =============

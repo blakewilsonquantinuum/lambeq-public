@@ -19,8 +19,7 @@ from enum import Enum
 
 __all__ = ['TreeReader', 'TreeReaderMode']
 
-from discopy.grammar.pregroup import Box, Diagram, Ty, Word
-
+from lambeq.backend.grammar import Box, Diagram, Id, Ty, Word
 from lambeq.core.types import AtomicType
 from lambeq.core.utils import SentenceType
 from lambeq.text2diagram.base import Reader
@@ -117,7 +116,7 @@ class TreeReader(Reader):
                      word_type: Ty = S,
                      suppress_exceptions: bool = False) -> Diagram | None:
         """Convert a :py:class:`~.CCGTree` into a
-        :py:class:`~discopy.grammar.pregroup.Diagram` .
+        :py:class:`~lambeq.backend.grammar.Diagram` .
 
         This produces a tree-shaped diagram based on the output of the
         CCG parser.
@@ -139,7 +138,7 @@ class TreeReader(Reader):
 
         Returns
         -------
-        :py:class:`discopy.grammar.pregroup.Diagram` or None
+        :py:class:`lambeq.backend.grammar.Diagram` or None
             The parsed diagram, or :py:obj:`None` on failure.
 
         """
@@ -157,7 +156,7 @@ class TreeReader(Reader):
                       mode: TreeReaderMode = TreeReaderMode.NO_TYPE,
                       word_type: Ty = S) -> Diagram:
         if tree.rule == CCGRule.LEXICAL:
-            return Word(tree.text, word_type)
+            return Word(tree.text, word_type).to_diagram()
         else:
             dom = word_type ** len(tree.children)
             cod = word_type
@@ -176,13 +175,13 @@ class TreeReader(Reader):
 
             children = [TreeReader._tree2diagram(child, mode, word_type)
                         for child in tree.children]
-            return Diagram.tensor(*children) >> Box(name, dom, cod)
+            return Id().tensor(*children) >> Box(name, dom, cod)
 
     def sentence2diagram(self,
                          sentence: SentenceType,
                          tokenised: bool = False,
                          suppress_exceptions: bool = False) -> Diagram | None:
-        """Parse a sentence into a DisCoPy diagram.
+        """Parse a sentence into a lambeq diagram.
 
         This produces a tree-shaped diagram based on the output of the
         CCG parser.
@@ -200,7 +199,7 @@ class TreeReader(Reader):
 
         Returns
         -------
-        :py:class:`discopy.grammar.pregroup.Diagram` or None
+        :py:class:`lambeq.backend.grammar.Diagram` or None
             The parsed diagram, or :py:obj:`None` on failure.
 
         """
