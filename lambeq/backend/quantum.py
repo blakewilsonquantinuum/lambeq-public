@@ -1105,8 +1105,8 @@ class Bit(Box):
 
 
 SWAP = Swap(qubit, qubit)
-H = Box('H', qubit, qubit,
-        (2 ** -0.5) * np.array([[1, 1], [1, -1]]), self_adjoint=True)
+H = SelfConjugate('H', qubit, qubit,
+                  (2 ** -0.5) * np.array([[1, 1], [1, -1]]), self_adjoint=True)
 S = Box('S', qubit, qubit, np.array([[1, 0], [0, 1j]]))
 T = Box('T', qubit, qubit, np.array([[1, 0], [0, np.e ** (1j * np.pi / 4)]]))
 X = SelfConjugate('X', qubit, qubit,
