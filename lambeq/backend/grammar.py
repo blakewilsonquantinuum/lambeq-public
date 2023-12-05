@@ -25,7 +25,8 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Iterator
 from copy import deepcopy
 from dataclasses import dataclass, field, InitVar, replace
-from typing import Any, ClassVar, Protocol, Type, TypeVar
+import json
+from typing import Any, ClassVar, Dict, Protocol, Type, TypeVar
 from typing import cast, overload, TYPE_CHECKING
 
 from typing_extensions import Self
@@ -36,6 +37,8 @@ class Entity:
     category: ClassVar[Category]
 
 
+# Types
+_JSONDictT = Dict[str, Any]
 _EntityType = TypeVar('_EntityType', bound=Type[Entity])
 
 
@@ -74,6 +77,39 @@ class Category:
         else:
             return self.set(name_or_entity.__name__, name_or_entity)
 
+    def from_json(self, data: _JSONDictT | str) -> Entity:
+        """Decode a JSON object or string into an entity from
+        this category.
+
+        Returns
+        -------
+        :py:class:`~lambeq.backend.grammar.Entity`
+            The entity generated from the JSON data. This could be
+            a :py:class:`~lambeq.backend.Ty`,
+            a :py:class:`~lambeq.backend.Box` subclass,
+            or a :py:class:`~lambeq.backend.Diagram` instance.
+        """
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _entity_mapping = {
+            'Cap': Cap,
+            'Cup': Cup,
+            'Daggered': Daggered,
+            'Spider': Spider,
+            'Swap': Swap,
+            'Word': Word,
+            'Ty': self.Ty,
+            'Box': self.Box,
+            'Layer': self.Layer,
+            'Diagram': self.Diagram,
+        }
+        entity_cls = _entity_mapping[data_dict['entity']]
+
+        return (  # type: ignore[no-any-return]
+            entity_cls.from_json(  # type: ignore[attr-defined]
+                data_dict
+            )
+        )
+
 
 grammar = Category('grammar')
 
@@ -90,13 +126,11 @@ class Ty(Entity):
     Parameters
     ----------
     name : str, optional
-        The name of the type, by default None
+        The name of the type, by default None.
     objects : list[Ty], optional
-        The objects defining a complex type, by default []
+        The objects defining a complex type, by default [].
     z : int, optional
-        The winding number of the type, by default 0
-
-
+        The winding number of the type, by default 0.
     """
     name: str | None = None
     objects: list[Self] = field(default_factory=list)
@@ -247,6 +281,48 @@ class Ty(Entity):
         else:
             return functor.ob(self)
 
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        """Decode a JSON object or string into a
+        :py:class:`~lambeq.backend.Ty`.
+
+        Returns
+        -------
+        :py:class:`~lambeq.backend.Ty`
+            The type generated from the JSON data.
+        """
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['objects'] = [cls.from_json(obj_data)
+                                for obj_data
+                                in data_dict['objects']]
+
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        """Encode this type to a JSON object.
+
+        Parameters
+        ----------
+        is_top_level : bool, optional
+            This flag indicates that this object is the top-most object
+            and should have the global metadata (e.g. category). This
+            should be set to `False` when calling `to_json` on attribute
+            instances to avoid duplication of said global metadata.
+        """
+        data_dict: _JSONDictT = {
+            'entity': self.__class__.__name__,
+            'name': self.name,
+            'objects': [obj.to_json(is_top_level=False)
+                        for obj in self.objects],
+            'z': self.z
+        }
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
+
 
 class Diagrammable(Protocol):
     """An abstract base class describing the behavior of a diagram.
@@ -303,7 +379,7 @@ class Box(Entity):
     cod : Ty
         The codomain of the box.
     z : int, optional
-        The winding number of the box, by default 0
+        The winding number of the box, by default 0.
 
     """
     name: str
@@ -370,6 +446,47 @@ class Box(Entity):
         else:
             return functor.ar(self)
 
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        """Decode a JSON object or string into a
+        :py:class:`~lambeq.backend.Box`.
+
+        Returns
+        -------
+        :py:class:`~lambeq.backend.Box`
+            The box generated from the JSON data.
+        """
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['dom'] = cls.category.Ty.from_json(data_dict['dom'])
+        data_dict['cod'] = cls.category.Ty.from_json(data_dict['cod'])
+
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        """Encode this box to a JSON object.
+
+        Parameters
+        ----------
+        is_top_level : bool, optional
+            This flag indicates that this object is the top-most object
+            and should have the global metadata (e.g. category). This
+            should be set to `False` when calling `to_json` on attribute
+            instances to avoid duplication of said global metadata.
+        """
+        data_dict: _JSONDictT = {
+            'entity': self.__class__.__name__,
+            'name': self.name,
+            'dom': self.dom.to_json(is_top_level=False),
+            'cod': self.cod.to_json(is_top_level=False),
+            'z': self.z
+        }
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
+
 
 @grammar
 @dataclass
@@ -435,6 +552,59 @@ class Layer(Entity):
                        left=self.left,
                        box=self.box.dagger(),
                        right=self.right)
+
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        """Decode a JSON object or string into a
+        :py:class:`~lambeq.backend.grammar.Layer`.
+
+        Returns
+        -------
+        :py:class:`~lambeq.backend.grammar.Layer`
+            The layer generated from the JSON data.
+        """
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['left'] = cls.category.Ty.from_json(data_dict['left'])
+        _entity_mapping = {
+            'Cap': Cap,
+            'Cup': Cup,
+            'Daggered': Daggered,
+            'Spider': Spider,
+            'Swap': Swap,
+            'Word': Word,
+            'Box': cls.category.Box,
+        }
+        box_cls = _entity_mapping[data_dict['box']['entity']]
+        data_dict['box'] = box_cls.from_json(    # type: ignore[attr-defined]
+            data_dict['box']
+        )
+        data_dict['right'] = cls.category.Ty.from_json(data_dict['right'])
+
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        """Encode this layer to a JSON object.
+
+        Parameters
+        ----------
+        is_top_level : bool, optional
+            This flag indicates that this object is the top-most object
+            and should have the global metadata (e.g. category). This
+            should be set to `False` when calling `to_json` on attribute
+            instances to avoid duplication of said global metadata.
+        """
+        data_dict: _JSONDictT = {'entity': self.__class__.__name__}
+
+        for attr in ('left', 'right', 'box'):
+            data_dict[attr] = getattr(self, attr).to_json(
+                is_top_level=False
+            )
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
 
 
 class InterchangerError(Exception):
@@ -606,7 +776,7 @@ class Diagram(Entity):
 
         Returns
         -------
-        :py:class:`~lambeq.backend..Diagram`
+        :py:class:`~lambeq.backend.Diagram`
             The generated pregroup diagram.
 
         Raises
@@ -1269,6 +1439,49 @@ class Diagram(Entity):
                          @ functor(self.id(right)))
         return diagram
 
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        """Decode a JSON object or string into a
+        :py:class:`~lambeq.backend.Diagram`.
+
+        Returns
+        -------
+        :py:class:`~lambeq.backend.Diagram`
+            The diagram generated from the JSON data.
+        """
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['dom'] = cls.category.Ty.from_json(data_dict['dom'])
+        data_dict['cod'] = cls.category.Ty.from_json(data_dict['cod'])
+        data_dict['layers'] = [cls.category.Layer.from_json(layer_data)
+                               for layer_data
+                               in data_dict['layers']]
+
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        """Encode this diagram to a JSON object.
+
+        Parameters
+        ----------
+        is_top_level : bool, optional
+            This flag indicates that this object is the top-most object
+            and should have the global metadata (e.g. category). This
+            should be set to `False` when calling `to_json` on attribute
+            instances to avoid duplication of said global metadata.
+        """
+        data_dict: _JSONDictT = {'entity': self.__class__.__name__}
+
+        for attr in ('dom', 'cod'):
+            data_dict[attr] = getattr(self, attr).to_json(is_top_level=False)
+        data_dict['layers'] = [layer.to_json(is_top_level=False)
+                               for layer in self.layers]
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
+
 
 @Diagram.register_special_box('cap')
 @dataclass
@@ -1373,6 +1586,26 @@ class Cap(Box):
             functor(self.right),
             is_reversed=bool(self.z)
         )
+
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['left'] = cls.category.Ty.from_json(data_dict['left'])
+        data_dict['right'] = cls.category.Ty.from_json(data_dict['right'])
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        data_dict: _JSONDictT = {'entity': self.__class__.__name__,
+                                 'is_reversed': bool(self.z)}
+
+        for attr in ('left', 'right'):
+            data_dict[attr] = getattr(self, attr).to_json(is_top_level=False)
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
 
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
@@ -1484,6 +1717,27 @@ class Cup(Box):
             is_reversed=bool(self.z)
         )
 
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['left'] = cls.category.Ty.from_json(data_dict['left'])
+        data_dict['right'] = cls.category.Ty.from_json(data_dict['right'])
+
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        data_dict: _JSONDictT = {'entity': self.__class__.__name__,
+                                 'is_reversed': bool(self.z)}
+
+        for attr in ('left', 'right'):
+            data_dict[attr] = getattr(self, attr).to_json(is_top_level=False)
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
+
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
 
@@ -1516,6 +1770,25 @@ class Daggered(Box):
 
     def dagger(self) -> Box:
         return self.box
+
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        box = cls.category.Box.from_json(data_dict['box'])
+
+        return box.dagger()  # type: ignore[return-value]
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        data_dict: _JSONDictT = {
+            'entity': self.__class__.__name__,
+            'box': self.box.to_json(is_top_level=False),
+        }
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
 
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
@@ -1601,6 +1874,27 @@ class Spider(Box):
             self.n_legs_out
         )
 
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['type'] = cls.category.Ty.from_json(data_dict['type'])
+
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        data_dict: _JSONDictT = {
+            'entity': self.__class__.__name__,
+            'type': self.type.to_json(is_top_level=False),
+            'n_legs_in': self.n_legs_in,
+            'n_legs_out': self.n_legs_out
+        }
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
+
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
 
@@ -1673,6 +1967,26 @@ class Swap(Box):
             functor(self.right)
         )
 
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['left'] = cls.category.Ty.from_json(data_dict['left'])
+        data_dict['right'] = cls.category.Ty.from_json(data_dict['right'])
+
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        data_dict: _JSONDictT = {'entity': self.__class__.__name__}
+
+        for attr in ('left', 'right'):
+            data_dict[attr] = getattr(self, attr).to_json(is_top_level=False)
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
+
     __repr__ = Box.__repr__
     __hash__ = Box.__hash__
 
@@ -1713,6 +2027,27 @@ class Word(Box):
 
     def dagger(self) -> Daggered:
         return Daggered(self)
+
+    @classmethod
+    def from_json(cls, data: _JSONDictT | str) -> Self:
+        data_dict = json.loads(data) if isinstance(data, str) else data
+        _, _ = data_dict.pop('category', None), data_dict.pop('entity')
+        data_dict['cod'] = cls.category.Ty.from_json(data_dict['cod'])
+
+        return cls(**data_dict)
+
+    def to_json(self, is_top_level: bool = True) -> _JSONDictT:
+        data_dict: _JSONDictT = {
+            'entity': self.__class__.__name__,
+            'name': self.name,
+            'cod': self.cod.to_json(is_top_level=False),
+            'z': self.z,
+        }
+
+        if is_top_level:
+            data_dict['category'] = self.category.name
+
+        return data_dict
 
 
 Id = Diagram.id

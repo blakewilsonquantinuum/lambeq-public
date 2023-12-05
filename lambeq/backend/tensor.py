@@ -42,7 +42,7 @@ tensor = grammar.Category('tensor')
 @tensor('Ty')
 @dataclass(init=False)
 class Dim(grammar.Ty):
-    """Dimension in the the tensor category.
+    """Dimension in the tensor category.
 
     Attributes
     ----------

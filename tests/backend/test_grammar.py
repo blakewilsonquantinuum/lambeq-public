@@ -311,19 +311,28 @@ def test_deepcopy():
     import pickle
 
     s = Ty('s')
-
-    cases = [s,
-             s@s,
-             Id(s),
-             Box('copy', s, s, 1),
-             Box('copy1', s, s, 1) >> Box('copy2', s, s, 1),
-             Spider(s, 2, 2),
-             Swap(s, s),
-             Swap(s @ s, s @ s),
-             Cup(s, s.r),
-             Cap(s, s.l),
-             Word('Alice', s) @ Word('runs', s.r @ s) >> \
-                Cup(s, s.r) @ Id(s)]
+    b1 = Box('copy', s, s, 1)
+    b2 = Box('copy2', s, s, 1)
+    cases = (
+        Ty(),
+        s,
+        s @ s,
+        b1,
+        Layer(s, b1, s @ s),
+        b2,
+        Id(s),
+        Cap(s, s.l),
+        Cup(s, s.r),
+        b1.dagger(),
+        b1 >> b1.dagger(),
+        Spider(s, 2, 2),
+        Spider(s @ s, 2, 3),
+        Swap(s, s),
+        Swap(s @ s, s @ s),
+        Word('Alice', s),
+        Word('Alice', s) @ Word('runs', s.r @ s) >> \
+            Cup(s, s.r) @ Id(s)
+    )
 
     for case in cases:
         assert deepcopy(case) == pickle.loads(pickle.dumps(case)) == case
@@ -337,3 +346,55 @@ def test_normal_form():
     expected_result = w1 @ w2
     assert expected_result == diagram.normal_form()\
         == (w2 >> w1 @ Id(n)).normal_form()
+
+
+def test_to_from_json():
+    n = Ty('n')
+    s = Ty('s')
+    b1 = Box('copy', s, s, 1)
+    b2 = Box('copy2', s, s, 1)
+
+    words1 = [Word("John", n),
+              Word("walks", n.r @ s),
+              Word("in", s.r @ n.r.r @ n.r @ s @ n.l),
+              Word("the", n @ n.l),
+              Word("park", n)]
+    cups1 = [(Cup, 2, 3), (Cup, 7, 8), (Cup, 9, 10), (Cup, 1, 4), (Cup, 0, 5)]
+    d1 = Diagram.create_pregroup_diagram(words1, cups1)
+
+    words2 = [Word("John", n),
+              Word("gave", n.r @ s @ n.l @ n.l),
+              Word("Mary", n),
+              Word("a", n @ n.l),
+              Word("flower", n)]
+    cups2 = [(Cup, 0, 1), (Swap, 3, 4), (Cup, 4, 5), (Cup, 7, 8), (Cup, 3, 6)]
+    d2 = Diagram.create_pregroup_diagram(words2, cups2)
+
+    cases = (
+        Ty(),
+        s,
+        s @ s,
+        b1,
+        Layer(s, b1, s @ s),
+        b2,
+        Id(s),
+        Cap(s, s.l),
+        Cup(s, s.r),
+        b1.dagger(),
+        b1 >> b1.dagger(),
+        Spider(s, 2, 2),
+        Spider(s @ s, 2, 3),
+        Swap(s, s),
+        Swap(s @ s, s @ s),
+        Word('Alice', s),
+        Word('Alice', s) @ Word('runs', s.r @ s) >> \
+            Cup(s, s.r) @ Id(s),
+        d1,
+        d2,
+    )
+
+    for case in cases:
+        case_json = case.to_json()
+        assert case_json['category'] == 'grammar'
+        assert 'entity' in case_json
+        assert grammar.from_json(json.dumps(case_json)) == case

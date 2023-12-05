@@ -55,7 +55,7 @@ def test_functors():
     F = grammar.Functor(tensor,
                         ob=lambda _, ty: {n: Dim(2), s: Dim(3)}[ty],
                         ar=lambda f, bx: Box(f"F({bx.name})", f(bx.dom), f(bx.cod)))
-    
+
 
     d1 = bxa >> bxb
     d1_f = Box("F(A)", Dim(2, 2), Dim(3)) >> Box("F(B)", Dim(3), Dim(3))
