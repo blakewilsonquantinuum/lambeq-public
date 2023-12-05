@@ -1292,13 +1292,12 @@ class Cap(Box):
             return diagram
 
     def __reduce__(self):
-        return (self.__class__, (self.left, self.right, self.is_reversed))
+        return (self.__class__, (self.left, self.right, bool(self.z % 2)))
 
     def __deepcopy__(self, memo) -> Self:
         left_copy = deepcopy(self.left, memo)
         right_copy = deepcopy(self.right, memo)
-        is_reversed_copy = deepcopy(self.is_reversed)
-        return type(self)(left_copy, right_copy, is_reversed_copy)
+        return type(self)(left_copy, right_copy, bool(self.z % 2))
 
     @classmethod
     def to_right(cls, left: Ty, is_reversed: bool = False) -> Self | Diagram:
@@ -1420,13 +1419,12 @@ class Cup(Box):
             return diagram
 
     def __reduce__(self):
-        return (self.__class__, (self.left, self.right, self.is_reversed))
+        return (self.__class__, (self.left, self.right, bool(self.z % 2)))
 
     def __deepcopy__(self, memo) -> Self:
         left_copy = deepcopy(self.left, memo)
         right_copy = deepcopy(self.right, memo)
-        is_reversed_copy = deepcopy(self.is_reversed)
-        return type(self)(left_copy, right_copy, is_reversed_copy)
+        return type(self)(left_copy, right_copy, bool(self.z % 2))
 
     @classmethod
     def to_right(cls, left: Ty, is_reversed: bool = False) -> Self | Diagram:
@@ -1873,7 +1871,7 @@ class Functor:
     def ob_with_cache(self, ob: Ty) -> Ty:
         """Apply the functor to a type, caching the result."""
         try:
-            return self.ob_cache[ob]
+            return deepcopy(self.ob_cache[ob])
         except KeyError:
             pass
 
@@ -1888,7 +1886,7 @@ class Functor:
     def ar_with_cache(self, ar: Diagrammable) -> Diagrammable:
         """Apply the functor to a diagrammable, caching the result."""
         try:
-            return self.ar_cache[ar]
+            return deepcopy(self.ar_cache[ar])
         except KeyError:
             pass
 
