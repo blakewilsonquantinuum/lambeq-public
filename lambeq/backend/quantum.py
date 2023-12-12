@@ -956,7 +956,7 @@ class Controlled(Parametrized):
         return Controlled(self.controlled.rotate(z), -self.distance)
 
 
-class MixedState(Box):
+class MixedState(SelfConjugate):
     """A mixed state is a state with a density matrix proportional to the
     identity matrix."""
     def __init__(self):
@@ -966,7 +966,7 @@ class MixedState(Box):
         return Discard()
 
 
-class Discard(Box):
+class Discard(SelfConjugate):
     """Discard a qubit. This is a measurement without post-selection."""
     def __init__(self):
         super().__init__('Discard', qubit, Ty(), is_mixed=True)
@@ -975,7 +975,7 @@ class Discard(Box):
         return MixedState()
 
 
-class Measure(Box):
+class Measure(SelfConjugate):
     """Measure a qubit and return a classical information bit."""
     def __init__(self):
         super().__init__('Measure', qubit, bit, is_mixed=True)
@@ -984,7 +984,7 @@ class Measure(Box):
         return Encode()
 
 
-class Encode(Box):
+class Encode(SelfConjugate):
     """Encode a classical information bit into a qubit."""
     def __init__(self):
         super().__init__('Encode', bit, qubit, is_mixed=True)
