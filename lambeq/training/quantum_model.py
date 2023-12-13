@@ -21,9 +21,13 @@ Module containing the base class for a quantum lambeq model.
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Iterable
+import pickle
 from typing import Any, TYPE_CHECKING
 
 import numpy as np
+from numpy.typing import ArrayLike
+from sympy import lambdify
 
 from lambeq.backend import numerical_backend
 from lambeq.backend.tensor import Diagram
@@ -126,6 +130,31 @@ class QuantumModel(Model):
         checkpoint.add_many({'model_symbols': self.symbols,
                              'model_weights': self.weights})
         return checkpoint
+
+    def _fast_subs(self,
+                   diagrams: list[Diagram],
+                   weights: Iterable[ArrayLike]) -> list[Diagram]:
+        """Substitute weights into a list of parameterised circuit."""
+        parameters = {k: v for k, v in zip(self.symbols, weights)}
+        diagrams = pickle.loads(pickle.dumps(diagrams))  # does fast deepcopy
+        for diagram in diagrams:
+            for b in diagram.boxes:
+                if b.free_symbols:
+                    while hasattr(b, 'controlled'):
+                        b = b.controlled
+                    syms, values = [], []
+                    for sym in b.free_symbols:
+                        syms.append(sym)
+                        try:
+                            values.append(parameters[sym])
+                        except KeyError as e:
+                            raise KeyError(
+                                f'Unknown symbol: {repr(sym)}'
+                            ) from e
+                    b.data = lambdify(syms, b.data)(*values)  # type: ignore[attr-defined] # noqa: E501
+                    # The name of this box isnt updated correctly
+                    del b.free_symbols
+        return diagrams
 
     @abstractmethod
     def get_diagram_output(

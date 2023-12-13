@@ -27,12 +27,10 @@ calculations are exact i.e. noiseless and not shot-based.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-import pickle
 from typing import Any, TYPE_CHECKING
 
 import numpy
 from numpy.typing import ArrayLike
-from sympy import lambdify
 
 from lambeq.backend import numerical_backend
 from lambeq.backend.quantum import Diagram as Circuit
@@ -92,29 +90,6 @@ class NumpyModel(QuantumModel):
 
         self.lambdas[diagram] = jit(diagram_output)
         return self.lambdas[diagram]
-
-    def _fast_subs(self,
-                   diagrams: list[Diagram],
-                   weights: Iterable[ArrayLike]) -> list[Diagram]:
-        """Substitute weights into a list of parameterised circuit."""
-        parameters = {k: v for k, v in zip(self.symbols, weights)}
-        diagrams = pickle.loads(pickle.dumps(diagrams))  # does fast deepcopy
-        for diagram in diagrams:
-            for b in diagram.boxes:
-                if b.free_symbols:
-                    while hasattr(b, 'controlled'):
-                        b = b.controlled
-                    syms, values = [], []
-                    for sym in b.free_symbols:
-                        syms.append(sym)
-                        try:
-                            values.append(parameters[sym])
-                        except KeyError as e:
-                            raise KeyError(
-                                f'Unknown symbol: {repr(sym)}'
-                            ) from e
-                    b.data = lambdify(syms, b.data)(*values)  # type: ignore[attr-defined] # noqa: E501
-        return diagrams
 
     def get_diagram_output(
         self,

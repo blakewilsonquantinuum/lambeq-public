@@ -889,6 +889,11 @@ class Controlled(Parametrized):
     def __hash__(self) -> int:
         return hash((self.controlled, self.distance))
 
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name == 'data':
+            self.controlled.data = __value
+        return super().__setattr__(__name, __value)
+
     @property
     def phase(self) -> float:
         if isinstance(self.controlled, Rotation):
@@ -1071,6 +1076,11 @@ class Daggered(tensor.Daggered, Box):
         self.data = self.box.data
         self.z = 0
         self.is_mixed = self.box.is_mixed
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name == 'data':
+            self.box.data = __value
+        return super().__setattr__(__name, __value)
 
     def dagger(self) -> Box:
         return self.box

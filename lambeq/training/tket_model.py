@@ -20,7 +20,6 @@ Module based on a quantum backend, using `tket`.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -62,12 +61,6 @@ class TketModel(QuantumModel):
                            f'Missing arguments: {missing_fields}.')
         self.backend_config = backend_config
 
-    def _make_lambda(self, diagram: Diagram) -> Callable[..., Any]:
-        """Measure and lambdify diagrams."""
-        measured = diagram >> Id().tensor(*[Measure()] * len(diagram.cod))
-        ret: Callable = measured.lambdify(*self.symbols)
-        return ret
-
     def _randint(self, low: int = -1 << 63, high: int = (1 << 63)-1) -> int:
         return np.random.randint(low, high, dtype=np.int64)
 
@@ -98,9 +91,12 @@ class TketModel(QuantumModel):
                              'then call `initialise_weights()`, or load '
                              'from pre-trained checkpoint.')
 
-        lambdified_diagrams = [self._make_lambda(d) for d in diagrams]
+        measured = [diagram >> Id().tensor(*[Measure()] * len(diagram.cod))
+                    for diagram in diagrams]  # noqa: E501
+        measured = self._fast_subs(measured, self.weights)
+
         tensors = Circuit.eval(
-            *[diag_f(*self.weights) for diag_f in lambdified_diagrams],
+            *measured,  # type: ignore[arg-type]
             **self.backend_config,
             seed=self._randint()
         )

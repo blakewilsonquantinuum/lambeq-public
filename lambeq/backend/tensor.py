@@ -24,13 +24,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field, replace
+from functools import cached_property
 import math
 from typing import Mapping
 
 import numpy as np
 import sympy
 import tensornetwork as tn
-from typing_extensions import Self
+from typing_extensions import Any, Self
 
 from lambeq.backend import grammar
 from lambeq.backend.numerical_backend import get_backend
@@ -227,7 +228,7 @@ class Box(grammar.Box):
                        cod=self.cod.rotate(z),
                        z=(self.z + z) % 2)
 
-    @property
+    @cached_property
     def free_symbols(self) -> set[sympy.Symbol]:
         def recursive_free_symbols(data) -> set[sympy.Symbol]:
             if isinstance(data, Mapping):
@@ -296,17 +297,23 @@ class Diagram(grammar.Diagram):
 
     def lambdify(self, *symbols, **kwargs):
 
+        lambdified_layers = [(l_,
+                              bx.lambdify(*symbols, **kwargs),
+                              r_) for l_, bx, r_ in self.layers]
+
         def lambda_diagram(*xs):
             return type(self)(
                 self.dom,
                 self.cod,
                 [self.category.Layer(l_,
-                                     bx.lambdify(*symbols, **kwargs)(*xs),
-                                     r_) for l_, bx, r_ in self.layers])
+                                     bx_lambda(*xs),
+                                     r_) for (l_,
+                                              bx_lambda,
+                                              r_) in lambdified_layers])
 
         return lambda_diagram
 
-    @property
+    @cached_property
     def free_symbols(self) -> set[sympy.Symbol]:
         return set().union(*(box.free_symbols for box in self.boxes))
 
@@ -505,7 +512,8 @@ class Swap(grammar.Swap, Box):
 
         """
 
-        super().__init__(left, right)
+        grammar.Swap.__init__(self, left, right)
+        Box.__init__(self, 'SWAP', left @ right, right @ left)
 
     def dagger(self):
         return type(self)(self.right, self.left)
@@ -579,6 +587,11 @@ class Daggered(grammar.Daggered, Box):
         self.cod = self.box.dom
         self.data = self.box.data
         self.z = self.box.z
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if __name == 'data':
+            self.box.data = __value
+        return super().__setattr__(__name, __value)
 
     @property
     def array(self):
