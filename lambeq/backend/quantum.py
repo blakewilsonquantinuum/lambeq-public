@@ -340,8 +340,8 @@ class Diagram(tensor.Diagram):
 
         Returns
         -------
-        tk_circuit : lambeq.backend.tk.Circuit
-            A :class:`lambeq.backend.tk.Circuit`.
+        tk_circuit : lambeq.backend.converters.tk.Circuit
+            A :class:`lambeq.backend.converters.tk.Circuit`.
 
         Note
         ----
@@ -381,7 +381,7 @@ class Diagram(tensor.Diagram):
         tk.Circuit(2, 1).H(0).CX(0, 1).Measure(1, 0).post_select({0: 0})
 
         """
-        from lambeq.backend.tk import to_tk
+        from lambeq.backend.converters.tk import to_tk
         return to_tk(self)
 
     def to_pennylane(self, probabilities=False, backend_config=None,

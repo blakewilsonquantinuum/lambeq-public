@@ -58,7 +58,9 @@ class Circuit(tk.Circuit):
     """Extend pytket.Circuit with counts post-processing."""
     @staticmethod
     def upgrade(tk_circuit) -> Circuit:
-        """Take a :class:`pytket.Circuit`, returns a :class:`Circuit`."""
+        """Takes a :py:class:`pytket.Circuit`, returns a
+        :py:class:`Circuit`.
+        """
         result = Circuit(tk_circuit.n_qubits,
                          len(tk_circuit.bits),
                          tk_circuit.post_selection,
@@ -191,7 +193,8 @@ class Circuit(tk.Circuit):
 
 def to_tk(circuit: Diagram):
     """
-    Takes a :class:`lambeq.quantum.Diagram`, returns a :class:`Circuit`.
+    Takes a :py:class:`lambeq.quantum.Diagram`, returns
+    a :py:class:`Circuit`.
     """
     # bits and qubits are lists of register indices, at layer i we want
     # len(bits) == circuit[:i].cod.count(bit) and same for qubits

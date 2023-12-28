@@ -32,6 +32,10 @@ from typing import cast, overload, TYPE_CHECKING
 from typing_extensions import Self
 
 
+if TYPE_CHECKING:
+    import discopy
+
+
 @dataclass
 class Entity:
     category: ClassVar[Category]
@@ -1226,6 +1230,28 @@ class Diagram(Entity):
             data_dict['category'] = self.category.name
 
         return data_dict
+
+    def to_discopy(self) -> 'discopy.monoidal.Diagram':
+        """Export lambeq diagram to discopy diagram.
+
+        Returns
+        -------
+        :class:`discopy.monoidal.Diagram`
+        """
+        from lambeq.backend.converters.discopy import to_discopy
+        return to_discopy(self)
+
+    @classmethod
+    def from_discopy(cls,
+                     diagram: 'discopy.monoidal.Diagram') -> Diagram:
+        """Import discopy diagram to lambeq diagram.
+
+        Parameters
+        ----------
+        diagram : :class:`discopy.monoidal.Diagram`
+        """
+        from lambeq.backend.converters.discopy import from_discopy
+        return from_discopy(diagram)
 
 
 @Diagram.register_special_box('cap')

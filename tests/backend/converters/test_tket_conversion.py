@@ -3,7 +3,7 @@ import pytest
 import pytket as tk
 
 from lambeq.backend.quantum import *
-from lambeq.backend.tk import from_tk, to_tk, Circuit
+from lambeq.backend.converters.tk import from_tk, to_tk, Circuit
 
 
 diagrams = [

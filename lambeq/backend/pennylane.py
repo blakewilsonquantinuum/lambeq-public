@@ -129,7 +129,7 @@ def extract_ops_from_tk(tk_circ):
 
     Parameters
     ----------
-    tk_circ : :class:`lambeq.backend.tk.Circuit`
+    tk_circ : :class:`lambeq.backend.converters.tk.Circuit`
         The pytket circuit to extract the operations from.
 
     Returns
@@ -165,7 +165,7 @@ def get_post_selection_dict(tk_circ):
 
     Parameters
     ----------
-    tk_circ : :class:`lambeq.backend.tk.Circuit`
+    tk_circ : :class:`lambeq.backend.converters.tk.Circuit`
         The pytket circuit to extract the post-selections from.
 
     Returns
