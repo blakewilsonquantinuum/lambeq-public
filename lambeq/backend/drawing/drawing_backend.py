@@ -26,7 +26,7 @@ from lambeq.backend.drawing.drawable import DrawableDiagram
 
 
 DEFAULT_MARGINS = (.05, .1)
-DEFAULT_ASPECT = 'auto'
+DEFAULT_ASPECT = 'equal'
 
 
 COLORS: dict[str, str] = {

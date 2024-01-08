@@ -25,8 +25,7 @@ from matplotlib.path import Path  # type: ignore[import-not-found]
 import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 
 from lambeq.backend.drawing.drawable import DrawableDiagram
-from lambeq.backend.drawing.drawing_backend import (COLORS, DEFAULT_ASPECT,
-                                                    DEFAULT_MARGINS,
+from lambeq.backend.drawing.drawing_backend import (COLORS, DEFAULT_MARGINS,
                                                     DrawingBackend, SHAPES)
 from lambeq.backend.drawing.helpers import drawn_as_spider
 from lambeq.backend.grammar import Spider
@@ -40,6 +39,7 @@ class MatBackend(DrawingBackend):
                  figsize: tuple | None = None,
                  linewidth: float = 1):
         self.axis = axis or plt.subplots(figsize=figsize, facecolor='white')[1]
+        self.default_aspect = 'equal' if figsize is None else 'auto'
         self.linewidth = linewidth
         self.max_width: float = 0
 
@@ -106,7 +106,7 @@ class MatBackend(DrawingBackend):
                **params) -> None:
         xlim, ylim = params.get('xlim', None), params.get('ylim', None)
         margins = params.get('margins', DEFAULT_MARGINS)
-        aspect = params.get('aspect', DEFAULT_ASPECT)
+        aspect = params.get('aspect', self.default_aspect)
 
         plt.margins(*margins)
         plt.subplots_adjust(

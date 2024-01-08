@@ -30,8 +30,10 @@ from typing import TYPE_CHECKING
 from PIL import Image
 
 from lambeq.backend import grammar, quantum
-from lambeq.backend.drawing.drawable import (BoxNode, DrawableDiagram,
+from lambeq.backend.drawing.drawable import (BOX_HEIGHT, BoxNode,
+                                             DrawableDiagram,
                                              DrawablePregroup,
+                                             LEDGE,
                                              WireEndpointType)
 from lambeq.backend.drawing.drawing_backend import (DEFAULT_ASPECT,
                                                     DEFAULT_MARGINS,
@@ -61,7 +63,7 @@ def draw(diagram: Diagram, **params) -> None:
     textpad : pair of floats, optional
         Padding between text and wires, default is `(0.1, 0.1)`.
     draw_type_labels : bool, optional
-        Whether to draw type labels, default is `False`.
+        Whether to draw type labels, default is `True`.
     draw_box_labels : bool, optional
         Whether to draw box labels, default is `True`.
     aspect : string, optional
@@ -125,11 +127,10 @@ def draw(diagram: Diagram, **params) -> None:
 
     backend.output(
         path=params.get('path', None),
-        baseline=len(drawable.boxes) / 2 or .5,
+        baseline=0,
         tikz_options=params.get('tikz_options', None),
         show=params.get('show', True),
-        margins=params.get('margins', DEFAULT_MARGINS),
-        aspect=params.get('aspect', DEFAULT_ASPECT))
+        margins=params.get('margins', DEFAULT_MARGINS))
 
 
 def draw_pregroup(diagram: Diagram, **params) -> None:
@@ -269,15 +270,9 @@ def draw_equation(*terms: grammar.Diagram,
 
     """
 
-    def height(term):
-        if hasattr(term, 'terms'):
-            return max(height(d) for d in term.terms)
-        return len(term.to_diagram()) or 1
-
     params['asymmetry'] = params.get(
         'asymmetry', .25 * any(needs_asymmetry(d) for d in terms))
 
-    max_height = max(map(height, terms))
     pad = params.get('pad', (0, 0))
     scale_x, scale_y = params.get('scale', (1, 1))
 
@@ -290,37 +285,21 @@ def draw_equation(*terms: grammar.Diagram,
         backend = MatBackend(figsize=params.get('figsize', None))
 
     for i, term in enumerate(terms):
-        scale = (scale_x, scale_y * max_height / height(term))
         term.draw(**dict(
             params, show=False, path=None,
-            backend=backend, scale=scale, pad=pad))
+            backend=backend, scale=(scale_x, scale_y), pad=pad))
         pad = (backend.max_width + space, 0)
         if i < len(terms) - 1:
-            backend.draw_text(symbol, pad[0], scale_y * max_height / 2)
+            backend.draw_text(symbol, pad[0], 0)
             pad = (pad[0] + space, pad[1])
 
     return backend.output(
         path=path,
-        baseline=max_height / 2,
+        baseline=0,
         tikz_options=params.get('tikz_options', None),
         show=params.get('show', True),
         margins=params.get('margins', DEFAULT_MARGINS),
         aspect=params.get('aspect', DEFAULT_ASPECT))
-
-
-def _get_box_frame_coordinates(drawable_diagram: DrawableDiagram,
-                               drawable_box: BoxNode) -> tuple[float, float]:
-    """Get the x coordinates of the left and right border of a box."""
-    all_wires_pos = [drawable_diagram.wire_endpoints[wire].x
-                     for wire in
-                     drawable_box.cod_wires + drawable_box.dom_wires]
-
-    if not all_wires_pos:  # scalar box
-        all_wires_pos = [drawable_box.x]
-
-    left = min(all_wires_pos) - 0.25
-    right = max(all_wires_pos) + 0.25
-    return left, right
 
 
 def _draw_box(backend: DrawingBackend,
@@ -356,11 +335,11 @@ def _draw_box(backend: DrawingBackend,
     if not box.dom and not box.cod:
         left, right = drawable_box.x, drawable_box.x
 
-    left, right = _get_box_frame_coordinates(drawable_diagram, drawable_box)
-    height = drawable_box.y - .25
+    left, right = drawable_box.get_x_lims(drawable_diagram)
+    height = drawable_box.y - BOX_HEIGHT / 2
 
     points = [[left, height], [right, height],
-              [right, height + .5], [left, height + .5]]
+              [right, height + BOX_HEIGHT], [left, height + BOX_HEIGHT]]
 
     conjd = bool(box.z)
     daggd = isinstance(box, grammar.Daggered)
@@ -410,11 +389,11 @@ def _draw_pregroup_state(backend: DrawingBackend,
 
     left = drawable_box.x
     right = left + 2
-    height = drawable_box.y - .25
+    height = drawable_box.y - BOX_HEIGHT / 2
 
     points = [[left, height], [right, height],
-              [right, height + .5], [(left + right) / 2, height + 0.6],
-              [left, height + .5]]
+              [right, height + BOX_HEIGHT], [(left + right) / 2, height + 0.6],
+              [left, height + BOX_HEIGHT]]
 
     backend.draw_polygon(*points)
     backend.draw_text(box.name, drawable_box.x + 1, drawable_box.y,
@@ -496,7 +475,7 @@ def _draw_brakets(backend: DrawingBackend,
 
     factor = -1 if is_bra else 1
 
-    left, right = _get_box_frame_coordinates(drawable_diagram, drawable_box)
+    left, right = drawable_box.get_x_lims(drawable_diagram)
     height = drawable_box.y - factor * .25
 
     points = [[left, height], [right, height],
@@ -534,7 +513,7 @@ def _draw_discard(backend: DrawingBackend,
 
     """
 
-    left, right = _get_box_frame_coordinates(drawable_diagram, drawable_box)
+    left, right = drawable_box.get_x_lims(drawable_diagram)
     height = drawable_box.y + 0.25
 
     for j in range(3):
@@ -698,7 +677,7 @@ def _draw_controlled_gate(backend: DrawingBackend,
 
         if shift_boundary:
             target_boundary = (
-                control_wire_endpoint_coordinates[0] - sign * .25,
+                control_wire_endpoint_coordinates[0] - sign * LEDGE,
                 control_wire_endpoint_coordinates[1])
 
     # draw vertical line through control dot

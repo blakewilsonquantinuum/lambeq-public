@@ -29,6 +29,12 @@ from lambeq.backend import grammar
 from lambeq.backend.quantum import quantum
 
 
+X_SPACING = 2.5  # Minimum space between adjacent wires
+LEDGE = 0.5  # Space from last wire to right box edge
+BOX_HEIGHT = 0.5
+HALF_BOX_HEIGHT = 0.25
+
+
 class WireEndpointType(Enum):
     """An enumeration for :py:class:`WireEndpoint`.
 
@@ -152,6 +158,29 @@ class BoxNode:
         """
         self.cod_wires.append(idx)
 
+    def get_x_lims(self,
+                   drawable_diagram: DrawableDiagram) -> tuple[float, float]:
+        """
+        Get left and right limits of the box.
+
+        Parameters
+        ----------
+        drawable_diagram : DrawableDiagram
+            `DrawableDiagram` with which this box is associated.
+
+        """
+
+        all_wires_pos = [drawable_diagram.wire_endpoints[wire].x
+                         for wire in self.cod_wires + self.dom_wires]
+
+        if not all_wires_pos:  # scalar box
+            all_wires_pos = [self.x]
+
+        left = min(all_wires_pos) - LEDGE
+        right = max(all_wires_pos) + LEDGE
+
+        return left, right
+
 
 @dataclass
 class DrawableDiagram:
@@ -198,12 +227,11 @@ class DrawableDiagram:
                  scan: list[int],
                  box: grammar.Box,
                  off: int,
-                 depth: int,
                  x_pos: float,
-                 max_depth: float) -> list[int]:
+                 y_pos: float) -> list[int]:
         """Add a box to the graph, creating necessary wire endpoints."""
 
-        node = BoxNode(box, x_pos, max_depth - depth - .5)
+        node = BoxNode(box, x_pos, y_pos)
 
         self._add_boxnode(node)
 
@@ -213,7 +241,7 @@ class DrawableDiagram:
             wire_end = WireEndpoint(WireEndpointType.DOM,
                                     obj=obj,
                                     x=self.wire_endpoints[nbr_idx].x,
-                                    y=max_depth - depth - .25)
+                                    y=y_pos + HALF_BOX_HEIGHT)
 
             wire_idx = self._add_wire_end(wire_end)
             node.add_dom_wire(wire_idx)
@@ -229,8 +257,8 @@ class DrawableDiagram:
                 nbr_idx = scan[off + i]
                 x = self.wire_endpoints[nbr_idx].x
             else:
-                x = x_pos - len(box.cod[1:]) / 2 + i
-            y = max_depth - depth - .75
+                x = x_pos + X_SPACING * (i - len(box.cod[1:]) / 2)
+            y = y_pos - HALF_BOX_HEIGHT
 
             wire_end = WireEndpoint(WireEndpointType.COD,
                                     obj=obj,
@@ -244,17 +272,42 @@ class DrawableDiagram:
         # Replace node's dom with its cod in scan
         return scan[:off] + scan_insert + scan[off + len(box.dom):]
 
+    def _find_box_edges(self,
+                        box: grammar.Box,
+                        x: float,
+                        off: int,
+                        scan: list[int]):
+
+        left_edge = x
+        right_edge = x
+
+        # dom edges come from upstream wire endpoints
+        if box.dom:
+            left_edge = min(self.wire_endpoints[scan[off]].x, left_edge)
+            right_edge = max(
+                self.wire_endpoints[scan[off + len(box.dom) - 1]].x,
+                right_edge)
+
+        # cod edges are evenly spaced
+        if box.cod:
+            left_edge = min(x - X_SPACING * len(box.cod[1:]) / 2, left_edge)
+            right_edge = max(x + X_SPACING * (len(box.cod[1:])
+                                              - len(box.cod[1:]) / 2),
+                             right_edge)
+
+        return left_edge - LEDGE, right_edge + LEDGE
+
     def _make_space(self,
                     scan: list[int],
                     box: grammar.Box,
-                    off: int) -> float:
-        """Determines x coord for a new box.
+                    off: int) -> tuple[float, float]:
+        """Determines x and y coords for a new box.
         Modifies x coordinates of existing nodes to make space."""
 
         if not scan:
-            return 0
+            return 0, 0
 
-        half_width = len(box.cod[:-1]) / 2 + 1
+        half_width = X_SPACING * (len(box.cod[:-1]) / 2 + 1)
 
         if not box.dom:
             if not off:
@@ -286,19 +339,37 @@ class DrawableDiagram:
                 if node.x >= limit:
                     node.x += pad
 
-        return x
+        left_edge, right_edge = self._find_box_edges(box, x, off, scan)
+        y = 0.0
+
+        for upstream_box in self.boxes:
+            bl, br = upstream_box.get_x_lims(self)
+
+            if not (bl > right_edge or br < left_edge):
+                # Boxes overlap
+                y = min(y, upstream_box.y - 1.0)
+
+        return x, y
 
     def _move_to_origin(self) -> None:
-        """Set the min x and y coordinates of the diagram to 0."""
+        """Set the min x and middle-y coordinates of the diagram to 0.
+        Setting the diagram to be centred on the y axis allows us to
+        avoid precomputing the diagram's height.
+        """
 
         min_x = min(
             [node.x for node in self.boxes + self.wire_endpoints])
+
         min_y = min(
             [node.y for node in self.boxes + self.wire_endpoints])
+        max_y = max(
+            [node.y for node in self.boxes + self.wire_endpoints])
+
+        mid_y = (min_y + max_y) / 2
 
         for node in self.boxes + self.wire_endpoints:
             node.x -= min_x
-            node.y -= min_y
+            node.y -= mid_y
 
     @classmethod
     def from_diagram(cls, diagram: grammar.Diagram) -> Self:
@@ -326,21 +397,23 @@ class DrawableDiagram:
         for i, obj in enumerate(diagram.dom):
             wire_end = WireEndpoint(WireEndpointType.INPUT,
                                     obj=obj,
-                                    x=i,
-                                    y=len(diagram) or 1)
+                                    x=X_SPACING * i,
+                                    y=1)
             wire_end_idx = drawable._add_wire_end(wire_end)
             scan.append(wire_end_idx)
 
-        for depth, (box, off) in enumerate(zip(diagram.boxes,
-                                               diagram.offsets)):
-            x = drawable._make_space(scan, box, off)
-            scan = drawable._add_box(scan, box, off, depth, x, len(diagram))
+        min_y = float('inf')
+
+        for (box, off) in zip(diagram.boxes, diagram.offsets):
+            x, y = drawable._make_space(scan, box, off)
+            scan = drawable._add_box(scan, box, off, x, y)
+            min_y = min(min_y, y)
 
         for i, obj in enumerate(diagram.cod):
             wire_end = WireEndpoint(WireEndpointType.OUTPUT,
                                     obj=obj,
                                     x=drawable.wire_endpoints[scan[i]].x,
-                                    y=0)
+                                    y=min_y - 1)
             wire_end_idx = drawable._add_wire_end(wire_end)
             drawable._add_wire(scan[i], wire_end_idx)
 
@@ -374,10 +447,12 @@ class DrawableDiagram:
             box.y = min_y + (box.y - min_y) * scale[1] + pad[1]
 
             for wire_end_idx in box.dom_wires:
-                self.wire_endpoints[wire_end_idx].y = box.y + 0.25
+                self.wire_endpoints[wire_end_idx].y = (
+                    box.y + HALF_BOX_HEIGHT * scale[1])
 
             for wire_end_idx in box.cod_wires:
-                self.wire_endpoints[wire_end_idx].y = box.y - 0.25
+                self.wire_endpoints[wire_end_idx].y = (
+                    box.y - HALF_BOX_HEIGHT * scale[1])
 
 
 class PregroupError(Exception):
