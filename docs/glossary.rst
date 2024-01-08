@@ -119,6 +119,9 @@ Glossary
     rewrite rule
         A :term:`functorial <functor>` transformation that changes the wiring of a specific box (representing a word) in a :term:`string diagram` to simplify the diagram or to make it more amenable to implementation on the hardware of choice.
 
+    rewriter
+        An object that acts on a :term:`string diagram`, applying some form of :term:`functorial <functor>` or procedural transformation.
+
     rigid category
         A :term:`monoidal category` where every object :math:`A` has a left dual :math:`A^l` and a right dual :math:`A^r`, both equipped with :term:`cup` and :term:`cap` morphisms obeying the so-called :term:`snake equations`. A :term:`pregroup grammar` is an example of a rigid category.
 

@@ -26,8 +26,20 @@ lambeq.ansatz
 lambeq.backend
 --------------
 
+This shows the internals of the classes from :py:mod:`.grammar` and how they are related to each other via attributes and methods.
+
 .. image:: ./puml/img/backend.png
-    :width: 100%
+    :width: 80%
+
+Zooming out a bit, this shows how the classes from :py:mod:`.grammar`, :py:mod:`.tensor`, and :py:mod:`.quantum` interact through inheritance.
+
+.. image:: ./puml/img/backend-inheritance.png
+    :width: 80%
+
+This is similar to the above diagram but with a focus on classes from :py:mod:`.quantum`.
+
+.. image:: ./puml/img/backend-quantum-inheritance.png
+    :width: 80%
 
 .. _uml_bobcat:
 

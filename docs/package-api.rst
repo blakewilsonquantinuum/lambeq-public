@@ -32,32 +32,62 @@ Concrete implementations of classical and quantum :term:`ansätze <ansatz (plura
 
 lambeq.backend
 --------------
-``lambeq``'s internal representation of categories. This work is based on :term: `DisCoPy` (https://discopy.org/) which is released under the BSD 3-Clause "New" or "Revised" License.
+``lambeq``'s internal representation of categories. This work is based on :term:`DisCoPy` (https://discopy.org/) which is released under the BSD 3-Clause "New" or "Revised" License.
 
 .. rubric:: API: :doc:`lambeq.backend`
 
 .. rubric:: UML diagrams: :ref:`uml_backend`
 
-.. rubric:: Methods
-
-- :py:meth:`~lambeq.backend.draw`
-- :py:meth:`~lambeq.backend.draw_equation`
-- :py:meth:`~lambeq.backend.to_gif`
-
 .. rubric:: Classes:
 
 .. inheritance-diagram::
-   lambeq.backend.grammar.Box
-   lambeq.backend.grammar.Cap
-   lambeq.backend.grammar.Category
-   lambeq.backend.grammar.Cup
-   lambeq.backend.grammar.Diagram
-   lambeq.backend.grammar.Functor
-   lambeq.backend.grammar.Id
-   lambeq.backend.grammar.Spider
-   lambeq.backend.grammar.Swap
-   lambeq.backend.grammar.Ty
-   lambeq.backend.grammar.Word
+    lambeq.backend.grammar.Entity
+    lambeq.backend.grammar.Category
+    lambeq.backend.grammar.Ty
+    lambeq.backend.quantum.Ty
+    lambeq.backend.grammar.Diagrammable
+    lambeq.backend.grammar.Box
+    lambeq.backend.quantum.Box
+    lambeq.backend.grammar.Layer
+    lambeq.backend.quantum.Layer
+    lambeq.backend.grammar.Diagram
+    lambeq.backend.quantum.Diagram
+    lambeq.backend.grammar.Cup
+    lambeq.backend.grammar.Cap
+    lambeq.backend.grammar.Daggered
+    lambeq.backend.quantum.Daggered
+    lambeq.backend.grammar.Spider
+    lambeq.backend.grammar.Swap
+    lambeq.backend.quantum.Swap
+    lambeq.backend.grammar.Word
+    lambeq.backend.grammar.Functor
+   :parts: 2
+
+|
+
+.. inheritance-diagram::
+    lambeq.backend.quantum.Box
+    lambeq.backend.quantum.SelfConjugate
+    lambeq.backend.quantum.AntiConjugate
+    lambeq.backend.quantum.Swap
+    lambeq.backend.quantum.Ket
+    lambeq.backend.quantum.Bra
+    lambeq.backend.quantum.Parametrized
+    lambeq.backend.quantum.Rotation
+    lambeq.backend.quantum.Rx
+    lambeq.backend.quantum.Ry
+    lambeq.backend.quantum.Rz
+    lambeq.backend.quantum.Controlled
+    lambeq.backend.quantum.MixedState
+    lambeq.backend.quantum.Discard
+    lambeq.backend.quantum.Measure
+    lambeq.backend.quantum.Encode
+    lambeq.backend.quantum.Scalar
+    lambeq.backend.quantum.Sqrt
+    lambeq.backend.quantum.Daggered
+    lambeq.backend.quantum.Bit
+   :top-classes: lambeq.backend.grammar.Box
+   :parts: 2
 
 |
 

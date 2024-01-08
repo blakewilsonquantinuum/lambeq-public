@@ -137,10 +137,8 @@ class Functor {
 
 Entity <|-- Ty
 Entity <|--- Box
-Diagrammable <|--- Box
 Entity <|-- Layer
 Entity <|-- Diagram
-Diagrammable <|--- Diagram
 Box <|-- Cap
 Box <|-- Cup
 Box <|-- Daggered
