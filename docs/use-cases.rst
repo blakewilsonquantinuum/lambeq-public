@@ -167,7 +167,7 @@ As soon as you are satisfied with the results of the simulations, it's time for 
    "`IQM <https://www.meetiqm.com/>`_", "Superconducting qubits"
    "`Microsoft Azure Quantum <https://azure.microsoft.com/en-us/services/quantum/>`_", "Trapped ions, superconducting qubits, `neutral atoms <https://pennylane.ai/qml/demos/tutorial_pasqal.html>`_"
    "`Oxford Quantum Circuits <https://oxfordquantumcircuits.com>`_", "Superconducting qubits"
-   "`Quandela <https://www.quandela.co/>`_", "Phototics"
+   "`Quandela <https://www.quandela.co/>`_", "Photonics"
    "`Quantinuum <https://www.honeywell.com/us/en/company/quantum>`_", "Trapped ions"
    "`Quantware <https://www.quantware.eu>`_", "Superconducting qubits"
    "`QuEra <https://www.quera.com>`_", Neutral atoms
