@@ -402,7 +402,7 @@ class DrawableDiagram:
             wire_end_idx = drawable._add_wire_end(wire_end)
             scan.append(wire_end_idx)
 
-        min_y = float('inf')
+        min_y = 1.0
 
         for (box, off) in zip(diagram.boxes, diagram.offsets):
             x, y = drawable._make_space(scan, box, off)
