@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import sys
 
 from typing_extensions import Self
 
@@ -372,7 +373,9 @@ class DrawableDiagram:
             node.y -= mid_y
 
     @classmethod
-    def from_diagram(cls, diagram: grammar.Diagram) -> Self:
+    def from_diagram(cls,
+                     diagram: grammar.Diagram,
+                     foliated: bool = False) -> Self:
         """
         Builds a graph representation of the diagram, calculating
         coordinates for each box and wire.
@@ -381,6 +384,10 @@ class DrawableDiagram:
         ----------
         diagram : grammar Diagram
             A lambeq diagram.
+        foliated : bool, default: False
+            If true, each box of the diagram is drawn in a separate
+            layer. By default boxes are compressed upwards into
+            available space.
 
         Returns
         -------
@@ -404,8 +411,12 @@ class DrawableDiagram:
 
         min_y = 1.0
 
-        for (box, off) in zip(diagram.boxes, diagram.offsets):
+        for depth, (box, off) in enumerate(zip(diagram.boxes,
+                                               diagram.offsets)):
+
             x, y = drawable._make_space(scan, box, off)
+            y = -depth if foliated else y
+
             scan = drawable._add_box(scan, box, off, x, y)
             min_y = min(min_y, y)
 
@@ -486,7 +497,9 @@ class DrawablePregroup(DrawableDiagram):
         return super()._add_wire_end(wire_end)
 
     @classmethod
-    def from_diagram(cls, diagram: grammar.Diagram) -> Self:
+    def from_diagram(cls,
+                     diagram: grammar.Diagram,
+                     foliated: bool = False) -> Self:
         """
         Builds a graph representation of the diagram, calculating
         coordinates for each box and wire.
@@ -495,6 +508,9 @@ class DrawablePregroup(DrawableDiagram):
         ----------
         diagram : grammar Diagram
             A lambeq diagram.
+        foliated : bool, default: False
+            This parameter is not used for pregroup diagrams, which are
+            always drawn un-foliated.
 
         Returns
         -------
@@ -503,6 +519,11 @@ class DrawablePregroup(DrawableDiagram):
             necessary to draw it.
 
         """
+
+        if foliated:
+            print('Pregroup diagrams cannot be drawn foliated.'
+                  ' Set `draw_as_pregroup` to `False` to see'
+                  ' foliation for this diagram.', file=sys.stderr)
 
         words = []
 

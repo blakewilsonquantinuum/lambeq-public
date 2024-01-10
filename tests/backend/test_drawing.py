@@ -403,6 +403,92 @@ def test_drawable_generation(diagram, drawable):
         assert dd_wep.coordinates == pytest.approx(dr_wep.coordinates)
 
 
+
+foliation_diagrams = [bx_1 @ bx_1,
+                      bx_1 @ bx_1,
+                      bx_1 @ s,
+                      bx_1 @ s]
+foliation_control = [False, True, False, True]
+foliation_expected_drawables = [
+    DrawableDiagram(
+        boxes=[BoxNode(obj=bx_1, x=1.25, y=0.0, dom_wires=[2], cod_wires=[3, 4]),
+               BoxNode(obj=bx_1, x=6.25, y=0.0, dom_wires=[5], cod_wires=[6, 7])],
+        wire_endpoints=[WireEndpoint(kind=WireEndpointType.INPUT, obj=s, x=1.25, y=1.0),
+                        WireEndpoint(kind=WireEndpointType.INPUT, obj=s, x=6.25, y=1.0),
+                        WireEndpoint(kind=WireEndpointType.DOM, obj=s, x=1.25, y=0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=0.0, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=2.5, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.DOM, obj=s, x=6.25, y=0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=5.0, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=7.5, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=0.0, y=-1.0),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=2.5, y=-1.0),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=5.0, y=-1.0),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=7.5, y=-1.0)],
+        wires=[(0, 2), (1, 5), (3, 8), (4, 9), (6, 10), (7, 11)]
+    ),
+    DrawableDiagram(
+        boxes=[BoxNode(obj=bx_1, x=1.25, y=0.5, dom_wires=[2], cod_wires=[3, 4]),
+               BoxNode(obj=bx_1, x=6.25, y=-0.5, dom_wires=[5], cod_wires=[6, 7])],
+        wire_endpoints=[WireEndpoint(kind=WireEndpointType.INPUT, obj=s, x=1.25, y=1.5),
+                        WireEndpoint(kind=WireEndpointType.INPUT, obj=s, x=6.25, y=1.5),
+                        WireEndpoint(kind=WireEndpointType.DOM, obj=s, x=1.25, y=0.75),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=0.0, y=0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=2.5, y=0.25),
+                        WireEndpoint(kind=WireEndpointType.DOM, obj=s, x=6.25, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=5.0, y=-0.75),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=7.5, y=-0.75),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=0.0, y=-1.5),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=2.5, y=-1.5),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=5.0, y=-1.5),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=7.5, y=-1.5)],
+        wires=[(0, 2), (1, 5), (3, 8), (4, 9), (6, 10), (7, 11)]
+    ),
+    DrawableDiagram(
+        boxes=[BoxNode(obj=bx_1, x=1.25, y=0.0, dom_wires=[2], cod_wires=[3, 4])],
+        wire_endpoints=[WireEndpoint(kind=WireEndpointType.INPUT, obj=s, x=1.25, y=1.0),
+                        WireEndpoint(kind=WireEndpointType.INPUT, obj=s, x=5.0, y=1.0),
+                        WireEndpoint(kind=WireEndpointType.DOM, obj=s, x=1.25, y=0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=0.0, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=2.5, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=0.0, y=-1.0),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=2.5, y=-1.0),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=5.0, y=-1.0)],
+        wires=[(0, 2), (3, 5), (4, 6), (1, 7)]
+    ),
+    DrawableDiagram(
+        boxes=[BoxNode(obj=bx_1, x=1.25, y=0.0, dom_wires=[2], cod_wires=[3, 4])],
+        wire_endpoints=[WireEndpoint(kind=WireEndpointType.INPUT, obj=s, x=1.25, y=1.0),
+                        WireEndpoint(kind=WireEndpointType.INPUT, obj=s, x=5.0, y=1.0),
+                        WireEndpoint(kind=WireEndpointType.DOM, obj=s, x=1.25, y=0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=0.0, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.COD, obj=s, x=2.5, y=-0.25),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=0.0, y=-1.0),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=2.5, y=-1.0),
+                        WireEndpoint(kind=WireEndpointType.OUTPUT, obj=s, x=5.0, y=-1.0)],
+        wires=[(0, 2), (3, 5), (4, 6), (1, 7)]
+    )
+]
+
+
+
+@pytest.mark.parametrize('diagram, foliated, drawable', zip(foliation_diagrams, foliation_control, foliation_expected_drawables))
+def test_foliated_drawable_generation(diagram, foliated, drawable):
+
+    dd = DrawableDiagram.from_diagram(diagram, foliated=foliated)
+
+    # print(dd)
+    # assert False
+
+    assert dd.boxes == drawable.boxes
+    assert dd.wires == drawable.wires
+
+    for dd_wep, dr_wep in zip(dd.wire_endpoints, drawable.wire_endpoints):
+        assert dd_wep.kind == dr_wep.kind
+        assert dd_wep.obj == dr_wep.obj
+        assert dd_wep.coordinates == pytest.approx(dr_wep.coordinates)    
+
+
 @pytest.mark.parametrize('diagram, tikz', zip(diagrams, tikz_outputs))
 def test_tikz_drawing(diagram, tikz, capsys):
 
@@ -769,3 +855,5 @@ def test_pregroup_drawable_generation(diagram, drawable, err):
         dr_prgrp = DrawablePregroup.from_diagram(diagram)
 
         assert dr_prgrp == drawable
+
+

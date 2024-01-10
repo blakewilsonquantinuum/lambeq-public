@@ -85,13 +85,17 @@ def draw(diagram: Diagram, **params) -> None:
     asymmetry : float, optional
         Make a box and its dagger mirror images, default is
         `.25 * any(box.is_dagger for box in diagram.boxes)`.
-
+    foliated : bool, default: False
+        If true, each box of the diagram is drawn in a separate
+        layer. By default boxes are compressed upwards into
+        available space.
     """
 
     params['asymmetry'] = params.get(
         'asymmetry', .25 * needs_asymmetry(diagram))
 
-    drawable = DrawableDiagram.from_diagram(diagram)
+    drawable = DrawableDiagram.from_diagram(diagram,
+                                            params.get('foliated', False))
     drawable.scale_and_pad(params.get('scale', (1, 1)),
                            params.get('pad', (0, 0)))
 
