@@ -131,7 +131,7 @@ class CCGRule(str, Enum):
             return cod.argument >> left.right, right.left >> cod.result
         elif self == CCGRule.FORWARD_CROSSED_COMPOSITION:
             self.check_match(left.right, right.right)
-            return cod.right << left.right, cod.right >> right.right
+            return cod.right << left.right, cod.left >> right.right
         elif self == CCGRule.BACKWARD_CROSSED_COMPOSITION:
             self.check_match(left.left, right.left)
             return left.left << cod.right, right.left >> cod.left
@@ -243,44 +243,53 @@ class CCGRule(str, Enum):
         left, right = dom
         if self == CCGRule.FORWARD_APPLICATION:
             # X/Y + Y -> X
+            # X @ Y.l + Y -> X
             return Diagram.fa(left.result.to_grammar(), right.to_grammar())
         elif self == CCGRule.BACKWARD_APPLICATION:
             # Y + X\Y -> X
+            # Y + Y.r @ X -> X
             return Diagram.ba(left.to_grammar(), right.result.to_grammar())
         elif self == CCGRule.FORWARD_COMPOSITION:
             # X/Y + Y/Z -> X/Z
+            # X @ Y.l + Y @ Z.l -> X @ Z.l
             return Diagram.fc(left.left.to_grammar(),
                               left.right.to_grammar(),
                               right.right.to_grammar())
         elif self == CCGRule.BACKWARD_COMPOSITION:
             # Z\Y + X\Y -> X\Z
+            # Z.r @ Y + Y.r @ X -> Z.r @ X
             return Diagram.bc(left.left.to_grammar(),
                               left.right.to_grammar(),
                               right.right.to_grammar())
         elif self == CCGRule.FORWARD_CROSSED_COMPOSITION:
             # X/Y + Y\Z -> X\Z
+            # X @ Y.l + Z.r @ Y -> Z.r @ X
             return Diagram.fx(left.left.to_grammar(),
                               left.right.to_grammar(),
                               right.left.to_grammar())
         elif self == CCGRule.BACKWARD_CROSSED_COMPOSITION:
             # Y/Z + X\Y -> X/Z
+            # Y @ Z.l + Y.r @ X -> X @ Z.l
             return Diagram.bx(left.right.to_grammar(),
                               left.left.to_grammar(),
-                              right.left.to_grammar())
+                              right.right.to_grammar())
         elif self == CCGRule.GENERALIZED_FORWARD_COMPOSITION:
             # X/Y + (Y/Z)/... -> (X/Z)/...
+            # X @ Y.l + Y @ Z.l @ ... -> X @ Z.l @ ...
             mid = left.argument.to_grammar()
             return (Id(left.result.to_grammar())
                     @ Diagram.cups(mid.l, mid)
                     @ Id(right.to_grammar()[len(mid):]))
         elif self == CCGRule.GENERALIZED_BACKWARD_COMPOSITION:
             # (Y\Z)\... + X\Y -> (X\Z)\...
+            # ... @ Z.r @ Y + Y.r @ X -> ... @ Z.r @ X
             mid = right.argument.to_grammar()
             return (Id(left.to_grammar()[:-len(mid)])
                     @ Diagram.cups(mid, mid.r)
                     @ Id(right.result.to_grammar()))
         elif self == CCGRule.GENERALIZED_FORWARD_CROSSED_COMPOSITION:
             # X/Y + (Y\Z)|... -> (X\Z)|...
+            # X @ Y.l + ... @ Z.r @ Y @ ... -> ... @ Z.r @ X @ ...
             mid = left.left.to_grammar()
             l, join, r = right.split(left.right)
             return (
@@ -289,6 +298,7 @@ class CCGRule(str, Enum):
             ) @ Id(r)
         elif self == CCGRule.GENERALIZED_BACKWARD_CROSSED_COMPOSITION:
             # (Y/Z)|... + X\Y -> (X/Z)|...
+            # ... @ Y @ Z.l @ ... + Y.r @ X -> ... @ X @ Z.l @ ...
             mid = right.right.to_grammar()
             l, join, r = left.split(right.left)
             return Id(l) @ (
