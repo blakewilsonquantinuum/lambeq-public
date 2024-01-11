@@ -3,6 +3,41 @@
 Release notes
 =============
 
+.. _rel-0.4.0:
+
+`0.4.0 <https://github.com/CQCL/lambeq/releases/tag/0.4.0>`_
+------------------------------------------------------------
+
+Added:
+
+- A new integrated backend that replaces :term:`DisCoPy`, which until now was providing the low-level functionality of ``lambeq``. The new backend offers better performance, increased stability, faster training speeds, and a simplified high-level interface to the user. The new backend consists of the following sub-modules:
+
+    - :py:mod:`lambeq.backend.grammar`: Contains the building blocks for creating string diagrams.
+    - :py:mod:`lambeq.backend.tensor`: Contains the necessary classes to create tensor diagrams.
+    - :py:mod:`lambeq.backend.quantum`: Adds quantum-specific functionality to the backend and provides a circuit simulator based on the `TensorNetwork <https://github.com/google/TensorNetwork>`_ library.
+    - :py:mod:`lambeq.backend.pennylane`: Interface with PennyLane.
+    - :py:mod:`lambeq.backend.tk`: Inteface with Tket.
+    - :py:mod:`lambeq.backend.numerical_backend`: Common interface for numerical backends (such as Numpy, Jax, PyTorch, TensorFlow)
+    - :py:mod:`lambeq.backend.drawing`: Contains drawing functionality for diagrams and circuits.
+
+- :py:class:`~lambeq.BobcatParser`: Added a special case for adjectival conjunction in tree translation.
+- :py:class:`~lambeq.TreeReader`: Diagrams now are created straight from the :py:class:`~lambeq.CCGTree`.
+- :py:class:`~lambeq.CCGRule` apply method: Added :py:meth:`~lambeq.CCGRule.apply` method to class :py:class:`~lambeq.CCGRule`.
+
+Changed:
+
+- Diagram-level rewriters: Rewrite functions :py:func:`remove_cups` and :py:func:`remove_swaps` are now refactored as diagram-level rewriters, :py:class:`~lambeq.RemoveCupsRewriter` and :py:class:`~lambeq.RemoveSwapsRewriter` correspondingly.
+- Extra whitespace is now ignored in the :py:class:`~lambeq.Tokeniser`.
+
+Fixed:
+
+- :py:class:`~lambeq.UnknownWordsRewriteRule`: Fixed rewriting of non-word boxes.
+
+Removed:
+
+- Removed :py:meth:`CCGTree.to_biclosed_diagram` and references to :py:mod:`discopy.biclosed`. Now CCG trees are directly converted into string diagrams, without the extra step of storing the derivation in a biclosed form.
+- :py:class:`~lambeq.CCGRule`: Removed :py:meth:`replace_cat_result` and added :py:meth:`~lambeq.CCGRule.resolve`.
+
 .. _rel-0.3.3:
 
 `0.3.3 <https://github.com/CQCL/lambeq/releases/tag/0.3.3>`_
