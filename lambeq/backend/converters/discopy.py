@@ -24,18 +24,33 @@ from __future__ import annotations
 
 from typing import cast, Type, TypeVar, Union
 
-try:
-    from discopy import quantum as dq
-    from discopy import tensor as dt
-    from discopy.grammar import pregroup as dg
-
-except ImportError:
-    raise ImportError('`import discopy` failed. Please install discopy by '
-                      'running `pip install discopy`.')
+from packaging import version
 
 from lambeq.backend import grammar as lg
 from lambeq.backend import quantum as lq
 from lambeq.backend import tensor as lt
+
+
+MIN_DISCOPY_VERSION = '1.1.0'
+
+try:
+    import discopy
+except ImportError as ie:
+    raise ImportError(
+        '`import discopy` failed. Please install discopy by '
+        f'running `pip install "discopy>={MIN_DISCOPY_VERSION}"`.'
+    ) from ie
+else:
+    if version.parse(discopy.__version__) < version.parse(MIN_DISCOPY_VERSION):
+        raise DeprecationWarning(
+            'Conversion from lambeq to discopy and vice versa '
+            f'requires discopy>={MIN_DISCOPY_VERSION}. Please update discopy '
+            f'by running `pip install "discopy>={MIN_DISCOPY_VERSION}"`.'
+        )
+
+from discopy import quantum as dq   # noqa: E402,I100
+from discopy import tensor as dt    # noqa: E402
+from discopy.grammar import pregroup as dg  # noqa: E402
 
 
 _LAMBEQ_QUANTUM_BOX_TY = Union[type[lq.Box], lq.Box]
@@ -496,6 +511,12 @@ def from_discopy(diagram: _DISCOPY_DIAGRAM_TY) -> _LAMBEQ_DIAGRAM_TY:
         The converted diagram.
 
     """
+
+    if version.parse(discopy.__version__) < version.parse(MIN_DISCOPY_VERSION):
+        raise DeprecationWarning(
+            'Conversion from discopy to lambeq'
+            f'requires discopy>={MIN_DISCOPY_VERSION}.'
+        )
 
     if isinstance(diagram, dq.Circuit):
         from lambeq.backend.quantum import Box, Ty, Id
