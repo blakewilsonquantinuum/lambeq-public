@@ -54,8 +54,6 @@ __all__ = [
 
         'VerbosityLevel',
 
-        'diagram2str',
-
         'Reader',
         'LinearReader',
         'TreeReader',
@@ -112,7 +110,6 @@ from lambeq.ansatz import (BaseAnsatz, CircuitAnsatz, IQPAnsatz, MPSAnsatz,
                            StronglyEntanglingAnsatz, Symbol, TensorAnsatz)
 from lambeq.core.globals import VerbosityLevel
 from lambeq.core.types import AtomicType
-from lambeq.backend.drawing.text_printer import diagram2str
 from lambeq.rewrite import (CoordinationRewriteRule, CurryRewriteRule,
                             DiagramRewriter, RemoveCupsRewriter,
                             RemoveSwapsRewriter, Rewriter, RewriteRule,
