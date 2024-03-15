@@ -60,6 +60,10 @@ jobs:
       run: pip install .
     - name: Check package import works
       run: python -c 'import lambeq'
+    - name: Install downgraded Qiskit (for compatibility reasons)
+      # This should be removed once the following PR is merged:
+      # https://github.com/PennyLaneAI/pennylane-qiskit/pull/493
+      run: pip install 'qiskit<1' pytket-qiskit qiskit-ibm-runtime
     - name: Install extra dependencies and tester
       run: pip install .[extras] .[test]
     - name: Locate bobcat pre-trained model cache
