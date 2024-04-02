@@ -236,6 +236,17 @@ class ParseTree:
     var_map: dict[int, Variable]
     score: float = 0
 
+    def __post_init__(self) -> None:
+        self.unfilled_deps = [dep for dep in self.unfilled_deps
+                              if dep.var in self.cat.vars]
+
+    @property
+    def index(self) -> int:
+        if self.is_leaf:
+            return self.variable.filler.index
+        else:
+            raise AttributeError('only leaves have an index')
+
     @property
     def word(self) -> str:
         if self.is_leaf:

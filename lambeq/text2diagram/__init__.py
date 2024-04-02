@@ -29,6 +29,7 @@ __all__ = ['CCGType',
 
            'LinearReader',
            'Reader',
+           'DependencyReader',
            'TreeReader',
            'TreeReaderMode',
            'bag_of_words_reader',
@@ -48,6 +49,7 @@ from lambeq.text2diagram.ccgbank_parser import CCGBankParseError, CCGBankParser
 from lambeq.text2diagram.depccg_parser import DepCCGParseError, DepCCGParser
 from lambeq.text2diagram.web_parser import WebParseError, WebParser
 
+from lambeq.text2diagram.dependency_reader import DependencyReader
 from lambeq.text2diagram.linear_reader import (LinearReader,
                                                cups_reader,
                                                stairs_reader,

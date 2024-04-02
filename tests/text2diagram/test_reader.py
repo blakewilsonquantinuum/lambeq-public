@@ -1,13 +1,12 @@
 import pytest
 from requests.exceptions import MissingSchema
 
-from lambeq.backend.grammar import Box, Diagram, Id, Spider, Word
-from lambeq.backend.quantum import Diagram as Circuit, Ty as QTy, qubit
-from lambeq.backend.quantum import Ket, Bra, CX, Id as QId
+from lambeq.backend.grammar import Box, Id, Spider, Word
+from lambeq.backend.quantum import Bra, CX, Id as QId, Ket, qubit
 
-from lambeq import (AtomicType, BobcatParser, IQPAnsatz, TreeReader,
-                    TreeReaderMode, VerbosityLevel, WebParser, cups_reader,
-                    spiders_reader, stairs_reader)
+from lambeq import (AtomicType, BobcatParser, IQPAnsatz, DependencyReader,
+                    TreeReader, TreeReaderMode, VerbosityLevel, WebParser,
+                    cups_reader, spiders_reader, stairs_reader)
 
 
 @pytest.fixture
@@ -65,6 +64,41 @@ def test_sentence2diagram_bad_tokenised_flag(sentence):
     with pytest.raises(ValueError):
         spiders_reader.sentence2diagram(sentence_tokenised)
 
+
+def test_dependency_reader(sentence, words, parser):
+    with pytest.raises(ValueError):
+        DependencyReader(ccg_parser='parser')
+
+    with pytest.raises(ValueError):
+        DependencyReader(ccg_parser=lambda: 'parser')
+
+    reader = DependencyReader(ccg_parser=parser,
+                              label_relations=False,
+                              label_indices=True,
+                              label_box_indices=True)
+
+    expected_edges = {(1, 0), (1, 3), (2, 3), (1, 1)}
+    expected_boxes = {0: (set(), {(1, 0)}),
+                      1: ({(1, 0), (1, 3)}, {(1, 1)}),
+                      2: ({(2, 3)}, set()),
+                      3: (set(), {(1, 3), (2, 3)})}
+
+    def ty_to_dep(ty):
+        toks = ty.name.split()
+        return int(toks[0]), int(toks[-1])
+
+    diagram = reader.sentence2diagram(sentence)
+    actual_edges = set()
+    actual_boxes = {}
+    for left, box, right in diagram:
+        index = int(box.name[0])
+        actual_boxes[index] = ({ty_to_dep(edge) for edge in box.dom},
+                               {ty_to_dep(edge) for edge in box.cod})
+        actual_edges.update(*actual_boxes[index],
+                            (ty_to_dep(edge) for edge in left @ right))
+
+    assert actual_edges == expected_edges
+    assert actual_boxes == expected_boxes
 
 def make_parse(*names):
     S = AtomicType.SENTENCE

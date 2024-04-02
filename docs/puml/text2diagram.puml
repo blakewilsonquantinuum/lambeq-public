@@ -28,6 +28,14 @@ abstract class CCGParser {
   sentences2trees()
 }
 
+class DependencyReader {
+  ccg_parser : CCGParser
+  label_relations
+  label_indices
+  label_box_indices
+  head_dependency
+}
+
 class TreeReader {
   ccg_parser : CCGParser
   mode: TreeReaderMode
@@ -84,6 +92,7 @@ object spiders_reader
 object stairs_reader
 
 Reader <|-- CCGParser
+Reader <|-- DependencyReader
 Reader <|-- TreeReader
 Reader <|-- LinearReader
 Reader <|-- SpidersReader
@@ -100,6 +109,7 @@ SpidersReader <.. spiders_reader : <<instanceOf>>
 
 DepCCGParser - depccg: > uses
 
+DependencyReader::ccg_parser o-- CCGParser
 TreeReader::ccg_parser o-- CCGParser
 TreeReader::mode *-l- TreeReaderMode
 LinearReader::word_type *-- backend.grammar.Ty

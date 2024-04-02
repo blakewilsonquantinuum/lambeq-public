@@ -55,6 +55,7 @@ __all__ = [
         'VerbosityLevel',
 
         'Reader',
+        'DependencyReader',
         'LinearReader',
         'TreeReader',
         'TreeReaderMode',
@@ -122,7 +123,7 @@ from lambeq.text2diagram import (
         CCGBankParseError, CCGBankParser,
         DepCCGParseError, DepCCGParser,
         WebParseError, WebParser,
-        Reader, LinearReader, TreeReader, TreeReaderMode,
+        Reader, DependencyReader, LinearReader, TreeReader, TreeReaderMode,
         bag_of_words_reader, cups_reader, spiders_reader,
         stairs_reader, word_sequence_reader)
 from lambeq.tokeniser import Tokeniser, SpacyTokeniser

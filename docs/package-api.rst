@@ -175,6 +175,7 @@ Package containing the interfaces for the :term:`CCG <Combinatory Categorial Gra
     lambeq.text2diagram.DepCCGParser
     lambeq.text2diagram.LinearReader
     lambeq.text2diagram.Reader
+    lambeq.text2diagram.DependencyReader
     lambeq.text2diagram.TreeReader
     lambeq.text2diagram.TreeReaderMode
     lambeq.text2diagram.WebParser

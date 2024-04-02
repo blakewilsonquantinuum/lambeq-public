@@ -122,6 +122,47 @@ class CCGTree:
                     'Cannot get the right child of a non-binary tree.')
         return self.children[1]
 
+    def root(self) -> CCGTree:
+        """Recursively get the root of the tree.
+
+        In the pregroup diagram, this corresponds to the leaf box that
+        contains the output wire.
+
+        Returns
+        -------
+        CCGTree
+            The root tree.
+
+        """
+        if not self.children:
+            return self
+
+        child = None
+        if len(self.children) == 1:
+            if 'TR' in self.rule.value:
+                raise ValueError('Type-raised trees have no root '
+                                 "(it's in the other branch).")
+            child = self.child
+        elif self.rule == CCGRule.CONJUNCTION:
+            if self.left.biclosed_type.is_conjoinable:
+                child = self.left
+            elif self.right.biclosed_type.is_conjoinable:
+                child = self.right
+        elif ('F' in self.rule.value
+              or self.rule == CCGRule.REMOVE_PUNCTUATION_RIGHT):
+            if 'TR' in self.left.rule.value:
+                child = self.right
+            else:
+                child = self.left
+        elif ('B' in self.rule.value
+              or self.rule == CCGRule.REMOVE_PUNCTUATION_LEFT):
+            if 'TR' in self.right.rule.value:
+                child = self.left
+            else:
+                child = self.right
+        assert child is not None
+        return child.root()
+
     @overload
     @classmethod
     def from_json(cls, data: None) -> None: ...
@@ -378,7 +419,9 @@ class CCGTree:
             if output == self.biclosed_type:
                 return self
             else:
-                return CCGTree(self.text, biclosed_type=output)
+                return CCGTree(self.text,
+                               biclosed_type=output,
+                               metadata=self.metadata)
 
         resolved_dom: tuple[CCGType, ...]
         rule = self.rule
@@ -426,7 +469,10 @@ class CCGTree:
         if children == self.children and output == self.biclosed_type:
             return self
         else:
-            return CCGTree(rule=rule, biclosed_type=output, children=children)
+            return CCGTree(rule=rule,
+                           biclosed_type=output,
+                           children=children,
+                           metadata=self.metadata)
 
     def to_diagram(self,
                    planar: bool = False,
