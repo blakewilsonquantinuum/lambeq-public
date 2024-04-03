@@ -83,7 +83,8 @@ _DISCOPY_DIAGRAM_TY = Union[dg.Diagram, dq.Circuit, dt.Diagram]
 _DISCOPY_TY_VAR = TypeVar('_DISCOPY_TY_VAR', dg.Ty, dq.Ty, dt.Dim)
 _LAMBEQ_TY_VAR = TypeVar('_LAMBEQ_TY_VAR', lg.Ty, lq.Ty, lt.Dim)
 _DISCOPY_BOX_VAR = TypeVar('_DISCOPY_BOX_VAR', dg.Box, dq.Box, dt.Box)
-_LAMBEQ_BOX_VAR = TypeVar('_LAMBEQ_BOX_VAR', lg.Box, lq.Box, lt.Box)
+_LAMBEQ_BOX_VAR = TypeVar('_LAMBEQ_BOX_VAR',
+                          lg.Box, lq.Box, lt.Box, lq.Diagram)
 _DISCOPY_ENTITY = TypeVar('_DISCOPY_ENTITY', dg.Ty, dq.Ty, dt.Dim, dg.Box,
                           dq.Box, dt.Box)
 
@@ -203,15 +204,19 @@ def convert_quantum_l2d(box: lq.Box) -> dq.Box:
     return op
 
 
-def convert_quantum_d2l(box: dq.Box) -> lq.Box:
+def convert_quantum_d2l(box: dq.Box) -> lq.Box | lq.Diagram:
     lq_box: _LAMBEQ_QUANTUM_BOX_TY
 
     if box.is_dagger:
         op = convert_quantum_d2l(box.dagger()).dagger()
 
     elif isinstance(box, dq.Controlled):
-        op = lq.Controlled(controlled=convert_quantum_d2l(box.controlled),
-                           distance=box.distance)
+        controlled = convert_quantum_d2l(box.controlled)
+        if isinstance(controlled, lq.Diagram):
+            op = controlled
+        else:
+            op = lq.Controlled(controlled=controlled,
+                               distance=box.distance)
 
     elif isinstance(box, (dq.Rx, dq.Ry, dq.Rz,
                           dq.gates.Scalar, dq.gates.Sqrt)):
@@ -220,9 +225,13 @@ def convert_quantum_d2l(box: dq.Box) -> lq.Box:
         op = lq_box(cast(float, box.data))
 
     elif isinstance(box, (dq.Bra, dq.Ket)):
-        lq_box = cast(type[Union[lq.Bra, lq.Ket]],
-                      QUANTUM_MAPPINGS_D2L[type(box)])
-        op = lq_box(*box.bitstring)
+        if box.bitstring:
+            lq_box = cast(type[Union[lq.Bra, lq.Ket]],
+                          QUANTUM_MAPPINGS_D2L[type(box)])
+
+            op = lq_box(*box.bitstring)
+        else:
+            op = lq.Id()
 
     elif isinstance(box, (dq.Discard, dq.Encode)):
         lq_box = cast(type[Union[lq.Discard, lq.Encode]],
@@ -430,7 +439,7 @@ def box_d2l(box: dg.Box,
         return convert_grammar_d2l(box)  # type: ignore[return-value]
     elif target == lq.Box:
         assert isinstance(box, dq.Box)
-        return convert_quantum_d2l(box)
+        return convert_quantum_d2l(box)  # type: ignore[return-value]
     elif target == lt.Box:
         assert isinstance(box, dt.Box)
         return convert_tensor_d2l(box)  # type: ignore[return-value]
