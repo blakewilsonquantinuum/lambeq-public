@@ -24,6 +24,7 @@ from __future__ import annotations
 
 __all__ = ['CircuitAnsatz',
            'IQPAnsatz',
+           'Sim4Ansatz',
            'Sim14Ansatz',
            'Sim15Ansatz',
            'StronglyEntanglingAnsatz']
@@ -77,6 +78,8 @@ class CircuitAnsatz(BaseAnsatz):
             The number of layers used by the ansatz.
         n_single_qubit_params : int
             The number of single qubit rotations used by the ansatz.
+            It only affects wires that `ob_map` maps to a single
+            qubit.
         circuit : callable
             Circuit generator used by the ansatz. This is a function
             (or a class constructor) that takes a number of qubits and
@@ -181,6 +184,8 @@ class IQPAnsatz(CircuitAnsatz):
             The number of layers used by the ansatz.
         n_single_qubit_params : int, default: 3
             The number of single qubit rotations used by the ansatz.
+            It only affects wires that `ob_map` maps to a single
+            qubit.
         discard : bool, default: False
             Discard open wires instead of post-selecting.
 
@@ -240,6 +245,8 @@ class Sim14Ansatz(CircuitAnsatz):
             The number of layers used by the ansatz.
         n_single_qubit_params : int, default: 3
             The number of single qubit rotations used by the ansatz.
+            It only affects wires that `ob_map` maps to a single
+            qubit.
         discard : bool, default: False
             Discard open wires instead of post-selecting.
 
@@ -308,6 +315,8 @@ class Sim15Ansatz(CircuitAnsatz):
             The number of layers used by the ansatz.
         n_single_qubit_params : int, default: 3
             The number of single qubit rotations used by the ansatz.
+            It only affects wires that `ob_map` maps to a single
+            qubit.
         discard : bool, default: False
             Discard open wires instead of post-selecting.
 
@@ -374,6 +383,8 @@ class Sim4Ansatz(CircuitAnsatz):
             The number of layers used by the ansatz.
         n_single_qubit_params : int, default: 3
             The number of single qubit rotations used by the ansatz.
+            It only affects wires that `ob_map` maps to a single
+            qubit.
         discard : bool, default: False
             Discard open wires instead of post-selecting.
 
@@ -440,6 +451,8 @@ class StronglyEntanglingAnsatz(CircuitAnsatz):
             The number of circuit layers used by the ansatz.
         n_single_qubit_params : int, default: 3
             The number of single qubit rotations used by the ansatz.
+            It only affects wires that `ob_map` maps to a single
+            qubit.
         ranges : list of int, optional
             The range of the CNOT gate between wires in each layer. By
             default, the range starts at one (i.e. adjacent wires) and
