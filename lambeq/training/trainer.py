@@ -179,7 +179,8 @@ class Trainer(ABC):
                               val_duration: float | None = None,
                               train_duration_mean: float | None = None,
                               val_duration_mean: float | None = None,
-                              eval_mode: str = EvalMode.EPOCH.value) -> str:
+                              eval_mode: str = EvalMode.EPOCH.value,
+                              full_timing_report: bool = False) -> str:
         """Generate the text to display with the progress bar.
 
         Parameters
@@ -217,14 +218,15 @@ class Trainer(ABC):
                          if value is not None else '-----')
             report.append(f'{name}: {str_value}')
 
-        # Mean durations are optional - they're mostly important
-        # when verbose='text'
-        for name, value in [(f'train/time_per_{eval_mode}',
-                             train_duration_mean),
-                            ('valid/time_per_eval', val_duration_mean)]:
-            if value is not None:
-                str_value = normalise_duration(value)
-                report.append(f'{name}: {str_value}')
+        if full_timing_report:
+            # Mean durations are optional - they're mostly important
+            # when verbose='text'
+            for name, value in [(f'train/time_per_{eval_mode}',
+                                train_duration_mean),
+                                ('valid/time_per_eval', val_duration_mean)]:
+                if value is not None:
+                    str_value = normalise_duration(value)
+                    report.append(f'{name}: {str_value}')
 
         if self.evaluate_on_train and self.evaluate_functions is not None:
             for name in self.train_eval_results:
@@ -403,7 +405,8 @@ class Trainer(ABC):
                           results: dict[str, list[Any]],
                           interval: int,
                           status_bar: tqdm,
-                          mode: str) -> None:
+                          mode: str,
+                          full_timing_report: bool = False) -> None:
         """Calculate the metric results and write them to tensorboard and
         command-line."""
         for name in eval_results:
@@ -418,7 +421,8 @@ class Trainer(ABC):
                     train_duration=(self.train_durations[-1] if
                                     self.train_durations else None),
                     val_duration=(self.val_durations[-1] if self.val_durations
-                                  else None)
+                                  else None),
+                    full_timing_report=full_timing_report,
                 )
             )
 
@@ -474,7 +478,8 @@ class Trainer(ABC):
             eval_mode: str = EvalMode.EPOCH.value,
             early_stopping_criterion: str | None = None,
             early_stopping_interval: int | None = None,
-            minimize_criterion: bool = True) -> None:
+            minimize_criterion: bool = True,
+            full_timing_report: bool = False) -> None:
         """Fit the model on the training data and, optionally,
         evaluate it on the validation data.
 
@@ -508,6 +513,8 @@ class Trainer(ABC):
         minimize_criterion: bool, default: True
             Flag indicating if we should minimize or maximize the early
             stopping criterion.
+        full_timing_report: bool, default: False
+            Flag for including mean timing statistics in the logs.
 
         Raises
         ------
@@ -595,7 +602,8 @@ class Trainer(ABC):
                                       else None),
                             train_duration=self.train_durations[-1],
                             val_duration=(self.val_durations[-1] if
-                                          self.val_durations else None)
+                                          self.val_durations else None),
+                            full_timing_report=full_timing_report,
                         )
                     )
                     self._to_tensorboard('train/time',
@@ -604,11 +612,14 @@ class Trainer(ABC):
 
                     # calculate metrics on train dataset
                     if self.evaluate_on_train and step % evaluation_step == 0:
-                        self._summarize_metric(self._train_eval_running,
-                                               self.train_eval_results,
-                                               epoch,
-                                               status_bar,
-                                               mode='train')
+                        self._summarize_metric(
+                            self._train_eval_running,
+                            self.train_eval_results,
+                            epoch,
+                            status_bar,
+                            mode='train',
+                            full_timing_report=full_timing_report,
+                        )
 
                     # evaluate metrics on validation data
                     if val_dataset is not None and step % evaluation_step == 0:
@@ -634,6 +645,7 @@ class Trainer(ABC):
                                     val_loss=v_loss,
                                     train_duration=self.train_durations[-1],
                                     val_duration=self.val_durations[-1],
+                                    full_timing_report=full_timing_report,
                                 )
                             )
 
@@ -647,6 +659,7 @@ class Trainer(ABC):
                                 val_loss=self.val_costs[-1],
                                 train_duration=self.train_durations[-1],
                                 val_duration=self.val_durations[-1],
+                                full_timing_report=full_timing_report,
                             )
                         )
 
@@ -657,11 +670,14 @@ class Trainer(ABC):
                                              self.val_durations[-1],
                                              epoch)
 
-                        self._summarize_metric(self._val_eval_running,
-                                               self.val_eval_results,
-                                               epoch,
-                                               status_bar,
-                                               mode='val')
+                        self._summarize_metric(
+                            self._val_eval_running,
+                            self.val_eval_results,
+                            epoch,
+                            status_bar,
+                            mode='val',
+                            full_timing_report=full_timing_report,
+                        )
                         # save best model
                         criterion_vals = self.val_costs
                         if early_stopping_criterion is not None:
@@ -731,6 +747,7 @@ class Trainer(ABC):
                                     train_duration_mean=train_duration_mean,
                                     val_duration_mean=val_duration_mean,
                                     eval_mode=eval_mode,
+                                    full_timing_report=full_timing_report,
                                 ),
                                 file=sys.stderr
                             )
