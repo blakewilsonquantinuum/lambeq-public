@@ -802,7 +802,7 @@ class Trainer(ABC):
         status_bar.close()
 
         # Summarize timing statistics
-        total_training_time = sum(self.train_epoch_durations)
+        total_training_time = sum(self.train_durations)
         training_time_per_epoch = normalise_duration(
             total_training_time / len(self.train_epoch_durations))
         training_time_per_step = normalise_duration(
