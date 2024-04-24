@@ -125,6 +125,30 @@ def test_functors():
     assert F(d3) == d3_f
 
 
+def test_spiders():
+
+    assert generate_spider(Ty(), 4, 3) == Id()
+
+    assert generate_spider(qubit, 1, 0) == Sqrt(2) @ H >> Bra(0)
+    assert generate_spider(qubit, 0, 1) == generate_spider(qubit, 1, 0).dagger()
+
+    assert generate_spider(qubit, 1, 1) == Id(qubit)
+
+    assert generate_spider(qubit, 2, 0).eval() == pytest.approx(generate_cup(qubit, qubit).eval())
+    assert generate_spider(qubit, 2, 0) == generate_spider(qubit, 0, 2).dagger()
+
+    assert generate_spider(qubit, 3, 2).eval().flatten() == pytest.approx([1, 0, 0, 0, 0, 0, 0, 0,
+                                                                           0, 0, 0, 0, 0, 0, 0, 0,
+                                                                           0, 0, 0, 0, 0, 0, 0, 0,
+                                                                           0, 0, 0, 0, 0, 0, 0, 1])
+    assert generate_spider(qubit, 2, 3).eval().flatten() == pytest.approx([1, 0, 0, 0, 0, 0, 0, 0,
+                                                                           0, 0, 0, 0, 0, 0, 0, 0,
+                                                                           0, 0, 0, 0, 0, 0, 0, 0,
+                                                                           0, 0, 0, 0, 0, 0, 0, 1])
+    with pytest.raises(NotImplementedError):
+        generate_spider(qubit @ qubit, 2, 3)
+
+
 def test_mixed_eval():
 
     assert (Ket(0) >> Discard()).eval() == 1

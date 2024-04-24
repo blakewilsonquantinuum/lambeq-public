@@ -632,8 +632,15 @@ def generate_spider(type: Ty, n_legs_in: int, n_legs_out: int) -> Diagram:
     if i == o == 1:
         return Id(type)
 
+    if type == Ty():
+        return Id()
+
+    if type != qubit:
+        raise NotImplementedError('Multi-qubit spiders are not presently'
+                                  ' supported.')
+
     if (i, o) == (1, 0):
-        return cast(Diagram, Sqrt(2) >> H >> Bra(0))
+        return cast(Diagram, Sqrt(2) @ H >> Bra(0))
     if (i, o) == (2, 1):
         return cast(Diagram, CX >> Id(qubit) @ Bra(0))
     if o > i:
