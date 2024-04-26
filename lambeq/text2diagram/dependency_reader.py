@@ -137,17 +137,38 @@ class DependencyReader(Reader):
     one dependency relation from "resigned" to "John".
 
     Each sentence has a list of dependencies. For example, the one for
-    "John resigned" is, represented in notation:
-    [ ⟨ ⟨ S\NP, "resigned" ⟩ , 1 , ⟨ NP "John" ⟩ ⟩ ]
+    "John resigned" is represented in notation::
 
-    This reader converts this list into a diagram, where each word is a
-    box, and each dependency is a labelled wire from the output of the
-    argument word-box to the input of the predicate word-box.
+       [ ⟨resigned, S\NP_1 , 1 , John⟩ ]
 
-    The dependencies are provided by a CCG parser; for example, Bobcat
-    produces trees that contain dependency data, trained from the
-    CCGBank corpus.
+    i.e. a list of single dependency. The indices in the types are
+    used to match the right arguments to their corresponding predicates.
+    In the more interesting case of the sentence "Money that I give
+    them", the derivation can capture long-range word dependencies,
+    like the one between "money" and "give"::
 
+      [〈that, (NP\NP_1)/(S/NP), 1, money〉
+       〈that, (NP\NP)/(S/NP)_2, 2, give〉
+       〈give, ((S\NP_1)/NP)/NP, 1, I〉
+       〈give, ((S\NP)/NP_2)/NP, 2, money〉
+       〈give, ((S\NP)/NP)/NP_3, 3, them〉]
+
+    This reader converts the dependency list into a diagram, where
+    each word is a box, and each dependency is a labelled wire from
+    the output of the argument word-box to the input of the predicate
+    word-box. The dependencies are provided by a CCG parser; for
+    example, Bobcat produces trees that contain dependency data,
+    trained from the CCGBank corpus.
+
+    Notes
+    -----
+    The order of the dependency input and output wires in a given word
+    box cannot be guaranteed, since the algorithm gives priority in
+    finding a wire configuration that minimises swaps. Therefore, if
+    the goal is to train these diagrams with a lambeq model, extra
+    post-processing steps need to be taken that ensure a consistent
+    order of the dependency wires in all boxes, so that the number of
+    the trainable boxes remains manageable.
     """
 
     def __init__(
