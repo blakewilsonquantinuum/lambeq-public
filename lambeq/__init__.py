@@ -94,6 +94,7 @@ __all__ = [
         'PytorchModel',
         'QuantumModel',
         'TketModel',
+        'TorchQuantumModel',
 
         'Trainer',
         'PytorchTrainer',
@@ -131,8 +132,9 @@ from lambeq.training import (Checkpoint, Dataset, Optimizer,
                              NelderMeadOptimizer, RotosolveOptimizer,
                              SPSAOptimizer, Model, NumpyModel,
                              PennyLaneModel, PytorchModel, QuantumModel,
-                             TketModel, Trainer, PytorchTrainer,
-                             QuantumTrainer, BinaryCrossEntropyLoss,
-                             CrossEntropyLoss, LossFunction, MSELoss)
+                             TketModel, TorchQuantumModel, Trainer,
+                             PytorchTrainer, QuantumTrainer,
+                             BinaryCrossEntropyLoss, CrossEntropyLoss,
+                             LossFunction, MSELoss)
 from lambeq.version import (version as __version__,
                             version_tuple as __version_info__)

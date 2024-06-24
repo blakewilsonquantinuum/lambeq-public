@@ -18,4 +18,5 @@ Examples
     ../examples/quantum-pipeline.ipynb
     ../examples/quantum-pipeline-jax.ipynb
     ../examples/pennylane.ipynb
+    ../examples/torchquantum.ipynb
 
