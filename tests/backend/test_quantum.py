@@ -1,6 +1,7 @@
 import pytest
 
 import numpy as np
+from pytket.extensions.qiskit import AerBackend
 import sympy
 
 from lambeq.backend.quantum import *
@@ -163,3 +164,9 @@ def test_mixed_eval():
     assert Ket(0).eval(mixed=True).reshape(4) == pytest.approx(np.array([1, 0, 0, 0]))
     assert Ket(1).eval(mixed=True).reshape(4) == pytest.approx(np.array([0, 0, 0, 1]))
     assert (Ket(0) >> H).eval(mixed=True).reshape(4) == pytest.approx(np.array([0.5, 0.5, 0.5, 0.5]))
+
+
+def test_eval_w_aer_backend():
+    backend = AerBackend()
+
+    assert ((Ket(0) >> Measure()) @ (Ket(1) >> Measure())).eval(backend=backend) == pytest.approx(np.array([[0, 1], [0, 0]]))
