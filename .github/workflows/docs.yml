@@ -28,6 +28,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
+        submodules: recursive
         fetch-depth: 0  # fetches tags, required for version info
     - name: Set up Python
       uses: actions/setup-python@v4
