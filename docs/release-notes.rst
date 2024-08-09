@@ -3,6 +3,29 @@
 Release notes
 =============
 
+.. _rel-0.4.2:
+
+`0.4.2 <https://github.com/CQCL/lambeq/releases/tag/0.4.2>`_
+------------------------------------------------------------
+
+Added:
+
+- Added timing information to training logs and model checkpoints.
+
+Changed:
+
+- Changed theme of online documentation.
+- Updated required version of ``pytket`` to 1.31.0.
+
+Fixed:
+
+- Fixed bug in generation of single-legged quantum spiders.
+- Fixed bug when evaluating quantum circuits using Tket.
+
+Removed:
+
+- Removed support for Python 3.9.
+
 .. _rel-0.4.1:
 
 `0.4.1 <https://github.com/CQCL/lambeq/releases/tag/0.4.1>`_
