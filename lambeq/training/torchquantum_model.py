@@ -183,9 +183,10 @@ class TorchQuantumModel(Model, torch.nn.Module):
         model = cls(**kwargs)
 
         model.symbols = sorted(
-            {sym for circ in diagrams for sym in circ.free_symbols},
-            key=default_sort_key
-        )
+            {sym.unscaled.to_sympy()
+                for circ in diagrams
+                for sym in circ.free_symbols},
+            key=default_sort_key)
 
         for circ in diagrams:
             assert isinstance(circ, Circuit)

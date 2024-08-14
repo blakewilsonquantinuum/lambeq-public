@@ -62,6 +62,7 @@ lambeq.backend
     lambeq.backend.quantum.Swap
     lambeq.backend.grammar.Word
     lambeq.backend.grammar.Functor
+    lambeq.backend.symbol.Symbol
    :parts: 2
 
 |

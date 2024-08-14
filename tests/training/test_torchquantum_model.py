@@ -8,6 +8,7 @@ from qiskit_ibm_provider.exceptions import IBMAccountError
 import torch
 from torch import Size
 from torch.nn import Parameter
+from sympy import default_sort_key
 
 from lambeq.backend.grammar import Cup, Id, Word
 from lambeq.backend.quantum import Measure
@@ -56,6 +57,8 @@ def test_normalize():
                               Cup(N, N.r) @ S @ Cup(N.l, N))
     ]
 
+    sorted_symbols = sorted(set.union(*[d.free_symbols for d in diagrams]), key=lambda sym: default_sort_key(sym.unscaled.to_sympy()))
+
     for i in range(len(diagrams)):
         for b in [True, False]:
             instance = TorchQuantumModel.from_diagrams(diagrams, 
@@ -65,7 +68,7 @@ def test_normalize():
 
             p_pred = instance.forward(diagrams)[i]
             d = (diagrams[i] >> Measure()) if b else diagrams[i]
-            d_pred = (d.lambdify(*instance.symbols)
+            d_pred = (d.lambdify(*sorted_symbols)
                      (*[x.item() for x in instance.weights]).eval())
 
             assert np.allclose(p_pred.detach().numpy(), d_pred, atol=1e-5)
