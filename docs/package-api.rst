@@ -23,8 +23,6 @@ Concrete implementations of classical and quantum :term:`ansätze <ansatz (plura
     lambeq.ansatz.Sim4Ansatz
     lambeq.ansatz.SpiderAnsatz
     lambeq.ansatz.StronglyEntanglingAnsatz
-    lambeq.ansatz.Symbol
-   :top-classes: lambeq.ansatz.base.Symbol
    :parts: 1
 
 |

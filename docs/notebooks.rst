@@ -10,6 +10,7 @@ Examples
     ../examples/parser.ipynb
     ../examples/reader.ipynb
     ../examples/tree-reader.ipynb
+    ../examples/dependency-reader.ipynb
     ../examples/rewrite.ipynb
     ../examples/circuit.ipynb
     ../examples/tensor.ipynb
