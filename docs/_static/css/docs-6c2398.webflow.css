@@ -73,6 +73,10 @@ a {
   height: 100%;
 }
 
+.button_link_image-wrap.bottom-buttons {
+  height: 50px;
+}
+
 .container {
   max-width: 61rem;
   margin-left: auto;
