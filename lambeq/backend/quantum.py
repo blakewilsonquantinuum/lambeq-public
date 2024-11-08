@@ -1524,7 +1524,7 @@ def circuital_to_dict(diagram):
             circuit_dict['qubits']['post'].append(qi)
             circuit_dict['measurements']['post'].append(
                 {'type': 'Bra', 'qubit': qi,
-                 'bit': bitmap[qi]}
+                'bit': bitmap[qi], 'phase': layer.box.bit }
             )
         elif isinstance(layer.box, Discard):
             available_qubits.remove(qi)
@@ -1551,6 +1551,7 @@ def gate_to_dict(box: Box, offset: int) -> Dict:
     if isinstance(box, Daggered):
         box = box.dagger()
         is_dagger = True
+        gdict['type'] = box.name.split('(')[0]
 
     gdict['dagger'] = is_dagger
 
