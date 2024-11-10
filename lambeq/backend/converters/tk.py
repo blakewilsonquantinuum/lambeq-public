@@ -410,7 +410,7 @@ def to_tk(diagram):
         circuit.Measure(measure['qubit'], measure['bit'])
 
     for postselect in circuit_dict['measurements']['post']:
-        circuit.post_select({postselect['qubit']: postselect['bit']})
+        circuit.post_select({postselect['qubit']: postselect['phase']})
 
     return circuit
 
